@@ -20,6 +20,7 @@ export function OnboardingGate() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [issued, setIssued] = useState<DbProfile | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
 
   const [form, setForm] = useState({
     name: "",
@@ -59,13 +60,16 @@ export function OnboardingGate() {
     if (issued) {
       return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-background p-6 shadow-xl">
-            <h2 className="text-lg font-semibold">You're all set 🎉</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Welcome to Syncpedia, {issued.name}.</p>
-            <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Your unique ID</p>
-              <p className="mt-1 select-all font-mono text-xl font-semibold text-primary">{issued.unique_id}</p>
-              <p className="mt-2 text-xs text-muted-foreground">Keep this safe — it's yours alone.</p>
+          <div className="w-full max-w-sm rounded-2xl bg-background p-6 text-center shadow-xl">
+            <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h2 className="mt-3 text-lg font-semibold">Welcome, {issued.name.split(" ")[0]}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Your Syncpedia ID is ready.</p>
+            <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Your unique ID</p>
+              <p className="mt-1 select-all font-mono text-2xl font-semibold text-primary">{issued.unique_id}</p>
+              <p className="mt-2 text-[11px] text-muted-foreground">Yours alone — keep it safe.</p>
             </div>
             <button
               onClick={() => {
@@ -74,7 +78,7 @@ export function OnboardingGate() {
               }}
               className="mt-5 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
-              Continue
+              Enter Syncpedia
             </button>
           </div>
         </div>
@@ -84,6 +88,14 @@ export function OnboardingGate() {
   }
 
   const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v as never }));
+
+  function goNext(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!form.name.trim()) return setError("Please enter your name");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.gmail)) return setError("Please enter a valid email");
+    setStep(2);
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -123,104 +135,128 @@ export function OnboardingGate() {
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
       <form
-        onSubmit={onSubmit}
+        onSubmit={step === 1 ? goNext : onSubmit}
         className="w-full max-w-md rounded-t-2xl bg-background p-5 shadow-xl sm:rounded-2xl"
       >
-        <h2 className="text-lg font-semibold">Welcome to Syncpedia</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Tell us about you to get started.</p>
+        <div className="flex items-center gap-1.5">
+          <span className={"h-1.5 flex-1 rounded-full " + (step >= 1 ? "bg-primary" : "bg-border")} />
+          <span className={"h-1.5 flex-1 rounded-full " + (step >= 2 ? "bg-primary" : "bg-border")} />
+        </div>
+        <h2 className="mt-4 text-lg font-semibold">
+          {step === 1 ? "Welcome to Syncpedia" : "A few more details"}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {step === 1 ? "Let's start with the basics." : "Almost there."}
+        </p>
 
-        <div className="mt-4 space-y-3">
-          <Field label="Full name">
-            <input
-              required
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
-              className="input"
-              placeholder="Jane Doe"
-            />
-          </Field>
-          <Field label="Mobile number">
-            <input
-              required
-              inputMode="tel"
-              value={form.mobile}
-              onChange={(e) => update("mobile", e.target.value)}
-              className="input"
-              placeholder="9876543210"
-            />
-          </Field>
-          <Field label="Gmail">
-            <input
-              required
-              type="email"
-              value={form.gmail}
-              onChange={(e) => update("gmail", e.target.value)}
-              className="input"
-              placeholder="you@gmail.com"
-            />
-          </Field>
-          <Field label="I am a">
-            <select
-              value={form.role}
-              onChange={(e) => update("role", e.target.value)}
-              className="input"
-            >
-              <option value="student">Student</option>
-              <option value="professional">Working professional</option>
-            </select>
-          </Field>
-
-          {form.role === "student" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Year">
-                <select
-                  value={form.year}
-                  onChange={(e) => update("year", e.target.value)}
-                  className="input"
-                >
-                  <option>1st year</option>
-                  <option>2nd year</option>
-                  <option>3rd year</option>
-                  <option>4th year</option>
-                  <option>Passed out</option>
-                </select>
-              </Field>
-              <Field label="College">
-                <input
-                  required
-                  value={form.college}
-                  onChange={(e) => update("college", e.target.value)}
-                  className="input"
-                  placeholder="Your college"
-                />
-              </Field>
-            </div>
-          ) : (
-            <Field label="Company">
+        {step === 1 ? (
+          <div className="mt-4 space-y-3">
+            <Field label="Full name">
               <input
+                autoFocus
                 required
-                value={form.company}
-                onChange={(e) => update("company", e.target.value)}
+                value={form.name}
+                onChange={(e) => update("name", e.target.value)}
                 className="input"
-                placeholder="e.g. Google"
+                placeholder="Jane Doe"
               />
             </Field>
+            <Field label="Email">
+              <input
+                required
+                type="email"
+                value={form.gmail}
+                onChange={(e) => update("gmail", e.target.value)}
+                className="input"
+                placeholder="you@gmail.com"
+              />
+            </Field>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <Field label="Mobile number">
+              <input
+                autoFocus
+                required
+                inputMode="tel"
+                value={form.mobile}
+                onChange={(e) => update("mobile", e.target.value)}
+                className="input"
+                placeholder="9876543210"
+              />
+            </Field>
+            <Field label="I am a">
+              <select
+                value={form.role}
+                onChange={(e) => update("role", e.target.value)}
+                className="input"
+              >
+                <option value="student">Student</option>
+                <option value="professional">Working professional</option>
+              </select>
+            </Field>
+            {form.role === "student" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Year">
+                  <select
+                    value={form.year}
+                    onChange={(e) => update("year", e.target.value)}
+                    className="input"
+                  >
+                    <option>1st year</option>
+                    <option>2nd year</option>
+                    <option>3rd year</option>
+                    <option>4th year</option>
+                    <option>Passed out</option>
+                  </select>
+                </Field>
+                <Field label="College">
+                  <input
+                    required
+                    value={form.college}
+                    onChange={(e) => update("college", e.target.value)}
+                    className="input"
+                    placeholder="Your college"
+                  />
+                </Field>
+              </div>
+            ) : (
+              <Field label="Company">
+                <input
+                  required
+                  value={form.company}
+                  onChange={(e) => update("company", e.target.value)}
+                  className="input"
+                  placeholder="e.g. Google"
+                />
+              </Field>
+            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
+        )}
+
+        <div className="mt-5 flex gap-2">
+          {step === 2 && (
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setStep(1);
+              }}
+              className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent"
+            >
+              Back
+            </button>
           )}
-
-          <p className="rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
-            A unique Syncpedia ID will be generated for you — it stays yours and can't be shared.
-          </p>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {step === 1 ? "Next" : submitting ? "Creating your ID…" : "Finish"}
+          </button>
         </div>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-5 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          {submitting ? "Saving…" : "Continue"}
-        </button>
 
         <style>{`
           .input {
