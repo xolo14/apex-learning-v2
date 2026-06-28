@@ -1,7 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUp, MessageCircle, Bookmark, Share2 } from "lucide-react";
+import { ArrowUp, ArrowDown, MessageCircle, Bookmark, Share2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { communityBySlug, KIND_BUCKET, KIND_LABEL, type Post } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
+import { votePost } from "@/lib/questions.functions";
 
 export function PostCard({ post }: { post: Post }) {
   const community = communityBySlug(post.communitySlug);
@@ -11,6 +15,48 @@ export function PostCard({ post }: { post: Post }) {
   const kindLabel = KIND_LABEL[post.kind];
   const avatarBg = avatarColor(post.unique_id || post.author);
   const avatarSize = compact ? "h-7 w-7" : "h-9 w-9";
+  const vote = useServerFn(votePost);
+  const qc = useQueryClient();
+  const [myVote, setMyVote] = useState<number>(0);
+  const [votes, setVotes] = useState<number>(post.votes);
+  useEffect(() => setVotes(post.votes), [post.votes]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("syncpedia_my_votes");
+      if (raw) {
+        const map = JSON.parse(raw) as Record<string, number>;
+        if (map[post.id]) setMyVote(map[post.id]);
+      }
+    } catch {}
+  }, [post.id]);
+
+  async function cast(value: 1 | -1) {
+    let deviceKey = "";
+    try {
+      deviceKey = localStorage.getItem("syncpedia_device_key") ?? "";
+    } catch {}
+    if (!deviceKey) return;
+    const oldMine = myVote;
+    const optimisticMine = oldMine === value ? 0 : value;
+    setMyVote(optimisticMine);
+    setVotes((v) => v + (optimisticMine - oldMine));
+    try {
+      const res = await vote({ data: { postId: post.id, deviceKey, value } });
+      setMyVote(res.value);
+      setVotes(res.votes);
+      try {
+        const raw = localStorage.getItem("syncpedia_my_votes");
+        const map = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+        if (res.value === 0) delete map[post.id];
+        else map[post.id] = res.value;
+        localStorage.setItem("syncpedia_my_votes", JSON.stringify(map));
+      } catch {}
+      qc.invalidateQueries({ queryKey: ["my-posts"] });
+    } catch {
+      setMyVote(oldMine);
+      setVotes(post.votes);
+    }
+  }
   return (
     <article
       className={
@@ -76,16 +122,29 @@ export function PostCard({ post }: { post: Post }) {
 
       <footer className={"flex items-center text-[12px] text-ink-muted " + (compact ? "mt-2" : "mt-4")}>
         <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); cast(1); }}
           aria-label="Upvote"
           className={
-            "inline-flex items-center gap-1.5 rounded-full bg-surface active:scale-95 " +
+            "inline-flex items-center gap-1.5 rounded-full active:scale-95 " +
+            (myVote === 1 ? "bg-forest/15 text-forest " : "bg-surface ") +
             (compact ? "px-2.5 py-1" : "px-3 py-1.5")
           }
         >
           <ArrowUp strokeWidth={2} className="h-[14px] w-[14px]" />
-          <span className="text-[12px] font-medium tabular-nums text-foreground">
-            {formatNumber(post.votes)}
+          <span className={"text-[12px] font-medium tabular-nums " + (myVote === 1 ? "text-forest" : "text-foreground")}>
+            {formatNumber(votes)}
           </span>
+        </button>
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); cast(-1); }}
+          aria-label="Downvote"
+          className={
+            "ml-1.5 inline-flex items-center rounded-full active:scale-95 " +
+            (myVote === -1 ? "bg-orange/15 text-orange " : "bg-surface text-ink-muted ") +
+            (compact ? "px-2.5 py-1" : "px-3 py-1.5")
+          }
+        >
+          <ArrowDown strokeWidth={2} className="h-[14px] w-[14px]" />
         </button>
         <Link
           to="/p/$id"
