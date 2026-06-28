@@ -15,13 +15,6 @@ export type DbQuestion = {
   hidden: boolean;
 };
 
-const DEVICE_KEY = "syncpedia_device_key";
-
-function getDeviceKey(): string | null {
-  if (typeof localStorage === "undefined") return null;
-  return localStorage.getItem(DEVICE_KEY);
-}
-
 function randomId() {
   return "q_" + Math.random().toString(36).slice(2, 10);
 }
