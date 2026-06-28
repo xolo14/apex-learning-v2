@@ -29,7 +29,7 @@ function SettingsPage() {
         <div className="mt-3 overflow-hidden rounded-2xl border border-hairline">
           <Row icon={Palette} label="Feed density">
             <div className="flex rounded-full bg-surface p-0.5 text-[12px]">
-              {(["comfortable", "compact"] as const).map((d) => (
+              {(["airy", "compact"] as const).map((d) => (
                 <button
                   key={d}
                   onClick={() => setDensity(d)}
