@@ -9,6 +9,7 @@ import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 import { listHot, type HotItem } from "@/lib/hot.functions";
 import { listNewQuestions, type DbQuestion } from "@/lib/questions.functions";
+import logoAsset from "@/assets/syncpedia-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
