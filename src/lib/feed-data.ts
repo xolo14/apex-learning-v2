@@ -52,6 +52,7 @@ export type Post = {
   id: string;
   author: string;
   initials: string;
+  unique_id: string;
   role: string;
   mentor: boolean;
   communitySlug: string;
