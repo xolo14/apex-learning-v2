@@ -194,7 +194,7 @@ function PostPage() {
         </div>
         <ul className="mt-4 space-y-4">
           {flattenReplies(messages).map((r, i) => (
-            <ChatBubble key={i} reply={r} />
+            <ChatBubble key={i} reply={r} isMe={r.author === currentUser.author} />
           ))}
         </ul>
       </div>
