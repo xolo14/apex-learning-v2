@@ -18,16 +18,15 @@ function AdminUsers() {
   const profiles = profilesQ.data ?? [];
   const pros = profiles.filter((p) => p.role === "professional");
 
-  const userMap = new Map<string, { author: string; initials: string; count: number; latest: string }>();
+  const userMap = new Map<string, { unique_id: string; count: number; latest: string }>();
   for (const row of q.data ?? []) {
-    const ex = userMap.get(row.author);
+    const ex = userMap.get(row.unique_id);
     if (ex) {
       ex.count += 1;
       if (row.created_at > ex.latest) ex.latest = row.created_at;
     } else {
-      userMap.set(row.author, {
-        author: row.author,
-        initials: row.initials,
+      userMap.set(row.unique_id, {
+        unique_id: row.unique_id,
         count: 1,
         latest: row.created_at,
       });
