@@ -73,41 +73,59 @@ function AdminPosts() {
             {q.data?.length === 0 && (
               <tr><td colSpan={6} className="px-5 py-6 text-ink-muted">No posts yet.</td></tr>
             )}
-            {q.data?.map((row) => (
-              <tr key={row.id} className="hover:bg-surface/50">
-                <td className="px-5 py-3">
-                  <div className="line-clamp-1 max-w-md font-medium">{row.title}</div>
-                  <div className="line-clamp-1 max-w-md text-[12px] text-ink-muted">{row.body}</div>
-                </td>
-                <td className="px-5 py-3">{row.author}</td>
-                <td className="px-5 py-3">c/{row.community_slug}</td>
-                <td className="px-5 py-3 text-ink-muted">{new Date(row.created_at).toLocaleString()}</td>
-                <td className="px-5 py-3">
-                  {row.hidden ? (
-                    <span className="rounded-full bg-orange/10 px-2 py-0.5 text-[11px] text-orange">Hidden</span>
-                  ) : (
-                    <span className="rounded-full bg-success/10 px-2 py-0.5 text-[11px] text-success">Live</span>
-                  )}
-                </td>
-                <td className="px-5 py-3">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => hideM.mutate({ id: row.id, hidden: !row.hidden })}
-                      className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[12px] hover:bg-foreground hover:text-background"
-                    >
-                      {row.hidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                      {row.hidden ? "Unhide" : "Hide"}
-                    </button>
-                    <button
-                      onClick={() => { if (confirm("Delete this post?")) delM.mutate(row.id); }}
-                      className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[12px] text-orange hover:bg-orange hover:text-white"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {q.data?.map((row) =>
+              editId === row.id ? (
+                <EditRow
+                  key={row.id}
+                  row={row}
+                  onCancel={() => setEditId(null)}
+                  onSave={(vars) =>
+                    updateM.mutate(vars, { onSuccess: () => setEditId(null) })
+                  }
+                  pending={updateM.isPending}
+                />
+              ) : (
+                <tr key={row.id} className="hover:bg-surface/50">
+                  <td className="px-5 py-3">
+                    <div className="line-clamp-1 max-w-md font-medium">{row.title}</div>
+                    <div className="line-clamp-1 max-w-md text-[12px] text-ink-muted">{row.body}</div>
+                  </td>
+                  <td className="px-5 py-3">{row.author}</td>
+                  <td className="px-5 py-3">c/{row.community_slug}</td>
+                  <td className="px-5 py-3 text-ink-muted">{new Date(row.created_at).toLocaleString()}</td>
+                  <td className="px-5 py-3">
+                    {row.hidden ? (
+                      <span className="rounded-full bg-orange/10 px-2 py-0.5 text-[11px] text-orange">Hidden</span>
+                    ) : (
+                      <span className="rounded-full bg-success/10 px-2 py-0.5 text-[11px] text-success">Live</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setEditId(row.id)}
+                        className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[12px] hover:bg-foreground hover:text-background"
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Edit
+                      </button>
+                      <button
+                        onClick={() => hideM.mutate({ id: row.id, hidden: !row.hidden })}
+                        className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[12px] hover:bg-foreground hover:text-background"
+                      >
+                        {row.hidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                        {row.hidden ? "Unhide" : "Hide"}
+                      </button>
+                      <button
+                        onClick={() => { if (confirm("Delete this post?")) delM.mutate(row.id); }}
+                        className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[12px] text-orange hover:bg-orange hover:text-white"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>
