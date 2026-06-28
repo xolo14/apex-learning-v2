@@ -66,16 +66,15 @@ function AdminUsers() {
               <tbody>
                 {profiles.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-5 py-6 text-ink-muted">
+                    <td colSpan={7} className="px-5 py-6 text-ink-muted">
                       {profilesQ.isLoading ? "Loading…" : "No profiles yet."}
                     </td>
                   </tr>
                 )}
                 {profiles.map((p) => (
                   <tr key={p.id} className="border-b border-hairline last:border-0">
-                    <td className="px-5 py-2 font-medium">{p.name}</td>
-                    <td className="px-5 py-2 capitalize">{p.role}</td>
                     <td className="px-5 py-2 font-mono text-[12px]">{p.unique_id}</td>
+                    <td className="px-5 py-2 capitalize">{p.role}</td>
                     <td className="px-5 py-2 tabular-nums">{p.mobile}</td>
                     <td className="px-5 py-2">{p.gmail}</td>
                     <td className="px-5 py-2">
