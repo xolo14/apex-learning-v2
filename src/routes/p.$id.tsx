@@ -234,15 +234,15 @@ function flattenReplies(list: Reply[]): Reply[] {
   return out;
 }
 
-function ChatBubble({ reply }: { reply: Reply }) {
+function ChatBubble({ reply, isMe }: { reply: Reply; isMe: boolean }) {
   return (
     <li>
-      <div className="flex items-end gap-2">
+      <div className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
           {reply.initials}
         </div>
         <div className="min-w-0 max-w-[80%]">
-          <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-ink-muted">
+          <div className={`mb-1 flex items-center gap-1.5 px-1 text-[11px] text-ink-muted ${isMe ? "justify-end" : ""}`}>
             <span className="font-medium text-foreground">{reply.author}</span>
             {reply.mentor ? (
               <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" />
@@ -250,7 +250,7 @@ function ChatBubble({ reply }: { reply: Reply }) {
             <span>·</span>
             <span>{reply.time}</span>
           </div>
-          <div className="rounded-[18px] rounded-bl-[6px] bg-surface px-3.5 py-2.5 text-[14px] leading-[1.5] text-foreground">
+          <div className={`rounded-[18px] px-3.5 py-2.5 text-[14px] leading-[1.5] ${isMe ? "rounded-br-[6px] bg-primary text-primary-foreground" : "rounded-bl-[6px] bg-surface text-foreground"}`}>
             {reply.body}
           </div>
         </div>
