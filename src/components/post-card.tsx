@@ -9,6 +9,7 @@ export function PostCard({ post }: { post: Post }) {
   const compact = density === "compact";
   const bucket = KIND_BUCKET[post.kind];
   const kindLabel = KIND_LABEL[post.kind];
+  const avatarBg = avatarColor(post.unique_id || post.author);
   return (
     <article
       className={
@@ -17,34 +18,32 @@ export function PostCard({ post }: { post: Post }) {
       }
     >
       <header className={"flex items-center " + (compact ? "gap-2" : "gap-2.5")}>
-        <Link
-          to="/c/$slug"
-          params={{ slug: post.communitySlug }}
-          className="flex items-center gap-2"
+        <span
+          className={
+            "grid shrink-0 place-items-center rounded-full text-white font-semibold " +
+            (compact ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-[12px]")
+          }
+          style={{ backgroundColor: avatarBg }}
+          aria-hidden
         >
-          {community ? (
-            <span
-              className={
-                "grid place-items-center rounded-[10px] bg-forest text-white " +
-                (compact ? "h-6 w-6" : "h-8 w-8")
-              }
-            >
-              <community.icon strokeWidth={1.75} className={compact ? "h-3 w-3" : "h-4 w-4"} />
+          {post.initials}
+        </span>
+        <span className="flex min-w-0 flex-col leading-tight">
+          <Link
+            to="/c/$slug"
+            params={{ slug: post.communitySlug }}
+            className="truncate text-[13px] font-medium tracking-tight text-foreground"
+          >
+            c/{community?.slug ?? post.communitySlug}
+          </Link>
+          {compact ? null : (
+            <span className="flex items-center gap-1 truncate text-[11px] text-ink-muted">
+              <span className="truncate">{post.unique_id}</span>
+              <span>·</span>
+              <span>{post.time}</span>
             </span>
-          ) : null}
-          <span className="flex flex-col leading-tight">
-            <span className="text-[13px] font-medium tracking-tight text-foreground">
-              c/{community?.slug ?? post.communitySlug}
-            </span>
-            {compact ? null : (
-              <span className="flex items-center gap-1 text-[11px] text-ink-muted">
-                {post.unique_id}
-                <span>·</span>
-                {post.time}
-              </span>
-            )}
-          </span>
-        </Link>
+          )}
+        </span>
         <span
             className={
               "ml-auto rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.12em] " +
@@ -121,4 +120,23 @@ export function PostCard({ post }: { post: Post }) {
 function formatNumber(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(n);
+}
+
+const AVATAR_PALETTE = [
+  "#1f6f54", // forest
+  "#b85c2b", // orange
+  "#3b5bdb",
+  "#7c3aed",
+  "#0e7490",
+  "#be185d",
+  "#9a3412",
+  "#15803d",
+  "#4338ca",
+  "#a16207",
+];
+
+function avatarColor(seed: string) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
 }
