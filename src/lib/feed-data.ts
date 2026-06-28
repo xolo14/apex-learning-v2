@@ -62,6 +62,63 @@ export type Post = {
   votes: number;
   comments: number;
   tag?: string;
+  kind: PostKind;
+};
+
+/**
+ * Content philosophy — Syncpedia 70 / 20 / 10
+ *   70% education: tutorial, project, mentor, discussion, question, resource, challenge
+ *   20% signal:    news, case study, career, launch
+ *   10% light:     meme, poll, quiz
+ */
+export type PostKind =
+  | "tutorial"
+  | "project"
+  | "mentor"
+  | "discussion"
+  | "question"
+  | "resource"
+  | "challenge"
+  | "news"
+  | "case-study"
+  | "career"
+  | "launch"
+  | "meme"
+  | "poll"
+  | "quiz";
+
+export const KIND_BUCKET: Record<PostKind, "education" | "signal" | "light"> = {
+  tutorial: "education",
+  project: "education",
+  mentor: "education",
+  discussion: "education",
+  question: "education",
+  resource: "education",
+  challenge: "education",
+  news: "signal",
+  "case-study": "signal",
+  career: "signal",
+  launch: "signal",
+  meme: "light",
+  poll: "light",
+  quiz: "light",
+};
+
+export const KIND_LABEL: Record<PostKind, string> = {
+  tutorial: "Tutorial",
+  project: "Project",
+  mentor: "Mentor note",
+  discussion: "Discussion",
+  question: "Question",
+  resource: "Resource",
+  challenge: "Challenge",
+  news: "Industry news",
+  "case-study": "Case study",
+  career: "Career",
+  launch: "Launch",
+  meme: "Meme",
+  poll: "Poll",
+  quiz: "Quiz",
 };
 
 export const posts: Post[] = [
@@ -78,6 +135,7 @@ export const posts: Post[] = [
     votes: 1248,
     comments: 184,
     tag: "Discussion",
+    kind: "mentor",
   },
   {
     id: "p2",
@@ -92,6 +150,7 @@ export const posts: Post[] = [
     votes: 612,
     comments: 97,
     tag: "Question",
+    kind: "question",
   },
   {
     id: "p3",
@@ -106,6 +165,7 @@ export const posts: Post[] = [
     votes: 2104,
     comments: 312,
     tag: "Mentor Note",
+    kind: "mentor",
   },
   {
     id: "p4",
@@ -120,6 +180,7 @@ export const posts: Post[] = [
     votes: 1842,
     comments: 241,
     tag: "Mentor Note",
+    kind: "mentor",
   },
   {
     id: "p5",
@@ -134,6 +195,7 @@ export const posts: Post[] = [
     votes: 487,
     comments: 156,
     tag: "Discussion",
+    kind: "discussion",
   },
   {
     id: "p6",
@@ -148,6 +210,7 @@ export const posts: Post[] = [
     votes: 1583,
     comments: 209,
     tag: "Mentor Note",
+    kind: "mentor",
   },
   {
     id: "p7",
@@ -162,9 +225,113 @@ export const posts: Post[] = [
     votes: 734,
     comments: 128,
     tag: "Question",
+    kind: "question",
+  },
+  {
+    id: "p8",
+    author: "Priya Shah",
+    initials: "PS",
+    role: "ML engineer",
+    mentor: false,
+    communitySlug: "ml",
+    time: "3h",
+    title: "Built a tiny RAG that runs entirely on-device — full write-up + repo",
+    body: "8MB model, sub-200ms latency on an M1 Air, no API keys. Walkthrough of the embedding choice, the chunker, and the eval set I used to compare it against a hosted baseline.",
+    votes: 968,
+    comments: 142,
+    tag: "Project",
+    kind: "project",
+  },
+  {
+    id: "p9",
+    author: "Syncpedia Weekly",
+    initials: "SW",
+    role: "Editorial",
+    mentor: false,
+    communitySlug: "ai",
+    time: "7h",
+    title: "Anthropic's new model card quietly redefines how we should think about evals",
+    body: "Three things changed: deprecation policy, behavioral spec versioning, and refusal calibration. Here's the 4-minute summary with the citations that matter.",
+    votes: 1421,
+    comments: 188,
+    tag: "News",
+    kind: "news",
+  },
+  {
+    id: "p10",
+    author: "Community Challenge",
+    initials: "CC",
+    role: "Weekly build",
+    mentor: false,
+    communitySlug: "programming",
+    time: "1d",
+    title: "This week: ship a CLI that does one boring thing extraordinarily well",
+    body: "Constraint: under 200 lines, zero runtime deps, must have a man page. Top 3 entries get a mentor review session. Submit by Sunday 23:59 UTC.",
+    votes: 612,
+    comments: 94,
+    tag: "Challenge",
+    kind: "challenge",
+  },
+  {
+    id: "p11",
+    author: "Hana Brennan",
+    initials: "HB",
+    role: "Recruiter, Stripe",
+    mentor: true,
+    communitySlug: "business",
+    time: "12h",
+    title: "What 'I want impact' actually means to a hiring manager",
+    body: "I read it 40 times a week. Here's how to translate it into one sentence that earns you a second round — and the two phrasings that quietly disqualify you.",
+    votes: 1102,
+    comments: 217,
+    tag: "Career",
+    kind: "career",
+  },
+  {
+    id: "p12",
+    author: "Theo Marchetti",
+    initials: "TM",
+    role: "CS senior",
+    mentor: false,
+    communitySlug: "programming",
+    time: "16h",
+    title: "Me explaining to my rubber duck why the bug is definitely the compiler's fault",
+    body: "Spoiler: it was a missing await. Three hours. I'm fine. I'm great. (Drop yours below — what bug humbled you this week?)",
+    votes: 2890,
+    comments: 421,
+    tag: "Meme",
+    kind: "meme",
   },
 ];
 
 export function communityBySlug(slug: string) {
   return communities.find((c) => c.slug === slug);
+}
+
+/**
+ * Order the feed so it always satisfies the 70 / 20 / 10 mix:
+ * education content leads, signal threads in, light content is sprinkled
+ * sparingly — never two light items in a row, never light in the top 3.
+ */
+export function balancedFeed(input: Post[] = posts): Post[] {
+  const buckets = {
+    education: [] as Post[],
+    signal: [] as Post[],
+    light: [] as Post[],
+  };
+  for (const p of input) buckets[KIND_BUCKET[p.kind]].push(p);
+
+  const out: Post[] = [];
+  let i = 0;
+  while (buckets.education.length || buckets.signal.length || buckets.light.length) {
+    const slot = i % 10;
+    let pick: Post | undefined;
+    if (slot === 9 && i >= 3) pick = buckets.light.shift();
+    else if (slot === 3 || slot === 7) pick = buckets.signal.shift();
+    pick = pick ?? buckets.education.shift() ?? buckets.signal.shift() ?? buckets.light.shift();
+    if (!pick) break;
+    out.push(pick);
+    i++;
+  }
+  return out;
 }

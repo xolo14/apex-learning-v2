@@ -3,7 +3,7 @@ import { Search, Bell, Flame, Clock, Sparkles, ArrowUpRight } from "lucide-react
 import { useState } from "react";
 import { MobileShell, DensityToggle } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
-import { posts, communities } from "@/lib/feed-data";
+import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 
 export const Route = createFileRoute("/")({
@@ -29,6 +29,7 @@ function Home() {
   const featured = communities.slice(0, 8);
   const { density } = useDensity();
   const compact = density === "compact";
+  const feed = balancedFeed(posts);
   return (
     <MobileShell>
       {/* Status bar–style chrome */}
@@ -166,7 +167,7 @@ function Home() {
       </div>
 
       <div className={compact ? "mt-1" : "mt-2"}>
-        {posts.map((p) => (
+        {feed.map((p) => (
           <PostCard key={p.id} post={p} />
         ))}
       </div>

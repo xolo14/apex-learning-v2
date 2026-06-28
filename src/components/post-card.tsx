@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUp, MessageCircle, Bookmark, Share2, BadgeCheck } from "lucide-react";
-import { communityBySlug, type Post } from "@/lib/feed-data";
+import { communityBySlug, KIND_BUCKET, KIND_LABEL, type Post } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 
 export function PostCard({ post }: { post: Post }) {
@@ -8,6 +8,8 @@ export function PostCard({ post }: { post: Post }) {
   const isMentor = post.mentor;
   const { density } = useDensity();
   const compact = density === "compact";
+  const bucket = KIND_BUCKET[post.kind];
+  const kindLabel = KIND_LABEL[post.kind];
   return (
     <article
       className={
@@ -61,11 +63,20 @@ export function PostCard({ post }: { post: Post }) {
           <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-forest/8 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-forest">
             Mentor
           </span>
-        ) : post.tag ? (
-          <span className="ml-auto rounded-full bg-surface px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted">
-            {post.tag}
+        ) : (
+          <span
+            className={
+              "ml-auto rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.12em] " +
+              (bucket === "signal"
+                ? "bg-foreground/[0.06] text-foreground"
+                : bucket === "light"
+                  ? "bg-orange/10 text-orange"
+                  : "bg-surface text-ink-muted")
+            }
+          >
+            {kindLabel}
           </span>
-        ) : null}
+        )}
       </header>
 
       <Link to="/p/$id" params={{ id: post.id }} className={compact ? "mt-2 block" : "mt-4 block"}>
