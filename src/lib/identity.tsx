@@ -79,6 +79,14 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setState((s) => ({ ...s, ...JSON.parse(raw) }));
+      // Seed uniqueId from the cached profile on first load
+      const profileRaw = localStorage.getItem("syncpedia_profile");
+      if (profileRaw) {
+        const p = JSON.parse(profileRaw);
+        if (p?.unique_id) {
+          setState((s) => (s.uniqueId ? s : { ...s, uniqueId: p.unique_id }));
+        }
+      }
     } catch {}
   }, []);
 
