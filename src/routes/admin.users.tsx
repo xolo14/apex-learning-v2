@@ -16,7 +16,7 @@ function AdminUsers() {
   const listP = useServerFn(listProfiles);
   const profilesQ = useQuery({ queryKey: ["admin", "profiles"], queryFn: () => listP() });
   const profiles = profilesQ.data ?? [];
-  const mentors = profiles.filter((p) => p.role === "mentor");
+  const pros = profiles.filter((p) => p.role === "professional");
 
   const userMap = new Map<string, { author: string; initials: string; count: number; latest: string }>();
   for (const row of q.data ?? []) {
@@ -48,7 +48,7 @@ function AdminUsers() {
         <section className="rounded-2xl border border-hairline lg:col-span-2">
           <header className="flex items-center justify-between border-b border-hairline px-5 py-3">
             <h2 className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
-              Onboarded profiles ({profiles.length}) · {mentors.length} mentors
+              Onboarded profiles ({profiles.length}) · {pros.length} working professionals
             </h2>
           </header>
           <div className="overflow-x-auto">
@@ -57,11 +57,11 @@ function AdminUsers() {
                 <tr className="border-b border-hairline">
                   <th className="px-5 py-2 font-medium">Name</th>
                   <th className="px-5 py-2 font-medium">Role</th>
-                  <th className="px-5 py-2 font-medium">Mentor ID</th>
+                  <th className="px-5 py-2 font-medium">Unique ID</th>
                   <th className="px-5 py-2 font-medium">Mobile</th>
                   <th className="px-5 py-2 font-medium">Gmail</th>
                   <th className="px-5 py-2 font-medium">Year</th>
-                  <th className="px-5 py-2 font-medium">College</th>
+                  <th className="px-5 py-2 font-medium">College / Company</th>
                   <th className="px-5 py-2 font-medium">Joined</th>
                 </tr>
               </thead>
@@ -77,11 +77,18 @@ function AdminUsers() {
                   <tr key={p.id} className="border-b border-hairline last:border-0">
                     <td className="px-5 py-2 font-medium">{p.name}</td>
                     <td className="px-5 py-2 capitalize">{p.role}</td>
-                    <td className="px-5 py-2 font-mono text-[12px]">{p.mentor_id ?? "—"}</td>
+                    <td className="px-5 py-2 font-mono text-[12px]">{p.unique_id}</td>
                     <td className="px-5 py-2 tabular-nums">{p.mobile}</td>
                     <td className="px-5 py-2">{p.gmail}</td>
                     <td className="px-5 py-2">{p.year}</td>
-                    <td className="px-5 py-2">{p.college}</td>
+                    <td className="px-5 py-2">
+                      {p.college}
+                      {p.role === "professional" && p.company && (
+                        <span className="block text-[11px] text-ink-muted">
+                          {p.company} · {p.experience}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-5 py-2 text-ink-muted">
                       {new Date(p.created_at).toLocaleDateString()}
                     </td>

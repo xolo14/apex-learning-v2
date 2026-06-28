@@ -8,19 +8,21 @@ export type DbProfile = {
   gmail: string;
   year: string;
   college: string;
-  role: "student" | "mentor";
-  mentor_id: string | null;
+  role: "student" | "professional";
+  unique_id: string;
+  company: string | null;
+  experience: string | null;
   created_at: string;
 };
 
 const rid = (p: string) => `${p}_` + Math.random().toString(36).slice(2, 10);
 
-function genMentorId() {
-  // 6-char alphanumeric, unambiguous
+function genUniqueId() {
+  // 6-char alphanumeric, unambiguous (no 0/O/1/I)
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let s = "";
   for (let i = 0; i < 6; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
-  return `MNT-${s}`;
+  return `SP-${s}`;
 }
 
 export const getProfileByDevice = createServerFn({ method: "GET" })
@@ -28,7 +30,7 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, mentor_id, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     return rows[0] ?? null;
@@ -42,7 +44,9 @@ export const createProfile = createServerFn({ method: "POST" })
     gmail: string;
     year: string;
     college: string;
-    role: "student" | "mentor";
+    role: "student" | "professional";
+    company?: string;
+    experience?: string;
   }) => {
     if (!d.deviceKey) throw new Error("Device key required");
     if (!d.name?.trim()) throw new Error("Name required");
@@ -50,7 +54,11 @@ export const createProfile = createServerFn({ method: "POST" })
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.gmail)) throw new Error("Valid email required");
     if (!d.year?.trim()) throw new Error("Year required");
     if (!d.college?.trim()) throw new Error("College required");
-    if (d.role !== "student" && d.role !== "mentor") throw new Error("Invalid role");
+    if (d.role !== "student" && d.role !== "professional") throw new Error("Invalid role");
+    if (d.role === "professional") {
+      if (!d.company?.trim()) throw new Error("Company required");
+      if (!d.experience?.trim()) throw new Error("Experience required");
+    }
     return d;
   })
   .handler(async ({ data }) => {
@@ -58,29 +66,29 @@ export const createProfile = createServerFn({ method: "POST" })
 
     // If already onboarded on this device, return existing profile
     const existing = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, mentor_id, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     if (existing[0]) return existing[0];
 
     const id = rid("usr");
-    let mentorId: string | null = null;
-
-    if (data.role === "mentor") {
-      // Generate unique mentor id — retry on collision
-      for (let i = 0; i < 8; i++) {
-        const candidate = genMentorId();
-        const hit = (await sql()`SELECT 1 FROM profiles WHERE mentor_id = ${candidate} LIMIT 1`) as unknown[];
-        if (hit.length === 0) {
-          mentorId = candidate;
-          break;
-        }
+    // Every profile gets a unique id, regardless of role
+    let uniqueId: string | null = null;
+    for (let i = 0; i < 10; i++) {
+      const candidate = genUniqueId();
+      const hit = (await sql()`SELECT 1 FROM profiles WHERE unique_id = ${candidate} LIMIT 1`) as unknown[];
+      if (hit.length === 0) {
+        uniqueId = candidate;
+        break;
       }
-      if (!mentorId) throw new Error("Could not allocate mentor id, please retry");
     }
+    if (!uniqueId) throw new Error("Could not allocate unique id, please retry");
+
+    const company = data.role === "professional" ? data.company!.trim().slice(0, 120) : null;
+    const experience = data.role === "professional" ? data.experience!.trim().slice(0, 40) : null;
 
     await sql()`
-      INSERT INTO profiles (id, device_key, name, mobile, gmail, year, college, role, mentor_id)
+      INSERT INTO profiles (id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience)
       VALUES (
         ${id}, ${data.deviceKey},
         ${data.name.trim().slice(0, 80)},
@@ -89,12 +97,14 @@ export const createProfile = createServerFn({ method: "POST" })
         ${data.year.trim().slice(0, 20)},
         ${data.college.trim().slice(0, 120)},
         ${data.role},
-        ${mentorId}
+        ${uniqueId},
+        ${company},
+        ${experience}
       )
     `;
 
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, mentor_id, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
       FROM profiles WHERE id = ${id} LIMIT 1
     `) as DbProfile[];
     return rows[0]!;
@@ -103,7 +113,7 @@ export const createProfile = createServerFn({ method: "POST" })
 export const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
   const { sql } = await import("./db.server");
   const rows = (await sql()`
-    SELECT id, device_key, name, mobile, gmail, year, college, role, mentor_id, created_at
+    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
     FROM profiles ORDER BY created_at DESC
   `) as DbProfile[];
   return rows;
