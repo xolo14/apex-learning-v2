@@ -10,6 +10,7 @@ export function PostCard({ post }: { post: Post }) {
   const bucket = KIND_BUCKET[post.kind];
   const kindLabel = KIND_LABEL[post.kind];
   const avatarBg = avatarColor(post.unique_id || post.author);
+  const avatarSize = compact ? "h-7 w-7" : "h-9 w-9";
   return (
     <article
       className={
@@ -19,14 +20,11 @@ export function PostCard({ post }: { post: Post }) {
     >
       <header className={"flex items-center " + (compact ? "gap-2" : "gap-2.5")}>
         <span
-          className={
-            "grid shrink-0 place-items-center rounded-full text-white font-semibold " +
-            (compact ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-[12px]")
-          }
+          className={"grid shrink-0 place-items-center overflow-hidden rounded-full " + avatarSize}
           style={{ backgroundColor: avatarBg }}
           aria-hidden
         >
-          {post.initials}
+          <DefaultAvatar />
         </span>
         <span className="flex min-w-0 flex-col leading-tight">
           <Link
