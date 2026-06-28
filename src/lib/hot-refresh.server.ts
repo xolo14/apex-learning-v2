@@ -79,8 +79,8 @@ export async function refreshHotCache(): Promise<{ inserted: number; total: numb
     `;
     if ((r as { is_insert: boolean }[])[0]?.is_insert) inserted++;
   }
-  // Prune anything older than 14 days.
-  await sql()`DELETE FROM hot_cache WHERE published_at < now() - interval '14 days'`;
+  // Keep history: only prune very old items (90 days) so yesterday/older stays visible below today's.
+  await sql()`DELETE FROM hot_cache WHERE published_at < now() - interval '90 days'`;
   const [{ c }] = (await sql()`SELECT count(*)::int AS c FROM hot_cache`) as { c: number }[];
   return { inserted, total: c };
 }
