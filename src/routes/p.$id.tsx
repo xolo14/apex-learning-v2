@@ -30,8 +30,7 @@ export const Route = createFileRoute("/p/$id")({
 });
 
 type Reply = {
-  author: string;
-  initials: string;
+  unique_id: string;
   role: string;
   mentor: boolean;
   time: string;
@@ -42,8 +41,7 @@ type Reply = {
 
 const replies: Reply[] = [
   {
-    author: "Sofia Marquez",
-    initials: "SM",
+    unique_id: "SP-SOFI01",
     role: "ML Eng, Anthropic",
     mentor: true,
     time: "1h",
@@ -51,8 +49,7 @@ const replies: Reply[] = [
     body: "Start with a value-aligned eval set tied to a single business outcome. Anything trace-level becomes noise without that anchor. Then layer drift detection — most teams skip step two and pay for it.",
     children: [
       {
-        author: "Daniel Park",
-        initials: "DP",
+        unique_id: "SP-DANP02",
         role: "Self-taught",
         mentor: false,
         time: "42m",
@@ -62,8 +59,7 @@ const replies: Reply[] = [
     ],
   },
   {
-    author: "Ravi Bhatt",
-    initials: "RB",
+    unique_id: "SP-RAVB03",
     role: "Eval lead, fintech",
     mentor: false,
     time: "2h",
@@ -71,8 +67,7 @@ const replies: Reply[] = [
     body: "We sample 1% of traces daily and rotate reviewers. Boring, but it's the only thing that caught silent regressions for us.",
   },
   {
-    author: "Hana Lee",
-    initials: "HL",
+    unique_id: "SP-HANL04",
     role: "Researcher",
     mentor: true,
     time: "3h",
@@ -82,8 +77,7 @@ const replies: Reply[] = [
 ];
 
 const currentUser = {
-  author: "You",
-  initials: "YO",
+  unique_id: "SP-YOU",
   role: "Student",
   mentor: false,
   time: "now",
@@ -142,9 +136,9 @@ function PostPage() {
       <article className="border-b-[6px] border-surface px-5 py-5">
         <div className="flex items-center gap-2 text-[12px] text-ink-muted">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
-            {post.initials}
+            ID
           </span>
-          <span className="font-medium text-foreground">{post.author}</span>
+          <span className="font-medium text-foreground">{post.unique_id}</span>
           {post.mentor ? <BadgeCheck strokeWidth={2} className="h-3.5 w-3.5 text-forest" /> : null}
           <span>·</span>
           <span>{post.role}</span>
@@ -194,7 +188,7 @@ function PostPage() {
         </div>
         <ul className="mt-4 space-y-4">
           {flattenReplies(messages).map((r, i) => (
-            <ChatBubble key={i} reply={r} isMe={r.author === currentUser.author} />
+          <ChatBubble key={i} reply={r} isMe={r.unique_id === currentUser.unique_id} />
           ))}
         </ul>
       </div>
@@ -239,11 +233,11 @@ function ChatBubble({ reply, isMe }: { reply: Reply; isMe: boolean }) {
     <li>
       <div className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
-          {reply.initials}
+          ID
         </div>
         <div className="min-w-0 max-w-[80%]">
           <div className={`mb-1 flex items-center gap-1.5 px-1 text-[11px] text-ink-muted ${isMe ? "justify-end" : ""}`}>
-            <span className="font-medium text-foreground">{reply.author}</span>
+            <span className="font-medium text-foreground">{reply.unique_id}</span>
             {reply.mentor ? (
               <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" />
             ) : null}

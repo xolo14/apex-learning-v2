@@ -7,6 +7,13 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { createQuestion } from "@/lib/questions.functions";
 import { communities } from "@/lib/feed-data";
 
+const DEVICE_KEY = "syncpedia_device_key";
+
+function getDeviceKey(): string | null {
+  if (typeof localStorage === "undefined") return null;
+  return localStorage.getItem(DEVICE_KEY);
+}
+
 export const Route = createFileRoute("/ask")({
   head: () => ({ meta: [{ title: "Ask — Syncpedia" }] }),
   component: AskPage,
@@ -17,7 +24,6 @@ function AskPage() {
   const qc = useQueryClient();
   const submit = useServerFn(createQuestion);
 
-  const [author, setAuthor] = useState("");
   const [community, setCommunity] = useState("ai");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -26,7 +32,7 @@ function AskPage() {
   const m = useMutation({
     mutationFn: () =>
       submit({
-        data: { author: author || "Anonymous", communitySlug: community, title, body },
+        data: { deviceKey: getDeviceKey() ?? undefined, communitySlug: community, title, body },
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["feed", "new"] });
@@ -54,17 +60,10 @@ function AskPage() {
         }
       />
       <div className="px-5 pt-5">
-        <input
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          placeholder="Your name"
-          className="w-full rounded-2xl border border-hairline bg-background px-4 py-3 text-[14px] focus:outline-none"
-        />
-
         <button
           type="button"
           onClick={() => setPickerOpen((v) => !v)}
-          className="mt-3 flex w-full items-center justify-between rounded-2xl border border-hairline bg-background px-4 py-3 text-left"
+          className="flex w-full items-center justify-between rounded-2xl border border-hairline bg-background px-4 py-3 text-left"
         >
           <span className="text-[13px] text-ink-muted">Community</span>
           <span className="flex items-center gap-1 text-[14px] font-medium text-foreground">

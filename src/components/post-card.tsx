@@ -38,7 +38,7 @@ export function PostCard({ post }: { post: Post }) {
             </span>
             {compact ? null : (
               <span className="flex items-center gap-1 text-[11px] text-ink-muted">
-                {post.author}
+                {post.unique_id}
                 <span>·</span>
                 {post.time}
               </span>

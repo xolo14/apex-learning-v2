@@ -18,16 +18,15 @@ function AdminUsers() {
   const profiles = profilesQ.data ?? [];
   const pros = profiles.filter((p) => p.role === "professional");
 
-  const userMap = new Map<string, { author: string; initials: string; count: number; latest: string }>();
+  const userMap = new Map<string, { unique_id: string; count: number; latest: string }>();
   for (const row of q.data ?? []) {
-    const ex = userMap.get(row.author);
+    const ex = userMap.get(row.unique_id);
     if (ex) {
       ex.count += 1;
       if (row.created_at > ex.latest) ex.latest = row.created_at;
     } else {
-      userMap.set(row.author, {
-        author: row.author,
-        initials: row.initials,
+      userMap.set(row.unique_id, {
+        unique_id: row.unique_id,
         count: 1,
         latest: row.created_at,
       });
@@ -55,9 +54,8 @@ function AdminUsers() {
             <table className="min-w-full text-[13px]">
               <thead className="text-left text-[11px] uppercase tracking-[0.14em] text-ink-muted">
                 <tr className="border-b border-hairline">
-                  <th className="px-5 py-2 font-medium">Name</th>
-                  <th className="px-5 py-2 font-medium">Role</th>
                   <th className="px-5 py-2 font-medium">Unique ID</th>
+                  <th className="px-5 py-2 font-medium">Role</th>
                   <th className="px-5 py-2 font-medium">Mobile</th>
                   <th className="px-5 py-2 font-medium">Gmail</th>
                   <th className="px-5 py-2 font-medium">Year / Company</th>
@@ -68,16 +66,15 @@ function AdminUsers() {
               <tbody>
                 {profiles.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-5 py-6 text-ink-muted">
+                    <td colSpan={7} className="px-5 py-6 text-ink-muted">
                       {profilesQ.isLoading ? "Loading…" : "No profiles yet."}
                     </td>
                   </tr>
                 )}
                 {profiles.map((p) => (
                   <tr key={p.id} className="border-b border-hairline last:border-0">
-                    <td className="px-5 py-2 font-medium">{p.name}</td>
-                    <td className="px-5 py-2 capitalize">{p.role}</td>
                     <td className="px-5 py-2 font-mono text-[12px]">{p.unique_id}</td>
+                    <td className="px-5 py-2 capitalize">{p.role}</td>
                     <td className="px-5 py-2 tabular-nums">{p.mobile}</td>
                     <td className="px-5 py-2">{p.gmail}</td>
                     <td className="px-5 py-2">
@@ -107,12 +104,12 @@ function AdminUsers() {
               </li>
             )}
             {users.map((u) => (
-              <li key={u.author} className="flex items-center gap-3 px-5 py-3">
+              <li key={u.unique_id} className="flex items-center gap-3 px-5 py-3">
                 <div className="grid h-9 w-9 place-items-center rounded-full bg-forest text-[12px] font-medium text-white">
-                  {u.initials}
+                  ID
                 </div>
                 <div className="flex-1">
-                  <p className="text-[13.5px] font-medium">{u.author}</p>
+                  <p className="text-[13.5px] font-medium font-mono">{u.unique_id}</p>
                   <p className="text-[11px] text-ink-muted">
                     Last post · {new Date(u.latest).toLocaleString()}
                   </p>

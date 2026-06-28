@@ -59,7 +59,7 @@ function AdminPosts() {
           <thead className="border-b border-hairline text-left text-[11px] uppercase tracking-[0.14em] text-ink-muted">
             <tr>
               <th className="px-5 py-3 font-medium">Title</th>
-              <th className="px-5 py-3 font-medium">Author</th>
+              <th className="px-5 py-3 font-medium">Unique ID</th>
               <th className="px-5 py-3 font-medium">Community</th>
               <th className="px-5 py-3 font-medium">Created</th>
               <th className="px-5 py-3 font-medium">Status</th>
@@ -90,7 +90,7 @@ function AdminPosts() {
                     <div className="line-clamp-1 max-w-md font-medium">{row.title}</div>
                     <div className="line-clamp-1 max-w-md text-[12px] text-ink-muted">{row.body}</div>
                   </td>
-                  <td className="px-5 py-3">{row.author}</td>
+                  <td className="px-5 py-3 font-mono text-[12px]">{row.unique_id}</td>
                   <td className="px-5 py-3">c/{row.community_slug}</td>
                   <td className="px-5 py-3 text-ink-muted">{new Date(row.created_at).toLocaleString()}</td>
                   <td className="px-5 py-3">
@@ -143,7 +143,7 @@ function EditRow({
   onCancel: () => void;
   onSave: (vars: {
     id: string;
-    author: string;
+    uniqueId: string;
     communitySlug: string;
     title: string;
     body: string;
@@ -152,7 +152,7 @@ function EditRow({
 }) {
   const [title, setTitle] = useState(row.title);
   const [body, setBody] = useState(row.body);
-  const [author, setAuthor] = useState(row.author);
+  const [uniqueId, setUniqueId] = useState(row.unique_id);
   const [community, setCommunity] = useState(row.community_slug);
   return (
     <tr className="bg-surface/40">
@@ -170,9 +170,9 @@ function EditRow({
         />
         <div className="mt-2 flex gap-2">
           <input
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Author"
+            value={uniqueId}
+            onChange={(e) => setUniqueId(e.target.value)}
+            placeholder="Unique ID"
             className="w-48 rounded-lg border border-hairline bg-background px-3 py-1.5 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-foreground"
           />
           <select
@@ -192,7 +192,7 @@ function EditRow({
           <button
             disabled={pending}
             onClick={() =>
-              onSave({ id: row.id, author, communitySlug: community, title, body })
+              onSave({ id: row.id, uniqueId, communitySlug: community, title, body })
             }
             className="inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1 text-[12px] text-background disabled:opacity-50"
           >
