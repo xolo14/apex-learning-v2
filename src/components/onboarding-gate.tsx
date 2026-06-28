@@ -27,7 +27,9 @@ export function OnboardingGate() {
     gmail: "",
     year: "1st year",
     college: "",
-    role: "student" as "student" | "mentor",
+    role: "student" as "student" | "professional",
+    company: "",
+    experience: "0-1 years",
   });
 
   const fetchProfile = useServerFn(getProfileByDevice);
@@ -61,13 +63,11 @@ export function OnboardingGate() {
           <div className="w-full max-w-sm rounded-2xl bg-background p-6 shadow-xl">
             <h2 className="text-lg font-semibold">You're all set 🎉</h2>
             <p className="mt-1 text-sm text-muted-foreground">Welcome to Syncpedia, {issued.name}.</p>
-            {issued.role === "mentor" && issued.mentor_id && (
-              <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Your unique mentor ID</p>
-                <p className="mt-1 select-all font-mono text-xl font-semibold text-primary">{issued.mentor_id}</p>
-                <p className="mt-2 text-xs text-muted-foreground">Keep this safe — it's yours alone.</p>
-              </div>
-            )}
+            <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Your unique ID</p>
+              <p className="mt-1 select-all font-mono text-xl font-semibold text-primary">{issued.unique_id}</p>
+              <p className="mt-2 text-xs text-muted-foreground">Keep this safe — it's yours alone.</p>
+            </div>
             <button
               onClick={() => {
                 setProfile(issued);
@@ -162,7 +162,7 @@ export function OnboardingGate() {
                 className="input"
               >
                 <option value="student">Student</option>
-                <option value="mentor">Mentor</option>
+                <option value="professional">Working professional</option>
               </select>
             </Field>
           </div>
@@ -176,11 +176,36 @@ export function OnboardingGate() {
             />
           </Field>
 
-          {form.role === "mentor" && (
-            <p className="rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
-              We'll generate a unique mentor ID for you. It's tied to you only and can't be used by anyone else.
-            </p>
+          {form.role === "professional" && (
+            <>
+              <Field label="Company">
+                <input
+                  required
+                  value={form.company}
+                  onChange={(e) => update("company", e.target.value)}
+                  className="input"
+                  placeholder="e.g. Google"
+                />
+              </Field>
+              <Field label="Experience">
+                <select
+                  value={form.experience}
+                  onChange={(e) => update("experience", e.target.value)}
+                  className="input"
+                >
+                  <option>0-1 years</option>
+                  <option>1-3 years</option>
+                  <option>3-5 years</option>
+                  <option>5-10 years</option>
+                  <option>10+ years</option>
+                </select>
+              </Field>
+            </>
           )}
+
+          <p className="rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
+            A unique Syncpedia ID will be generated for you — it stays yours and can't be shared.
+          </p>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
