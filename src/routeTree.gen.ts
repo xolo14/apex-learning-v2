@@ -20,7 +20,10 @@ import { Route as PIdRouteImport } from './routes/p.$id'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminPostsRouteImport } from './routes/admin.posts'
+import { Route as AdminInternshipsRouteImport } from './routes/admin.internships'
 import { Route as AdminHotRouteImport } from './routes/admin.hot'
+import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
+import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -77,9 +80,24 @@ const AdminPostsRoute = AdminPostsRouteImport.update({
   path: '/posts',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInternshipsRoute = AdminInternshipsRouteImport.update({
+  id: '/internships',
+  path: '/internships',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminHotRoute = AdminHotRouteImport.update({
   id: '/hot',
   path: '/hot',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCoursesRoute = AdminCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCommunitiesRoute = AdminCommunitiesRouteImport.update({
+  id: '/communities',
+  path: '/communities',
   getParentRoute: () => AdminRoute,
 } as any)
 
@@ -90,7 +108,10 @@ export interface FileRoutesByFullPath {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/communities': typeof AdminCommunitiesRoute
+  '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
+  '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
@@ -103,7 +124,10 @@ export interface FileRoutesByTo {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/communities': typeof AdminCommunitiesRoute
+  '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
+  '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
@@ -118,7 +142,10 @@ export interface FileRoutesById {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/communities': typeof AdminCommunitiesRoute
+  '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
+  '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
@@ -134,7 +161,10 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/communities'
+    | '/admin/courses'
     | '/admin/hot'
+    | '/admin/internships'
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
@@ -147,7 +177,10 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/communities'
+    | '/admin/courses'
     | '/admin/hot'
+    | '/admin/internships'
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
@@ -161,7 +194,10 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/communities'
+    | '/admin/courses'
     | '/admin/hot'
+    | '/admin/internships'
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
@@ -259,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/internships': {
+      id: '/admin/internships'
+      path: '/internships'
+      fullPath: '/admin/internships'
+      preLoaderRoute: typeof AdminInternshipsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/hot': {
       id: '/admin/hot'
       path: '/hot'
@@ -266,18 +309,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHotRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/courses': {
+      id: '/admin/courses'
+      path: '/courses'
+      fullPath: '/admin/courses'
+      preLoaderRoute: typeof AdminCoursesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/communities': {
+      id: '/admin/communities'
+      path: '/communities'
+      fullPath: '/admin/communities'
+      preLoaderRoute: typeof AdminCommunitiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminCommunitiesRoute: typeof AdminCommunitiesRoute
+  AdminCoursesRoute: typeof AdminCoursesRoute
   AdminHotRoute: typeof AdminHotRoute
+  AdminInternshipsRoute: typeof AdminInternshipsRoute
   AdminPostsRoute: typeof AdminPostsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCommunitiesRoute: AdminCommunitiesRoute,
+  AdminCoursesRoute: AdminCoursesRoute,
   AdminHotRoute: AdminHotRoute,
+  AdminInternshipsRoute: AdminInternshipsRoute,
   AdminPostsRoute: AdminPostsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,

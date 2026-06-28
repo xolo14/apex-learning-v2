@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageSquare, Users, Flame, ExternalLink } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Users, Flame, ExternalLink, Layers, BookOpen, Briefcase } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -10,7 +10,10 @@ export const Route = createFileRoute("/admin")({
 const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/posts", label: "Posts & comments", icon: MessageSquare },
-  { to: "/admin/users", label: "Users & communities", icon: Users },
+  { to: "/admin/users", label: "Members", icon: Users },
+  { to: "/admin/communities", label: "Communities", icon: Layers },
+  { to: "/admin/courses", label: "Courses", icon: BookOpen },
+  { to: "/admin/internships", label: "Internships", icon: Briefcase },
   { to: "/admin/hot", label: "Hot feed curator", icon: Flame },
 ];
 
