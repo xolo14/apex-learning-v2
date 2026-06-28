@@ -7,12 +7,12 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const nav = [
+const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/posts", label: "Posts & comments", icon: MessageSquare },
   { to: "/admin/users", label: "Users & communities", icon: Users },
   { to: "/admin/hot", label: "Hot feed curator", icon: Flame },
-] as const;
+];
 
 function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
