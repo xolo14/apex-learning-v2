@@ -120,3 +120,44 @@ export const listProfiles = createServerFn({ method: "GET" }).handler(async () =
   `) as DbProfile[];
   return rows;
 });
+
+export const checkUniqueIdAvailable = createServerFn({ method: "POST" })
+  .inputValidator((d: { uniqueId: string; deviceKey: string }) => d)
+  .handler(async ({ data }) => {
+    if (!/^SP-26[A-Z0-9]{6}$/.test(data.uniqueId)) {
+      return { available: false, reason: "format" as const };
+    }
+    const { sql } = await import("./db.server");
+    const rows = (await sql()`
+      SELECT device_key FROM profiles WHERE unique_id = ${data.uniqueId} LIMIT 1
+    `) as { device_key: string }[];
+    if (rows.length === 0) return { available: true, reason: null };
+    if (rows[0].device_key === data.deviceKey)
+      return { available: true, reason: "self" as const };
+    return { available: false, reason: "taken" as const };
+  });
+
+export const updateUniqueId = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string; uniqueId: string }) => {
+    if (!d.deviceKey) throw new Error("Device key required");
+    if (!/^SP-26[A-Z0-9]{6}$/.test(d.uniqueId))
+      throw new Error("ID must be SP-26 followed by 6 letters or digits");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const existing = (await sql()`
+      SELECT device_key FROM profiles WHERE unique_id = ${data.uniqueId} LIMIT 1
+    `) as { device_key: string }[];
+    if (existing[0] && existing[0].device_key !== data.deviceKey) {
+      throw new Error("This ID is already used. Try a different one.");
+    }
+    await sql()`
+      UPDATE profiles SET unique_id = ${data.uniqueId} WHERE device_key = ${data.deviceKey}
+    `;
+    const rows = (await sql()`
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
+      FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as DbProfile[];
+    return rows[0]!;
+  });

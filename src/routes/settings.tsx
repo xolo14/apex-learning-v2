@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Bell, Lock, Eye, HelpCircle, LogOut, Palette, Globe, RefreshCw, Copy, Check } from "lucide-react";
+import { ChevronLeft, Bell, Lock, Eye, HelpCircle, LogOut, Palette, Globe, Copy, Check, Loader2 } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { useDensity } from "@/lib/density";
-import { useIdentity, IdentityAvatar, AVATAR_COLORS, AVATAR_ICONS } from "@/lib/identity";
-import { useState } from "react";
+import { useIdentity, IdentityAvatar, AVATAR_COLORS, AVATAR_STYLES } from "@/lib/identity";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { checkUniqueIdAvailable, updateUniqueId } from "@/lib/profiles.functions";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Syncpedia" }] }),
@@ -14,7 +16,78 @@ function SettingsPage() {
   const { density, setDensity } = useDensity();
   const identity = useIdentity();
   const [copied, setCopied] = useState(false);
-  const displayId = identity.uniqueId ?? "SP-XXXXXX";
+  const displayId = identity.uniqueId ?? "SP-26______";
+
+  const check = useServerFn(checkUniqueIdAvailable);
+  const save = useServerFn(updateUniqueId);
+  const [suffix, setSuffix] = useState(() =>
+    identity.uniqueId?.startsWith("SP-26") ? identity.uniqueId.slice(5) : "",
+  );
+  const [status, setStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid" | "saving" | "saved" | "error"
+  >("idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Live availability check (debounced)
+  useEffect(() => {
+    if (suffix.length === 0) {
+      setStatus("idle");
+      setErrorMsg(null);
+      return;
+    }
+    if (!/^[A-Z0-9]{6}$/.test(suffix)) {
+      setStatus("invalid");
+      setErrorMsg("6 letters or digits (A–Z, 0–9)");
+      return;
+    }
+    setStatus("checking");
+    setErrorMsg(null);
+    const deviceKey = localStorage.getItem("syncpedia_device_key") ?? "";
+    const candidate = `SP-26${suffix}`;
+    const handle = setTimeout(async () => {
+      try {
+        const res = await check({ data: { uniqueId: candidate, deviceKey } });
+        if (res.available) setStatus("available");
+        else {
+          setStatus("taken");
+          setErrorMsg("This ID is already used");
+        }
+      } catch {
+        setStatus("error");
+        setErrorMsg("Could not check, try again");
+      }
+    }, 350);
+    return () => clearTimeout(handle);
+  }, [suffix, check]);
+
+  async function saveId() {
+    const deviceKey = localStorage.getItem("syncpedia_device_key") ?? "";
+    if (!deviceKey) {
+      setStatus("error");
+      setErrorMsg("No device — reload the page");
+      return;
+    }
+    const candidate = `SP-26${suffix}`;
+    setStatus("saving");
+    try {
+      await save({ data: { deviceKey, uniqueId: candidate } });
+      identity.setUniqueId(candidate);
+      // refresh profile cache so onboarding gate stays in sync
+      try {
+        const raw = localStorage.getItem("syncpedia_profile");
+        if (raw) {
+          const p = JSON.parse(raw);
+          p.unique_id = candidate;
+          localStorage.setItem("syncpedia_profile", JSON.stringify(p));
+        }
+      } catch {}
+      setStatus("saved");
+      setTimeout(() => setStatus("available"), 1500);
+    } catch (err) {
+      setStatus("taken");
+      setErrorMsg(err instanceof Error ? err.message : "Could not save");
+    }
+  }
 
   function copyId() {
     if (!identity.uniqueId) return;
@@ -56,38 +129,78 @@ function SettingsPage() {
                   {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
                   {copied ? "Copied" : "Copy"}
                 </button>
-                <button
-                  onClick={() => identity.regenerateId()}
-                  className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[11px] text-foreground active:scale-95"
-                >
-                  <RefreshCw className="h-3 w-3" /> Regenerate
-                </button>
               </div>
             </div>
           </div>
 
           <div className="mt-5">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Edit your ID</div>
+            <div className="mt-2 flex items-stretch overflow-hidden rounded-xl border border-hairline bg-background focus-within:border-foreground">
+              <span className="grid place-items-center bg-surface px-3 font-mono text-[14px] font-semibold text-foreground">
+                SP-26
+              </span>
+              <input
+                value={suffix}
+                onChange={(e) =>
+                  setSuffix(
+                    e.target.value
+                      .toUpperCase()
+                      .replace(/[^A-Z0-9]/g, "")
+                      .slice(0, 6),
+                  )
+                }
+                maxLength={6}
+                placeholder="______"
+                className="flex-1 bg-transparent px-3 py-2 font-mono text-[14px] tracking-[0.18em] text-foreground outline-none placeholder:text-ink-muted/60"
+              />
+              <button
+                onClick={saveId}
+                disabled={status !== "available" || `SP-26${suffix}` === identity.uniqueId}
+                className="bg-foreground px-4 text-[12px] font-medium text-background disabled:opacity-40"
+              >
+                {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : "Save"}
+              </button>
+            </div>
+            <div className="mt-1.5 flex items-center gap-1.5 text-[12px] min-h-[18px]">
+              {status === "checking" && (
+                <span className="inline-flex items-center gap-1 text-ink-muted">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Checking…
+                </span>
+              )}
+              {status === "available" && suffix.length === 6 && (
+                <span className="inline-flex items-center gap-1 text-success">
+                  <Check className="h-3 w-3" /> Available
+                </span>
+              )}
+              {status === "saved" && (
+                <span className="inline-flex items-center gap-1 text-success">
+                  <Check className="h-3 w-3" /> Saved
+                </span>
+              )}
+              {(status === "taken" || status === "invalid" || status === "error") && errorMsg && (
+                <span className="text-orange">{errorMsg}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-5">
             <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Avatar icon</div>
-            <div className="mt-2 grid grid-cols-8 gap-2">
-              {AVATAR_ICONS.map((ic) => {
-                const active = identity.icon === ic;
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {AVATAR_STYLES.map((s) => {
+                const active = identity.icon === s.id;
                 return (
                   <button
-                    key={ic}
-                    onClick={() => identity.setIcon(ic)}
-                    aria-label={`Set avatar ${ic}`}
+                    key={s.id}
+                    onClick={() => identity.setIcon(s.id)}
+                    aria-label={`Set avatar ${s.id}`}
                     className={
-                      "grid aspect-square place-items-center rounded-xl border text-[16px] transition " +
+                      "rounded-2xl border p-1.5 transition " +
                       (active
                         ? "border-foreground bg-foreground/5"
                         : "border-hairline bg-background active:scale-95")
                     }
                   >
-                    {ic === "snoo" ? (
-                      <IdentityAvatar color={identity.color} icon="snoo" className="h-6 w-6" />
-                    ) : (
-                      <span>{ic}</span>
-                    )}
+                    <IdentityAvatar color={identity.color} icon={s.id} className="h-14 w-14" />
                   </button>
                 );
               })}
