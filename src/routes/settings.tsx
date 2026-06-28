@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, Bell, Lock, Eye, HelpCircle, LogOut, Palette, Globe, Copy, Check, Loader2 } from "lucide-react";
+import { ChevronLeft, Bell, Lock, Eye, HelpCircle, LogOut, Palette, Globe, Copy, Check, Loader2, Pencil, X } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { useDensity } from "@/lib/density";
 import { useIdentity, IdentityAvatar, AVATAR_COLORS, AVATAR_STYLES } from "@/lib/identity";
@@ -16,7 +16,8 @@ function SettingsPage() {
   const { density, setDensity } = useDensity();
   const identity = useIdentity();
   const [copied, setCopied] = useState(false);
-  const displayId = identity.uniqueId ?? "SP-26______";
+  const displayId = identity.uniqueId ?? "SP-26 — ——";
+  const [editing, setEditing] = useState(false);
 
   const check = useServerFn(checkUniqueIdAvailable);
   const save = useServerFn(updateUniqueId);
@@ -112,80 +113,100 @@ function SettingsPage() {
         }
       />
       <section className="px-5 pt-5">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Identity</p>
-        <div className="mt-3 rounded-2xl border border-hairline p-4">
-          <div className="flex items-center gap-4">
-            <IdentityAvatar color={identity.color} icon={identity.icon} className="h-16 w-16 text-[28px]" />
-            <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Syncpedia ID</div>
-              <div className="mt-0.5 font-mono text-[18px] font-semibold tracking-tight text-foreground">
-                {displayId}
-              </div>
-              <div className="mt-2 flex gap-1.5">
-                <button
-                  onClick={copyId}
-                  className="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[11px] text-foreground active:scale-95"
-                >
-                  {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  {copied ? "Copied" : "Copy"}
-                </button>
-              </div>
+        {/* Identity card — compact */}
+        <div className="rounded-2xl border border-hairline p-4">
+          <div className="flex items-center gap-3">
+            <IdentityAvatar color={identity.color} icon={identity.icon} className="h-14 w-14" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">Syncpedia ID</div>
+              {!editing ? (
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <span className="truncate font-mono text-[16px] font-semibold tracking-tight text-foreground">
+                    {displayId}
+                  </span>
+                  <button
+                    onClick={() => setEditing(true)}
+                    aria-label="Edit ID"
+                    className="grid h-6 w-6 place-items-center rounded-full bg-surface text-ink-muted active:scale-90 hover:text-foreground"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={copyId}
+                    aria-label="Copy ID"
+                    className="grid h-6 w-6 place-items-center rounded-full bg-surface text-ink-muted active:scale-90 hover:text-foreground"
+                  >
+                    {copied ? <Check className="h-3 w-3 text-success" /> : <Copy className="h-3 w-3" />}
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-1">
+                  <div className="flex items-stretch overflow-hidden rounded-lg border border-hairline bg-background focus-within:border-foreground">
+                    <span className="grid place-items-center bg-surface px-2 font-mono text-[13px] font-semibold">
+                      SP-26
+                    </span>
+                    <input
+                      autoFocus
+                      value={suffix}
+                      onChange={(e) =>
+                        setSuffix(
+                          e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6),
+                        )
+                      }
+                      maxLength={6}
+                      placeholder="ABC123"
+                      className="w-24 bg-transparent px-2 py-1.5 font-mono text-[13px] tracking-[0.16em] outline-none placeholder:text-ink-muted/50"
+                    />
+                    <button
+                      onClick={async () => {
+                        await saveId();
+                        if (status !== "taken" && status !== "invalid") setEditing(false);
+                      }}
+                      disabled={status !== "available" || `SP-26${suffix}` === identity.uniqueId}
+                      className="bg-foreground px-3 text-[11px] font-medium text-background disabled:opacity-40"
+                    >
+                      {status === "saving" ? "…" : "Save"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditing(false);
+                        setSuffix(
+                          identity.uniqueId?.startsWith("SP-26")
+                            ? identity.uniqueId.slice(5)
+                            : "",
+                        );
+                        setStatus("idle");
+                        setErrorMsg(null);
+                      }}
+                      aria-label="Cancel"
+                      className="grid w-8 place-items-center bg-surface text-ink-muted"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="mt-1 flex min-h-[16px] items-center gap-1 text-[11px]">
+                    {status === "checking" && (
+                      <span className="inline-flex items-center gap-1 text-ink-muted">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Checking…
+                      </span>
+                    )}
+                    {status === "available" && suffix.length === 6 && (
+                      <span className="inline-flex items-center gap-1 text-success">
+                        <Check className="h-3 w-3" /> Available
+                      </span>
+                    )}
+                    {(status === "taken" || status === "invalid" || status === "error") && errorMsg && (
+                      <span className="text-orange">{errorMsg}</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="mt-5">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Edit your ID</div>
-            <div className="mt-2 flex items-stretch overflow-hidden rounded-xl border border-hairline bg-background focus-within:border-foreground">
-              <span className="grid place-items-center bg-surface px-3 font-mono text-[14px] font-semibold text-foreground">
-                SP-26
-              </span>
-              <input
-                value={suffix}
-                onChange={(e) =>
-                  setSuffix(
-                    e.target.value
-                      .toUpperCase()
-                      .replace(/[^A-Z0-9]/g, "")
-                      .slice(0, 6),
-                  )
-                }
-                maxLength={6}
-                placeholder="______"
-                className="flex-1 bg-transparent px-3 py-2 font-mono text-[14px] tracking-[0.18em] text-foreground outline-none placeholder:text-ink-muted/60"
-              />
-              <button
-                onClick={saveId}
-                disabled={status !== "available" || `SP-26${suffix}` === identity.uniqueId}
-                className="bg-foreground px-4 text-[12px] font-medium text-background disabled:opacity-40"
-              >
-                {status === "saving" ? "Saving…" : status === "saved" ? "Saved" : "Save"}
-              </button>
-            </div>
-            <div className="mt-1.5 flex items-center gap-1.5 text-[12px] min-h-[18px]">
-              {status === "checking" && (
-                <span className="inline-flex items-center gap-1 text-ink-muted">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Checking…
-                </span>
-              )}
-              {status === "available" && suffix.length === 6 && (
-                <span className="inline-flex items-center gap-1 text-success">
-                  <Check className="h-3 w-3" /> Available
-                </span>
-              )}
-              {status === "saved" && (
-                <span className="inline-flex items-center gap-1 text-success">
-                  <Check className="h-3 w-3" /> Saved
-                </span>
-              )}
-              {(status === "taken" || status === "invalid" || status === "error") && errorMsg && (
-                <span className="text-orange">{errorMsg}</span>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Avatar icon</div>
-            <div className="mt-2 grid grid-cols-4 gap-2">
+          {/* Avatar styles — horizontal scroll, denser */}
+          <div className="mt-4 -mx-4 overflow-x-auto px-4 pb-1">
+            <div className="flex gap-2">
               {AVATAR_STYLES.map((s) => {
                 const active = identity.icon === s.id;
                 return (
@@ -194,43 +215,40 @@ function SettingsPage() {
                     onClick={() => identity.setIcon(s.id)}
                     aria-label={`Set avatar ${s.id}`}
                     className={
-                      "rounded-2xl border p-1.5 transition " +
+                      "shrink-0 rounded-xl border p-1 transition " +
                       (active
                         ? "border-foreground bg-foreground/5"
                         : "border-hairline bg-background active:scale-95")
                     }
                   >
-                    <IdentityAvatar color={identity.color} icon={s.id} className="h-14 w-14" />
+                    <IdentityAvatar color={identity.color} icon={s.id} className="h-12 w-12" />
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="mt-5">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Background color</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {AVATAR_COLORS.map((c) => {
-                const active = identity.color === c;
-                return (
-                  <button
-                    key={c}
-                    onClick={() => identity.setColor(c)}
-                    aria-label={`Set color ${c}`}
-                    style={{ backgroundColor: c }}
-                    className={
-                      "h-8 w-8 rounded-full transition active:scale-90 " +
-                      (active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "")
-                    }
-                  />
-                );
-              })}
-            </div>
+          {/* Color row */}
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {AVATAR_COLORS.map((c) => {
+              const active = identity.color === c;
+              return (
+                <button
+                  key={c}
+                  onClick={() => identity.setColor(c)}
+                  aria-label={`Set color ${c}`}
+                  style={{ backgroundColor: c }}
+                  className={
+                    "h-6 w-6 rounded-full transition active:scale-90 " +
+                    (active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "")
+                  }
+                />
+              );
+            })}
           </div>
         </div>
 
-        <p className="mt-7 text-[11px] uppercase tracking-[0.18em] text-ink-muted">Display</p>
-        <div className="mt-3 overflow-hidden rounded-2xl border border-hairline">
+        <div className="mt-4 overflow-hidden rounded-2xl border border-hairline">
           <Row icon={Palette} label="Feed density">
             <div className="flex rounded-full bg-surface p-0.5 text-[12px]">
               {(["airy", "compact"] as const).map((d) => (
@@ -247,23 +265,15 @@ function SettingsPage() {
               ))}
             </div>
           </Row>
-        </div>
-
-        <p className="mt-7 text-[11px] uppercase tracking-[0.18em] text-ink-muted">Account</p>
-        <div className="mt-3 overflow-hidden rounded-2xl border border-hairline">
           <Row icon={Bell} label="Notifications" hint="Push, email, mentions" />
           <Row icon={Lock} label="Privacy" hint="Who can DM and tag you" />
           <Row icon={Eye} label="Blocked accounts" hint="Manage your block list" />
           <Row icon={Globe} label="Language" hint="English (US)" />
-        </div>
-
-        <p className="mt-7 text-[11px] uppercase tracking-[0.18em] text-ink-muted">Support</p>
-        <div className="mt-3 overflow-hidden rounded-2xl border border-hairline">
           <Row icon={HelpCircle} label="Help center" hint="Guides and FAQs" />
           <Row icon={LogOut} label="Sign out" hint="End this session" danger />
         </div>
 
-        <p className="mt-8 pb-10 text-center text-[11px] text-ink-muted">Syncpedia · v0.1</p>
+        <p className="mt-6 pb-8 text-center text-[11px] text-ink-muted">Syncpedia · v0.1</p>
       </section>
     </MobileShell>
   );
