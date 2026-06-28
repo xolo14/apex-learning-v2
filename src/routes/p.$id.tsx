@@ -167,12 +167,12 @@ function PostPage() {
 
       <div className="px-5 pb-6 pt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[14px] font-medium text-foreground">{post.comments} replies</h2>
-          <button className="text-[12px] text-ink-muted">Best ▾</button>
+          <h2 className="text-[14px] font-medium text-foreground">{post.comments} messages</h2>
+          <button className="text-[12px] text-ink-muted">Newest ▾</button>
         </div>
-        <ul className="mt-3 space-y-5">
-          {replies.map((r, i) => (
-            <ReplyNode key={i} reply={r} />
+        <ul className="mt-4 space-y-4">
+          {flattenReplies(replies).map((r, i) => (
+            <ChatBubble key={i} reply={r} />
           ))}
         </ul>
       </div>
@@ -197,53 +197,34 @@ function PostPage() {
   );
 }
 
-function ReplyNode({ reply }: { reply: Reply }) {
+function flattenReplies(list: Reply[]): Reply[] {
+  const out: Reply[] = [];
+  for (const r of list) {
+    out.push(r);
+    if (r.children?.length) out.push(...flattenReplies(r.children));
+  }
+  return out;
+}
+
+function ChatBubble({ reply }: { reply: Reply }) {
   return (
     <li>
-      <div className="flex items-start gap-3">
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
+      <div className="flex items-end gap-2">
+        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
           {reply.initials}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-ink-muted">
+        <div className="min-w-0 max-w-[80%]">
+          <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-ink-muted">
             <span className="font-medium text-foreground">{reply.author}</span>
             {reply.mentor ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-1.5 py-0.5 text-[10px] font-medium text-forest">
-                <BadgeCheck strokeWidth={2.25} className="h-3 w-3" />
-                Mentor
-              </span>
+              <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" />
             ) : null}
-            <span>·</span>
-            <span>{reply.role}</span>
             <span>·</span>
             <span>{reply.time}</span>
           </div>
-          <p
-            className={
-              "mt-1.5 text-[14px] leading-[1.55] " +
-              (reply.mentor
-                ? "rounded-[14px] border border-forest/15 bg-forest/[0.04] p-3 text-foreground"
-                : "text-foreground")
-            }
-          >
+          <div className="rounded-[18px] rounded-bl-[6px] bg-surface px-3.5 py-2.5 text-[14px] leading-[1.5] text-foreground">
             {reply.body}
-          </p>
-          <div className="mt-2 flex items-center gap-3 text-[12px] text-ink-muted">
-            <button className="inline-flex items-center gap-1">
-              <ArrowBigUp strokeWidth={1.75} className="h-[14px] w-[14px]" />
-              {reply.votes}
-            </button>
-            <button>Reply</button>
-            <button>Share</button>
           </div>
-
-          {reply.children?.length ? (
-            <ul className="mt-4 space-y-4 border-l border-hairline pl-4">
-              {reply.children.map((c, i) => (
-                <ReplyNode key={i} reply={c} />
-              ))}
-            </ul>
-          ) : null}
         </div>
       </div>
     </li>
