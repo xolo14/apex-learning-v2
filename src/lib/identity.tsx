@@ -15,26 +15,35 @@ export const AVATAR_COLORS = [
   "#dc2626",
 ];
 
-export const AVATAR_ICONS = [
-  "snoo",
-  "🦊",
-  "🐱",
-  "🐼",
-  "🐧",
-  "🐙",
-  "🦄",
-  "🐝",
-  "🌶️",
-  "🍀",
-  "⚡",
-  "🚀",
-  "🎧",
-  "🧠",
-  "👾",
-  "🪐",
+/**
+ * Polished avatar set powered by DiceBear (open-source, MIT).
+ * Each entry resolves to a crisp SVG illustration.
+ */
+export const AVATAR_STYLES = [
+  { id: "bot-1",    style: "bottts-neutral", seed: "Orion" },
+  { id: "bot-2",    style: "bottts-neutral", seed: "Nova" },
+  { id: "bot-3",    style: "bottts-neutral", seed: "Atlas" },
+  { id: "fun-1",    style: "fun-emoji",       seed: "Ember" },
+  { id: "fun-2",    style: "fun-emoji",       seed: "Mango" },
+  { id: "fun-3",    style: "fun-emoji",       seed: "Pixel" },
+  { id: "lor-1",    style: "lorelei",         seed: "Mira" },
+  { id: "lor-2",    style: "lorelei",         seed: "Kenji" },
+  { id: "lor-3",    style: "lorelei",         seed: "Aria" },
+  { id: "not-1",    style: "notionists",      seed: "Sam" },
+  { id: "not-2",    style: "notionists",      seed: "Hana" },
+  { id: "not-3",    style: "notionists",      seed: "Theo" },
+  { id: "shape-1",  style: "shapes",          seed: "Helix" },
+  { id: "shape-2",  style: "shapes",          seed: "Drift" },
+  { id: "shape-3",  style: "shapes",          seed: "Cobalt" },
+  { id: "ring-1",   style: "rings",           seed: "Solar" },
 ] as const;
 
-export type AvatarIcon = (typeof AVATAR_ICONS)[number];
+export type AvatarIcon = (typeof AVATAR_STYLES)[number]["id"];
+
+export function avatarUrl(icon: AvatarIcon) {
+  const entry = AVATAR_STYLES.find((a) => a.id === icon) ?? AVATAR_STYLES[0];
+  return `https://api.dicebear.com/9.x/${entry.style}/svg?seed=${encodeURIComponent(entry.seed)}&radius=50&backgroundType=solid&backgroundColor=transparent`;
+}
 
 export type Identity = {
   color: string;
@@ -62,7 +71,7 @@ function genId() {
 export function IdentityProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<Identity>({
     color: AVATAR_COLORS[0],
-    icon: "snoo",
+    icon: "bot-1",
     uniqueId: null,
   });
 
@@ -104,7 +113,7 @@ export function useIdentity(): Ctx {
   if (!ctx) {
     return {
       color: AVATAR_COLORS[0],
-      icon: "snoo",
+      icon: "bot-1",
       uniqueId: null,
       setColor: () => {},
       setIcon: () => {},
@@ -113,21 +122,6 @@ export function useIdentity(): Ctx {
     };
   }
   return ctx;
-}
-
-export function SnooAvatar({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 40 40" className={className} aria-hidden>
-      <line x1="20" y1="6" x2="20" y2="13" stroke="rgba(0,0,0,0.55)" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="20" cy="5.5" r="1.8" fill="rgba(0,0,0,0.55)" />
-      <circle cx="20" cy="22" r="9" fill="rgba(0,0,0,0.55)" />
-      <circle cx="11.5" cy="20" r="2.2" fill="rgba(0,0,0,0.55)" />
-      <circle cx="28.5" cy="20" r="2.2" fill="rgba(0,0,0,0.55)" />
-      <circle cx="17" cy="21" r="1.3" fill="#fff" />
-      <circle cx="23" cy="21" r="1.3" fill="#fff" />
-      <path d="M11 30 Q20 36 29 30 L29 34 Q20 39 11 34 Z" fill="rgba(0,0,0,0.55)" />
-    </svg>
-  );
 }
 
 export function IdentityAvatar({
@@ -144,11 +138,12 @@ export function IdentityAvatar({
       className={"grid place-items-center overflow-hidden rounded-full " + (className ?? "")}
       style={{ backgroundColor: color }}
     >
-      {icon === "snoo" ? (
-        <SnooAvatar className="h-full w-full" />
-      ) : (
-        <span className="text-[55%] leading-none">{icon}</span>
-      )}
+      <img
+        src={avatarUrl(icon)}
+        alt=""
+        className="h-[85%] w-[85%] object-contain"
+        draggable={false}
+      />
     </span>
   );
 }
