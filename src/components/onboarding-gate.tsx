@@ -155,7 +155,6 @@ export function OnboardingGate() {
                 value={form.name}
                 onChange={(e) => update("name", e.target.value)}
                 className="input"
-                placeholder="Jane Doe"
               />
             </Field>
             <Field label="Email">
@@ -165,7 +164,6 @@ export function OnboardingGate() {
                 value={form.gmail}
                 onChange={(e) => update("gmail", e.target.value)}
                 className="input"
-                placeholder="you@gmail.com"
               />
             </Field>
             {error && <p className="text-sm text-destructive">{error}</p>}
@@ -180,7 +178,6 @@ export function OnboardingGate() {
                 value={form.mobile}
                 onChange={(e) => update("mobile", e.target.value)}
                 className="input"
-                placeholder="9876543210"
               />
             </Field>
             <Field label="I am a">
@@ -213,9 +210,8 @@ export function OnboardingGate() {
                     required
                     value={form.college}
                     onChange={(e) => update("college", e.target.value)}
-                    className="input"
-                    placeholder="Your college"
-                  />
+                className="input"
+              />
                 </Field>
               </div>
             ) : (
@@ -224,9 +220,8 @@ export function OnboardingGate() {
                   required
                   value={form.company}
                   onChange={(e) => update("company", e.target.value)}
-                  className="input"
-                  placeholder="e.g. Google"
-                />
+                className="input"
+              />
               </Field>
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
