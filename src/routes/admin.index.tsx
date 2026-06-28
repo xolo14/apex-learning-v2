@@ -12,8 +12,18 @@ function AdminOverview() {
   const stats = useServerFn(adminStats);
   const recent = useServerFn(listNewQuestions);
 
-  const statsQ = useQuery({ queryKey: ["admin", "stats"], queryFn: () => stats() });
-  const recentQ = useQuery({ queryKey: ["admin", "recent"], queryFn: () => recent() });
+  const statsQ = useQuery({
+    queryKey: ["admin", "stats"],
+    queryFn: () => stats(),
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
+  const recentQ = useQuery({
+    queryKey: ["admin", "recent"],
+    queryFn: () => recent(),
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <div>
