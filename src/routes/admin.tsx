@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, MessageSquare, Users, Flame, ExternalLink, Layers, BookOpen, Briefcase } from "lucide-react";
+import syncpediaLogo from "@/assets/syncpedia-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/admin")({
 const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/posts", label: "Posts & comments", icon: MessageSquare },
-  { to: "/admin/users", label: "Members", icon: Users },
+  { to: "/admin/users", label: "Members directory", icon: Users },
   { to: "/admin/communities", label: "Communities", icon: Layers },
   { to: "/admin/courses", label: "Courses", icon: BookOpen },
   { to: "/admin/internships", label: "Internships", icon: Briefcase },
@@ -24,9 +25,11 @@ function AdminLayout() {
       <div className="mx-auto flex max-w-[1400px]">
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-1 border-r border-hairline px-3 py-6 md:flex">
           <div className="flex items-center gap-2 px-3 pb-5">
-            <div className="grid h-8 w-8 place-items-center rounded-[10px] bg-foreground text-background">
-              <span className="text-[13px] font-semibold tracking-tight">S</span>
-            </div>
+            <img
+              src={syncpediaLogo.url}
+              alt="Syncpedia"
+              className="h-9 w-9 rounded-[10px] object-cover ring-1 ring-hairline"
+            />
             <div className="flex flex-col leading-tight">
               <span className="text-[14px] font-semibold tracking-tight">Syncpedia</span>
               <span className="text-[11px] text-ink-muted">Admin console</span>
