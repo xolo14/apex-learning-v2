@@ -20,6 +20,7 @@ import { Route as PIdRouteImport } from './routes/p.$id'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminPostsRouteImport } from './routes/admin.posts'
+import { Route as AdminHotRouteImport } from './routes/admin.hot'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -76,6 +77,11 @@ const AdminPostsRoute = AdminPostsRouteImport.update({
   path: '/posts',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminHotRoute = AdminHotRouteImport.update({
+  id: '/hot',
+  path: '/hot',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -84,6 +90,7 @@ export interface FileRoutesByFullPath {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/hot': typeof AdminHotRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/hot': typeof AdminHotRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/hot': typeof AdminHotRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/hot'
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/hot'
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/hot'
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
@@ -247,16 +259,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPostsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/hot': {
+      id: '/admin/hot'
+      path: '/hot'
+      fullPath: '/admin/hot'
+      preLoaderRoute: typeof AdminHotRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminHotRoute: typeof AdminHotRoute
   AdminPostsRoute: typeof AdminPostsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminHotRoute: AdminHotRoute,
   AdminPostsRoute: AdminPostsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,

@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, DensityToggle } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
 import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
+import { listHot, type HotItem } from "@/lib/hot.functions";
+import { listNewQuestions, type DbQuestion } from "@/lib/questions.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,6 +34,20 @@ function Home() {
   const { density } = useDensity();
   const compact = density === "compact";
   const feed = balancedFeed(posts);
+  const fHot = useServerFn(listHot);
+  const fNew = useServerFn(listNewQuestions);
+  const hotQ = useQuery({
+    queryKey: ["feed", "hot"],
+    queryFn: () => fHot(),
+    enabled: sort === "hot",
+    staleTime: 60_000,
+  });
+  const newQ = useQuery({
+    queryKey: ["feed", "new"],
+    queryFn: () => fNew(),
+    enabled: sort === "new",
+    staleTime: 15_000,
+  });
   return (
     <MobileShell>
       {/* Status bar–style chrome */}
