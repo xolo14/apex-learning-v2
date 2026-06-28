@@ -12,6 +12,8 @@ export type DbProfile = {
   unique_id: string;
   company: string | null;
   experience: string | null;
+  branch: string | null;
+  department: string | null;
   created_at: string;
 };
 
@@ -30,7 +32,7 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     return rows[0] ?? null;
@@ -46,6 +48,8 @@ export const createProfile = createServerFn({ method: "POST" })
     college?: string;
     role: "student" | "professional";
     company?: string;
+    branch?: string;
+    department?: string;
   }) => {
     if (!d.deviceKey) throw new Error("Device key required");
     if (!d.name?.trim()) throw new Error("Name required");
@@ -65,7 +69,7 @@ export const createProfile = createServerFn({ method: "POST" })
 
     // If already onboarded on this device, return existing profile
     const existing = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     if (existing[0]) return existing[0];
@@ -88,9 +92,11 @@ export const createProfile = createServerFn({ method: "POST" })
     const experience = null;
     const year = isPro ? null : data.year!.trim().slice(0, 20);
     const college = isPro ? null : data.college!.trim().slice(0, 120);
+    const branch = isPro ? null : (data.branch?.trim().slice(0, 40) || null);
+    const department = isPro ? null : (data.department?.trim().slice(0, 80) || null);
 
     await sql()`
-      INSERT INTO profiles (id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience)
+      INSERT INTO profiles (id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department)
       VALUES (
         ${id}, ${data.deviceKey},
         ${data.name.trim().slice(0, 80)},
@@ -101,12 +107,14 @@ export const createProfile = createServerFn({ method: "POST" })
         ${data.role},
         ${uniqueId},
         ${company},
-        ${experience}
+        ${experience},
+        ${branch},
+        ${department}
       )
     `;
 
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
       FROM profiles WHERE id = ${id} LIMIT 1
     `) as DbProfile[];
     return rows[0]!;
@@ -115,7 +123,7 @@ export const createProfile = createServerFn({ method: "POST" })
 export const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
   const { sql } = await import("./db.server");
   const rows = (await sql()`
-    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
+    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
     FROM profiles ORDER BY created_at DESC
   `) as DbProfile[];
   return rows;
@@ -156,7 +164,7 @@ export const updateUniqueId = createServerFn({ method: "POST" })
       UPDATE profiles SET unique_id = ${data.uniqueId} WHERE device_key = ${data.deviceKey}
     `;
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     return rows[0]!;
