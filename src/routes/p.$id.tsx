@@ -7,10 +7,6 @@ import {
   Share2,
   Bookmark,
   BadgeCheck,
-  Image as ImageIcon,
-  Mic,
-  Code2,
-  FileText,
 } from "lucide-react";
 import { MobileShell } from "@/components/mobile-shell";
 import { communityBySlug, posts } from "@/lib/feed-data";
