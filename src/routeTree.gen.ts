@@ -9,38 +9,148 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as CoursesRouteImport } from './routes/courses'
+import { Route as CommunitiesRouteImport } from './routes/communities'
+import { Route as AskRouteImport } from './routes/ask'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PIdRouteImport } from './routes/p.$id'
+import { Route as CSlugRouteImport } from './routes/c.$slug'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesRoute = CoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunitiesRoute = CommunitiesRouteImport.update({
+  id: '/communities',
+  path: '/communities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AskRoute = AskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PIdRoute = PIdRouteImport.update({
+  id: '/p/$id',
+  path: '/p/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CSlugRoute = CSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ask': typeof AskRoute
+  '/communities': typeof CommunitiesRoute
+  '/courses': typeof CoursesRoute
+  '/profile': typeof ProfileRoute
+  '/c/$slug': typeof CSlugRoute
+  '/p/$id': typeof PIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ask': typeof AskRoute
+  '/communities': typeof CommunitiesRoute
+  '/courses': typeof CoursesRoute
+  '/profile': typeof ProfileRoute
+  '/c/$slug': typeof CSlugRoute
+  '/p/$id': typeof PIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/ask': typeof AskRoute
+  '/communities': typeof CommunitiesRoute
+  '/courses': typeof CoursesRoute
+  '/profile': typeof ProfileRoute
+  '/c/$slug': typeof CSlugRoute
+  '/p/$id': typeof PIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/ask'
+    | '/communities'
+    | '/courses'
+    | '/profile'
+    | '/c/$slug'
+    | '/p/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/ask'
+    | '/communities'
+    | '/courses'
+    | '/profile'
+    | '/c/$slug'
+    | '/p/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/ask'
+    | '/communities'
+    | '/courses'
+    | '/profile'
+    | '/c/$slug'
+    | '/p/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AskRoute: typeof AskRoute
+  CommunitiesRoute: typeof CommunitiesRoute
+  CoursesRoute: typeof CoursesRoute
+  ProfileRoute: typeof ProfileRoute
+  CSlugRoute: typeof CSlugRoute
+  PIdRoute: typeof PIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/courses': {
+      id: '/courses'
+      path: '/courses'
+      fullPath: '/courses'
+      preLoaderRoute: typeof CoursesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/communities': {
+      id: '/communities'
+      path: '/communities'
+      fullPath: '/communities'
+      preLoaderRoute: typeof CommunitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ask': {
+      id: '/ask'
+      path: '/ask'
+      fullPath: '/ask'
+      preLoaderRoute: typeof AskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +158,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$id': {
+      id: '/p/$id'
+      path: '/p/$id'
+      fullPath: '/p/$id'
+      preLoaderRoute: typeof PIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$slug': {
+      id: '/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/c/$slug'
+      preLoaderRoute: typeof CSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AskRoute: AskRoute,
+  CommunitiesRoute: CommunitiesRoute,
+  CoursesRoute: CoursesRoute,
+  ProfileRoute: ProfileRoute,
+  CSlugRoute: CSlugRoute,
+  PIdRoute: PIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
