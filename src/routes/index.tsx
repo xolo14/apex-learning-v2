@@ -289,9 +289,9 @@ function NewFeed({
         >
           <div className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-[11px] font-medium text-white">
-              {q.initials}
+              ID
             </span>
-            <span className="text-[12px] text-foreground">{q.author}</span>
+            <span className="text-[12px] text-foreground">{q.unique_id}</span>
             <span className="text-[11px] text-ink-muted">· c/{q.community_slug}</span>
             <span className="ml-auto text-[11px] text-ink-muted">
               {timeAgo(q.created_at)}

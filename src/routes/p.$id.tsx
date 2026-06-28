@@ -142,9 +142,9 @@ function PostPage() {
       <article className="border-b-[6px] border-surface px-5 py-5">
         <div className="flex items-center gap-2 text-[12px] text-ink-muted">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
-            {post.initials}
+            ID
           </span>
-          <span className="font-medium text-foreground">{post.author}</span>
+          <span className="font-medium text-foreground">{post.unique_id}</span>
           {post.mentor ? <BadgeCheck strokeWidth={2} className="h-3.5 w-3.5 text-forest" /> : null}
           <span>·</span>
           <span>{post.role}</span>
@@ -239,11 +239,11 @@ function ChatBubble({ reply, isMe }: { reply: Reply; isMe: boolean }) {
     <li>
       <div className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
-          {reply.initials}
+          ID
         </div>
         <div className="min-w-0 max-w-[80%]">
           <div className={`mb-1 flex items-center gap-1.5 px-1 text-[11px] text-ink-muted ${isMe ? "justify-end" : ""}`}>
-            <span className="font-medium text-foreground">{reply.author}</span>
+            <span className="font-medium text-foreground">{reply.unique_id}</span>
             {reply.mentor ? (
               <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" />
             ) : null}

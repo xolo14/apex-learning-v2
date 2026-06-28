@@ -59,7 +59,7 @@ function AdminPosts() {
           <thead className="border-b border-hairline text-left text-[11px] uppercase tracking-[0.14em] text-ink-muted">
             <tr>
               <th className="px-5 py-3 font-medium">Title</th>
-              <th className="px-5 py-3 font-medium">Author</th>
+              <th className="px-5 py-3 font-medium">Unique ID</th>
               <th className="px-5 py-3 font-medium">Community</th>
               <th className="px-5 py-3 font-medium">Created</th>
               <th className="px-5 py-3 font-medium">Status</th>
@@ -90,7 +90,7 @@ function AdminPosts() {
                     <div className="line-clamp-1 max-w-md font-medium">{row.title}</div>
                     <div className="line-clamp-1 max-w-md text-[12px] text-ink-muted">{row.body}</div>
                   </td>
-                  <td className="px-5 py-3">{row.author}</td>
+                  <td className="px-5 py-3 font-mono text-[12px]">{row.unique_id}</td>
                   <td className="px-5 py-3">c/{row.community_slug}</td>
                   <td className="px-5 py-3 text-ink-muted">{new Date(row.created_at).toLocaleString()}</td>
                   <td className="px-5 py-3">

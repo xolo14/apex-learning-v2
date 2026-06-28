@@ -67,12 +67,12 @@ function AdminOverview() {
               <li key={q.id} className="px-5 py-3">
                 <div className="flex items-start gap-3">
                   <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface text-[11px] font-medium">
-                    {q.initials}
+                    ID
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[14px] font-medium">{q.title}</p>
                     <p className="text-[11px] text-ink-muted">
-                      {q.author} · c/{q.community_slug} · {new Date(q.created_at).toLocaleString()}
+                      {q.unique_id} · c/{q.community_slug} · {new Date(q.created_at).toLocaleString()}
                     </p>
                   </div>
                   {q.hidden ? <EyeOff className="h-4 w-4 text-ink-muted" /> : <Eye className="h-4 w-4 text-ink-muted" />}
