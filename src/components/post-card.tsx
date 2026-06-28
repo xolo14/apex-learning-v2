@@ -82,11 +82,15 @@ export function PostCard({ post }: { post: Post }) {
       <Link to="/p/$id" params={{ id: post.id }} className={compact ? "mt-2 block" : "mt-4 block"}>
         <h3
           className={
-            isMentor && !compact
-              ? "font-serif text-[24px] leading-[1.15] tracking-tight text-foreground"
-              : compact
-                ? "text-[15px] font-semibold leading-[1.3] tracking-tight text-foreground line-clamp-2"
-                : "text-[18px] font-semibold leading-[1.25] tracking-tight text-foreground"
+            isMentor
+              ? "font-serif tracking-tight text-foreground " +
+                (compact
+                  ? "text-[18px] leading-[1.2] line-clamp-2"
+                  : "text-[24px] leading-[1.15]")
+              : "font-semibold tracking-tight text-foreground " +
+                (compact
+                  ? "text-[15px] leading-[1.3] line-clamp-2"
+                  : "text-[18px] leading-[1.25]")
           }
         >
           {post.title}
