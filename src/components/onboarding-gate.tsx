@@ -138,11 +138,8 @@ export function OnboardingGate() {
         onSubmit={step === 1 ? goNext : onSubmit}
         className="w-full max-w-md rounded-t-2xl bg-background p-5 shadow-xl sm:rounded-2xl"
       >
-        <div className="flex items-center gap-1.5">
-          <span className={"h-1.5 flex-1 rounded-full " + (step >= 1 ? "bg-primary" : "bg-border")} />
-          <span className={"h-1.5 flex-1 rounded-full " + (step >= 2 ? "bg-primary" : "bg-border")} />
-        </div>
         <h2 className="mt-4 text-lg font-semibold">
+
           {step === 1 ? "Welcome to Syncpedia" : "A few more details"}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
