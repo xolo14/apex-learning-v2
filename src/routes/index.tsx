@@ -62,7 +62,7 @@ function Home() {
             <img
               src={logoAsset.url}
               alt="Syncpedia"
-              className="h-8 w-auto object-contain"
+              className="h-10 w-auto object-contain"
             />
           </Link>
           <div className="flex items-center gap-1.5">
