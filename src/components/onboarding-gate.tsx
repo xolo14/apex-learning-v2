@@ -254,13 +254,13 @@ export function OnboardingGate() {
           .input {
             width: 100%;
             border-radius: 0.5rem;
-            border: 1px solid hsl(var(--border));
-            background: hsl(var(--background));
+            border: 1px solid color-mix(in oklch, var(--foreground) 22%, var(--background));
+            background: var(--background);
             padding: 0.55rem 0.75rem;
             font-size: 0.875rem;
             outline: none;
           }
-          .input:focus { border-color: hsl(var(--primary)); }
+          .input:focus { border-color: var(--primary); }
         `}</style>
       </form>
     </div>
