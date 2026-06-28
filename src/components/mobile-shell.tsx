@@ -51,7 +51,7 @@ type Tab = { to: string; label: string; icon: LucideIcon; primary?: boolean; pro
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: House },
-  { to: "/communities", label: "Explore", icon: Compass },
+  { to: "/communities", label: "Communities", icon: Compass },
   { to: "/ask", label: "Ask", icon: Plus, primary: true },
   { to: "/courses", label: "Intern", icon: GraduationCap },
   { to: "/profile", label: "You", icon: CircleUserRound, profile: true },

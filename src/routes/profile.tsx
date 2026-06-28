@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Settings, BadgeCheck, FileText } from "lucide-react";
+import { Settings, BadgeCheck, FileText, Pencil, Check, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -56,6 +56,9 @@ function ProfilePage() {
   const [tab, setTab] = useState<(typeof tabs)[number]>("Posts");
   const identity = useIdentity();
   const [profileName, setProfileName] = useState("You");
+  const [bio, setBio] = useState<string>("");
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioDraft, setBioDraft] = useState("");
 
   useEffect(() => {
     try {
@@ -63,9 +66,24 @@ function ProfilePage() {
       if (raw) {
         const p = JSON.parse(raw);
         if (p?.name) setProfileName(p.name);
+        if (typeof p?.bio === "string") setBio(p.bio);
       }
     } catch {}
   }, []);
+
+  function saveBio() {
+    const next = bioDraft.trim().slice(0, 160);
+    setBio(next);
+    setEditingBio(false);
+    try {
+      const raw = localStorage.getItem("syncpedia_profile");
+      const p = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(
+        "syncpedia_profile",
+        JSON.stringify({ ...p, bio: next }),
+      );
+    } catch {}
+  }
 
   const listMine = useServerFn(listMyQuestions);
   const uniqueId = identity.uniqueId ?? "";
@@ -111,6 +129,55 @@ function ProfilePage() {
           <Stat n={String(mapped.length)} l="Posts" />
           <Stat n={String(mapped.reduce((s, p) => s + p.votes, 0))} l="Karma" />
           <Stat n={String(mapped.reduce((s, p) => s + p.comments, 0))} l="Replies" />
+        </div>
+
+        <div className="mt-4">
+          {editingBio ? (
+            <div className="rounded-2xl border border-hairline bg-surface p-3">
+              <textarea
+                value={bioDraft}
+                onChange={(e) => setBioDraft(e.target.value.slice(0, 160))}
+                placeholder="Write a short bio (max 160 chars)"
+                rows={3}
+                autoFocus
+                className="w-full resize-none bg-transparent text-[13px] leading-snug text-foreground outline-none placeholder:text-ink-muted"
+              />
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[11px] text-ink-muted">{bioDraft.length}/160</span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setEditingBio(false)}
+                    className="grid h-8 w-8 place-items-center rounded-full bg-background text-ink-muted active:scale-95"
+                    aria-label="Cancel"
+                  >
+                    <X strokeWidth={1.75} className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={saveBio}
+                    className="grid h-8 w-8 place-items-center rounded-full bg-foreground text-background active:scale-95"
+                    aria-label="Save"
+                  >
+                    <Check strokeWidth={2} className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setBioDraft(bio);
+                setEditingBio(true);
+              }}
+              className="group flex w-full items-start gap-2 rounded-2xl border border-transparent px-0 py-1 text-left active:opacity-80"
+            >
+              <p className={"flex-1 text-[13px] leading-snug " + (bio ? "text-foreground" : "text-ink-muted")}>
+                {bio || "Add a short bio…"}
+              </p>
+              <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-ink-muted">
+                <Pencil strokeWidth={1.75} className="h-3.5 w-3.5" />
+              </span>
+            </button>
+          )}
         </div>
       </section>
 
