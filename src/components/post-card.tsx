@@ -1,79 +1,101 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowBigUp, ArrowBigDown, MessageCircle, Bookmark, Share2, BadgeCheck } from "lucide-react";
+import { ArrowUp, MessageCircle, Bookmark, Share2, BadgeCheck } from "lucide-react";
 import { communityBySlug, type Post } from "@/lib/feed-data";
 
 export function PostCard({ post }: { post: Post }) {
   const community = communityBySlug(post.communitySlug);
+  const isMentor = post.mentor;
   return (
-    <article className="border-b border-hairline bg-background px-5 py-4 active:bg-surface/60">
-      <header className="flex items-center gap-2 text-[12px] text-ink-muted">
+    <article
+      className={
+        "relative border-b border-hairline bg-background px-5 pb-4 pt-5 active:bg-surface/40 " +
+        (isMentor ? "" : "")
+      }
+    >
+      {isMentor ? (
+        <span
+          aria-hidden
+          className="absolute left-0 top-5 h-8 w-[3px] rounded-r-full bg-forest"
+        />
+      ) : null}
+
+      <header className="flex items-center gap-2.5">
         <Link
           to="/c/$slug"
           params={{ slug: post.communitySlug }}
-          className="flex items-center gap-1.5 font-medium text-foreground"
+          className="flex items-center gap-2"
         >
           {community ? (
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-forest text-white">
-              <community.icon strokeWidth={2} className="h-3 w-3" />
+            <span className="grid h-8 w-8 place-items-center rounded-[10px] bg-forest text-white">
+              <community.icon strokeWidth={1.75} className="h-4 w-4" />
             </span>
           ) : null}
-          c/{community?.slug ?? post.communitySlug}
+          <span className="flex flex-col leading-tight">
+            <span className="text-[13px] font-medium tracking-tight text-foreground">
+              c/{community?.slug ?? post.communitySlug}
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-ink-muted">
+              {post.author}
+              {isMentor ? (
+                <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" />
+              ) : null}
+              <span>·</span>
+              {post.time}
+            </span>
+          </span>
         </Link>
-        <span>·</span>
-        <span className="truncate">{post.author}</span>
-        {post.mentor ? (
-          <BadgeCheck strokeWidth={2} className="h-3.5 w-3.5 text-forest" />
-        ) : null}
-        <span>·</span>
-        <span>{post.time}</span>
-        {post.tag ? (
-          <span className="ml-auto rounded-full border border-hairline px-2 py-0.5 text-[10px] uppercase tracking-[0.1em] text-ink-muted">
+        {isMentor ? (
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-forest/8 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-forest">
+            Mentor
+          </span>
+        ) : post.tag ? (
+          <span className="ml-auto rounded-full bg-surface px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted">
             {post.tag}
           </span>
         ) : null}
       </header>
 
-      <Link to="/p/$id" params={{ id: post.id }} className="mt-2 block">
-        <h3 className="text-[17px] font-semibold leading-[1.3] tracking-tight text-foreground">
+      <Link to="/p/$id" params={{ id: post.id }} className="mt-4 block">
+        <h3
+          className={
+            isMentor
+              ? "font-serif text-[24px] leading-[1.15] tracking-tight text-foreground"
+              : "text-[18px] font-semibold leading-[1.25] tracking-tight text-foreground"
+          }
+        >
           {post.title}
         </h3>
-        <p className="mt-1.5 line-clamp-3 text-[14px] leading-[1.5] text-ink-muted">
+        <p className="mt-2 line-clamp-3 text-[14px] leading-[1.55] text-ink-muted">
           {post.body}
         </p>
       </Link>
 
-      <footer className="mt-3 flex items-center gap-1.5 text-[12px] text-ink-muted">
-        <div className="flex items-center gap-0.5 rounded-full bg-surface px-1.5 py-1">
-          <button aria-label="Upvote" className="grid h-7 w-7 place-items-center rounded-full text-ink-muted active:text-orange">
-            <ArrowBigUp strokeWidth={1.75} className="h-[18px] w-[18px]" />
-          </button>
-          <span className="min-w-[28px] text-center text-[12px] font-medium text-foreground tabular-nums">
+      <footer className="mt-4 flex items-center text-[12px] text-ink-muted">
+        <button
+          aria-label="Upvote"
+          className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 active:scale-95"
+        >
+          <ArrowUp strokeWidth={2} className="h-[14px] w-[14px]" />
+          <span className="text-[12px] font-medium tabular-nums text-foreground">
             {formatNumber(post.votes)}
           </span>
-          <button aria-label="Downvote" className="grid h-7 w-7 place-items-center rounded-full text-ink-muted active:text-forest">
-            <ArrowBigDown strokeWidth={1.75} className="h-[18px] w-[18px]" />
-          </button>
-        </div>
+        </button>
         <Link
           to="/p/$id"
           params={{ id: post.id }}
-          className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-2"
+          className="ml-1.5 inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5"
         >
-          <MessageCircle strokeWidth={1.75} className="h-[15px] w-[15px]" />
-          {formatNumber(post.comments)}
+          <MessageCircle strokeWidth={1.75} className="h-[14px] w-[14px]" />
+          <span className="text-[12px] font-medium text-foreground">{formatNumber(post.comments)}</span>
         </Link>
-        <button
-          aria-label="Share"
-          className="ml-auto grid h-9 w-9 place-items-center rounded-full bg-surface text-ink-muted"
-        >
-          <Share2 strokeWidth={1.75} className="h-[15px] w-[15px]" />
-        </button>
-        <button
-          aria-label="Bookmark"
-          className="grid h-9 w-9 place-items-center rounded-full bg-surface text-ink-muted"
-        >
-          <Bookmark strokeWidth={1.75} className="h-[15px] w-[15px]" />
-        </button>
+        <div className="ml-auto flex items-center gap-1">
+          <button aria-label="Share" className="grid h-8 w-8 place-items-center rounded-full text-ink-muted active:bg-surface">
+            <Share2 strokeWidth={1.75} className="h-[14px] w-[14px]" />
+          </button>
+          <button aria-label="Bookmark" className="grid h-8 w-8 place-items-center rounded-full text-ink-muted active:bg-surface">
+            <Bookmark strokeWidth={1.75} className="h-[14px] w-[14px]" />
+          </button>
+        </div>
       </footer>
     </article>
   );
