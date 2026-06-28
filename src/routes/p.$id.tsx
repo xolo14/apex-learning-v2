@@ -30,8 +30,7 @@ export const Route = createFileRoute("/p/$id")({
 });
 
 type Reply = {
-  author: string;
-  initials: string;
+  unique_id: string;
   role: string;
   mentor: boolean;
   time: string;
@@ -42,8 +41,7 @@ type Reply = {
 
 const replies: Reply[] = [
   {
-    author: "Sofia Marquez",
-    initials: "SM",
+    unique_id: "SP-SOFI01",
     role: "ML Eng, Anthropic",
     mentor: true,
     time: "1h",
@@ -51,8 +49,7 @@ const replies: Reply[] = [
     body: "Start with a value-aligned eval set tied to a single business outcome. Anything trace-level becomes noise without that anchor. Then layer drift detection — most teams skip step two and pay for it.",
     children: [
       {
-        author: "Daniel Park",
-        initials: "DP",
+        unique_id: "SP-DANP02",
         role: "Self-taught",
         mentor: false,
         time: "42m",
@@ -62,8 +59,7 @@ const replies: Reply[] = [
     ],
   },
   {
-    author: "Ravi Bhatt",
-    initials: "RB",
+    unique_id: "SP-RAVB03",
     role: "Eval lead, fintech",
     mentor: false,
     time: "2h",
@@ -71,8 +67,7 @@ const replies: Reply[] = [
     body: "We sample 1% of traces daily and rotate reviewers. Boring, but it's the only thing that caught silent regressions for us.",
   },
   {
-    author: "Hana Lee",
-    initials: "HL",
+    unique_id: "SP-HANL04",
     role: "Researcher",
     mentor: true,
     time: "3h",
@@ -82,8 +77,7 @@ const replies: Reply[] = [
 ];
 
 const currentUser = {
-  author: "You",
-  initials: "YO",
+  unique_id: "SP-YOU",
   role: "Student",
   mentor: false,
   time: "now",
@@ -194,7 +188,7 @@ function PostPage() {
         </div>
         <ul className="mt-4 space-y-4">
           {flattenReplies(messages).map((r, i) => (
-            <ChatBubble key={i} reply={r} isMe={r.author === currentUser.author} />
+          <ChatBubble key={i} reply={r} isMe={r.unique_id === currentUser.unique_id} />
           ))}
         </ul>
       </div>
