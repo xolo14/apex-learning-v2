@@ -5,10 +5,13 @@ export type HotItem = {
   title: string;
   url: string;
   source: string;
-  bucket: "education" | "politics" | "memes";
+  bucket: "education" | "politics" | "memes" | "tech";
   score: number;
   comments: number;
   thumbnail: string | null;
+  imageUrl?: string | null;
+  summary?: string | null;
+  pinned?: boolean;
   createdAt: number;
 };
 
@@ -67,11 +70,14 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
     (async () => {
       try {
         const { sql } = await import("./db.server");
-        return (await sql()`SELECT id::text, title, url, source, extract(epoch from pinned_at)*1000 AS pinned FROM hot_pins ORDER BY pinned_at DESC LIMIT 20`) as {
+        return (await sql()`SELECT id::text, title, url, source, image_url, summary, category, extract(epoch from pinned_at)*1000 AS pinned FROM hot_pins ORDER BY pinned_at DESC LIMIT 20`) as {
           id: string;
           title: string;
           url: string | null;
           source: string;
+          image_url: string | null;
+          summary: string | null;
+          category: string | null;
           pinned: number;
         }[];
       } catch {
@@ -80,17 +86,28 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
     })(),
   ]);
 
-  const pins: HotItem[] = pinsRaw.map((p) => ({
-    id: `pin_${p.id}`,
-    title: p.title,
-    url: p.url ?? "#",
-    source: p.source || "Pinned",
-    bucket: "education",
-    score: 99999,
-    comments: 0,
-    thumbnail: null,
-    createdAt: p.pinned,
-  }));
+  const pins: HotItem[] = pinsRaw.map((p) => {
+    const cat = (p.category || "").toLowerCase();
+    const bucket: HotItem["bucket"] =
+      cat === "politics" ? "politics" :
+      cat === "memes" ? "memes" :
+      cat === "tech" ? "tech" :
+      "education";
+    return {
+      id: `pin_${p.id}`,
+      title: p.title,
+      url: p.url ?? "#",
+      source: p.source || "Pinned",
+      bucket,
+      score: 99999,
+      comments: 0,
+      thumbnail: p.image_url ?? null,
+      imageUrl: p.image_url ?? null,
+      summary: p.summary ?? null,
+      pinned: true,
+      createdAt: p.pinned,
+    };
+  });
 
   const all = [...pins, ...education, ...politics, ...memes];
   all.sort((a, b) => b.score - a.score);
@@ -99,27 +116,34 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
 
 export const listHotPins = createServerFn({ method: "GET" }).handler(async () => {
   const { sql } = await import("./db.server");
-  return (await sql()`SELECT id::int AS id, title, url, source, pinned_at FROM hot_pins ORDER BY pinned_at DESC`) as {
+  return (await sql()`SELECT id::int AS id, title, url, source, image_url, summary, category, pinned_at FROM hot_pins ORDER BY pinned_at DESC`) as {
     id: number;
     title: string;
     url: string | null;
     source: string;
+    image_url: string | null;
+    summary: string | null;
+    category: string | null;
     pinned_at: string;
   }[];
 });
 
 export const addHotPin = createServerFn({ method: "POST" })
-  .inputValidator((data: { title: string; url?: string; source?: string }) => {
+  .inputValidator((data: { title: string; url?: string; source?: string; imageUrl?: string; summary?: string; category?: string }) => {
     if (!data.title?.trim()) throw new Error("Title required");
     return {
       title: data.title.trim().slice(0, 200),
       url: data.url?.trim().slice(0, 500) || null,
       source: (data.source || "manual").slice(0, 60),
+      imageUrl: data.imageUrl?.trim().slice(0, 500) || null,
+      summary: data.summary?.trim().slice(0, 600) || null,
+      category: (data.category || "education").slice(0, 30),
     };
   })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
-    await sql()`INSERT INTO hot_pins (title, url, source) VALUES (${data.title}, ${data.url}, ${data.source})`;
+    await sql()`INSERT INTO hot_pins (title, url, source, image_url, summary, category)
+      VALUES (${data.title}, ${data.url}, ${data.source}, ${data.imageUrl}, ${data.summary}, ${data.category})`;
     return { ok: true };
   });
 
@@ -132,17 +156,23 @@ export const removeHotPin = createServerFn({ method: "POST" })
   });
 
 export const updateHotPin = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: number; title?: string; url?: string | null; source?: string }) => data)
+  .inputValidator((data: { id: number; title?: string; url?: string | null; source?: string; imageUrl?: string | null; summary?: string | null; category?: string }) => data)
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
     const title = data.title?.trim().slice(0, 200) ?? null;
     const url = data.url === undefined ? null : data.url;
     const source = data.source?.slice(0, 60) ?? null;
+    const imageUrl = data.imageUrl === undefined ? null : data.imageUrl;
+    const summary = data.summary === undefined ? null : data.summary;
+    const category = data.category?.slice(0, 30) ?? null;
     await sql()`
       UPDATE hot_pins SET
         title = COALESCE(${title}, title),
         url = COALESCE(${url}, url),
-        source = COALESCE(${source}, source)
+        source = COALESCE(${source}, source),
+        image_url = COALESCE(${imageUrl}, image_url),
+        summary = COALESCE(${summary}, summary),
+        category = COALESCE(${category}, category)
       WHERE id = ${data.id}
     `;
     return { ok: true };
