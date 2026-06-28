@@ -6,8 +6,8 @@ export type DbProfile = {
   name: string;
   mobile: string;
   gmail: string;
-  year: string;
-  college: string;
+  year: string | null;
+  college: string | null;
   role: "student" | "professional";
   unique_id: string;
   company: string | null;
@@ -42,22 +42,21 @@ export const createProfile = createServerFn({ method: "POST" })
     name: string;
     mobile: string;
     gmail: string;
-    year: string;
-    college: string;
+    year?: string;
+    college?: string;
     role: "student" | "professional";
     company?: string;
-    experience?: string;
   }) => {
     if (!d.deviceKey) throw new Error("Device key required");
     if (!d.name?.trim()) throw new Error("Name required");
     if (!/^\d{7,15}$/.test(d.mobile.replace(/\D/g, ""))) throw new Error("Valid mobile required");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.gmail)) throw new Error("Valid email required");
-    if (!d.year?.trim()) throw new Error("Year required");
-    if (!d.college?.trim()) throw new Error("College required");
     if (d.role !== "student" && d.role !== "professional") throw new Error("Invalid role");
-    if (d.role === "professional") {
+    if (d.role === "student") {
+      if (!d.year?.trim()) throw new Error("Year required");
+      if (!d.college?.trim()) throw new Error("College required");
+    } else {
       if (!d.company?.trim()) throw new Error("Company required");
-      if (!d.experience?.trim()) throw new Error("Experience required");
     }
     return d;
   })
@@ -84,8 +83,11 @@ export const createProfile = createServerFn({ method: "POST" })
     }
     if (!uniqueId) throw new Error("Could not allocate unique id, please retry");
 
-    const company = data.role === "professional" ? data.company!.trim().slice(0, 120) : null;
-    const experience = data.role === "professional" ? data.experience!.trim().slice(0, 40) : null;
+    const isPro = data.role === "professional";
+    const company = isPro ? data.company!.trim().slice(0, 120) : null;
+    const experience = null;
+    const year = isPro ? null : data.year!.trim().slice(0, 20);
+    const college = isPro ? null : data.college!.trim().slice(0, 120);
 
     await sql()`
       INSERT INTO profiles (id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience)
@@ -94,8 +96,8 @@ export const createProfile = createServerFn({ method: "POST" })
         ${data.name.trim().slice(0, 80)},
         ${data.mobile.trim().slice(0, 20)},
         ${data.gmail.trim().toLowerCase().slice(0, 120)},
-        ${data.year.trim().slice(0, 20)},
-        ${data.college.trim().slice(0, 120)},
+        ${year},
+        ${college},
         ${data.role},
         ${uniqueId},
         ${company},

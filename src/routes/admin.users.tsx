@@ -60,8 +60,8 @@ function AdminUsers() {
                   <th className="px-5 py-2 font-medium">Unique ID</th>
                   <th className="px-5 py-2 font-medium">Mobile</th>
                   <th className="px-5 py-2 font-medium">Gmail</th>
-                  <th className="px-5 py-2 font-medium">Year</th>
-                  <th className="px-5 py-2 font-medium">College / Company</th>
+                  <th className="px-5 py-2 font-medium">Year / Company</th>
+                  <th className="px-5 py-2 font-medium">College</th>
                   <th className="px-5 py-2 font-medium">Joined</th>
                 </tr>
               </thead>
@@ -80,15 +80,10 @@ function AdminUsers() {
                     <td className="px-5 py-2 font-mono text-[12px]">{p.unique_id}</td>
                     <td className="px-5 py-2 tabular-nums">{p.mobile}</td>
                     <td className="px-5 py-2">{p.gmail}</td>
-                    <td className="px-5 py-2">{p.year}</td>
                     <td className="px-5 py-2">
-                      {p.college}
-                      {p.role === "professional" && p.company && (
-                        <span className="block text-[11px] text-ink-muted">
-                          {p.company} · {p.experience}
-                        </span>
-                      )}
+                      {p.role === "professional" ? (p.company ?? "—") : (p.year ?? "—")}
                     </td>
+                    <td className="px-5 py-2">{p.college ?? "—"}</td>
                     <td className="px-5 py-2 text-ink-muted">
                       {new Date(p.created_at).toLocaleDateString()}
                     </td>

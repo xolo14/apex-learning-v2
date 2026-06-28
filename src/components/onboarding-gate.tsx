@@ -29,7 +29,6 @@ export function OnboardingGate() {
     college: "",
     role: "student" as "student" | "professional",
     company: "",
-    experience: "0-1 years",
   });
 
   const fetchProfile = useServerFn(getProfileByDevice);
@@ -92,7 +91,26 @@ export function OnboardingGate() {
     setSubmitting(true);
     try {
       const key = getDeviceKey();
-      const p = await submitProfile({ data: { deviceKey: key, ...form } });
+      const payload =
+        form.role === "professional"
+          ? {
+              deviceKey: key,
+              name: form.name,
+              mobile: form.mobile,
+              gmail: form.gmail,
+              role: "professional" as const,
+              company: form.company,
+            }
+          : {
+              deviceKey: key,
+              name: form.name,
+              mobile: form.mobile,
+              gmail: form.gmail,
+              role: "student" as const,
+              year: form.year,
+              college: form.college,
+            };
+      const p = await submitProfile({ data: payload });
       localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
       setIssued(p);
     } catch (err) {
@@ -141,66 +159,52 @@ export function OnboardingGate() {
               placeholder="you@gmail.com"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Year">
-              <select
-                value={form.year}
-                onChange={(e) => update("year", e.target.value)}
-                className="input"
-              >
-                <option>1st year</option>
-                <option>2nd year</option>
-                <option>3rd year</option>
-                <option>4th year</option>
-                <option>Passed out</option>
-              </select>
-            </Field>
-            <Field label="I am a">
-              <select
-                value={form.role}
-                onChange={(e) => update("role", e.target.value)}
-                className="input"
-              >
-                <option value="student">Student</option>
-                <option value="professional">Working professional</option>
-              </select>
-            </Field>
-          </div>
-          <Field label="College">
-            <input
-              required
-              value={form.college}
-              onChange={(e) => update("college", e.target.value)}
+          <Field label="I am a">
+            <select
+              value={form.role}
+              onChange={(e) => update("role", e.target.value)}
               className="input"
-              placeholder="Your college name"
-            />
+            >
+              <option value="student">Student</option>
+              <option value="professional">Working professional</option>
+            </select>
           </Field>
 
-          {form.role === "professional" && (
-            <>
-              <Field label="Company">
-                <input
-                  required
-                  value={form.company}
-                  onChange={(e) => update("company", e.target.value)}
-                  className="input"
-                  placeholder="e.g. Google"
-                />
-              </Field>
-              <Field label="Experience">
+          {form.role === "student" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Year">
                 <select
-                  value={form.experience}
-                  onChange={(e) => update("experience", e.target.value)}
+                  value={form.year}
+                  onChange={(e) => update("year", e.target.value)}
                   className="input"
                 >
-                  <option>0-1 years</option>
-                  <option>1-3 years</option>
-                  <option>3-5 years</option>
-                  <option>5-10 years</option>
-                  <option>10+ years</option>
+                  <option>1st year</option>
+                  <option>2nd year</option>
+                  <option>3rd year</option>
+                  <option>4th year</option>
+                  <option>Passed out</option>
                 </select>
               </Field>
-            </>
+              <Field label="College">
+                <input
+                  required
+                  value={form.college}
+                  onChange={(e) => update("college", e.target.value)}
+                  className="input"
+                  placeholder="Your college"
+                />
+              </Field>
+            </div>
+          ) : (
+            <Field label="Company">
+              <input
+                required
+                value={form.company}
+                onChange={(e) => update("company", e.target.value)}
+                className="input"
+                placeholder="e.g. Google"
+              />
+            </Field>
           )}
 
           <p className="rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
