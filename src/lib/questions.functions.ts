@@ -42,6 +42,21 @@ export const listAllQuestions = createServerFn({ method: "GET" }).handler(async 
   return rows;
 });
 
+export const listMyQuestions = createServerFn({ method: "POST" })
+  .inputValidator((d: { uniqueId: string }) => d)
+  .handler(async ({ data }) => {
+    if (!data.uniqueId) return [] as DbQuestion[];
+    const { sql } = await import("./db.server");
+    const rows = (await sql()`
+      SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
+      FROM questions
+      WHERE unique_id = ${data.uniqueId} AND hidden = false
+      ORDER BY created_at DESC
+      LIMIT 100
+    `) as DbQuestion[];
+    return rows;
+  });
+
 export const createQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: {
     deviceKey?: string;

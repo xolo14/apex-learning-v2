@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Settings, BadgeCheck } from "lucide-react";
-import { useState } from "react";
+import { Settings, BadgeCheck, FileText } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
-import { posts } from "@/lib/feed-data";
+import type { Post, PostKind } from "@/lib/feed-data";
 import { useIdentity, IdentityAvatar } from "@/lib/identity";
+import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Syncpedia" }] }),
@@ -13,9 +16,68 @@ export const Route = createFileRoute("/profile")({
 
 const tabs = ["Posts", "Replies", "Bookmarks", "Communities"] as const;
 
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  return `${d}d`;
+}
+
+function toPost(q: DbQuestion): Post {
+  const tag = (q.tag || "question").toLowerCase();
+  const kind: PostKind = (
+    ["tutorial","project","mentor","discussion","question","resource","challenge","news","case-study","career","launch","meme","poll","quiz"].includes(tag)
+      ? tag
+      : "question"
+  ) as PostKind;
+  return {
+    id: q.id,
+    author: q.author,
+    initials: q.initials,
+    unique_id: q.unique_id,
+    role: "Member",
+    mentor: false,
+    communitySlug: q.community_slug,
+    time: timeAgo(q.created_at),
+    title: q.title,
+    body: q.body,
+    votes: q.votes,
+    comments: q.comments,
+    tag: q.tag ?? undefined,
+    kind,
+  };
+}
+
 function ProfilePage() {
   const [tab, setTab] = useState<(typeof tabs)[number]>("Posts");
   const identity = useIdentity();
+  const [profileName, setProfileName] = useState("You");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("syncpedia_profile");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p?.name) setProfileName(p.name);
+      }
+    } catch {}
+  }, []);
+
+  const listMine = useServerFn(listMyQuestions);
+  const uniqueId = identity.uniqueId ?? "";
+  const myPosts = useQuery({
+    queryKey: ["my-posts", uniqueId],
+    queryFn: () => listMine({ data: { uniqueId } }),
+    enabled: !!uniqueId,
+    refetchOnWindowFocus: true,
+  });
+
+  const mapped = useMemo(() => (myPosts.data ?? []).map(toPost), [myPosts.data]);
+
   return (
     <MobileShell>
       <MobileHeader
@@ -36,7 +98,7 @@ function ProfilePage() {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-[18px] font-semibold tracking-tight text-foreground">
-                Ava Lindgren
+                {profileName}
               </span>
               <BadgeCheck strokeWidth={2} className="h-4 w-4 text-forest" />
             </div>
@@ -45,14 +107,10 @@ function ProfilePage() {
             </div>
           </div>
         </div>
-        <p className="mt-4 text-[14px] leading-[1.55] text-foreground">
-          Designer turned founder. Learning ML in public. Mentor in c/uiux.
-        </p>
         <div className="mt-5 flex items-center gap-6 text-[13px]">
-          <Stat n="1.4k" l="Karma" />
-          <Stat n="38" l="Posts" />
-          <Stat n="412" l="Replies" />
-          <Stat n="9" l="Communities" />
+          <Stat n={String(mapped.length)} l="Posts" />
+          <Stat n={String(mapped.reduce((s, p) => s + p.votes, 0))} l="Karma" />
+          <Stat n={String(mapped.reduce((s, p) => s + p.comments, 0))} l="Replies" />
         </div>
       </section>
 
@@ -80,11 +138,35 @@ function ProfilePage() {
       </div>
 
       <div>
-        {posts.slice(0, 3).map((p) => (
-          <PostCard key={p.id} post={p} />
-        ))}
+        {tab === "Posts" && (
+          <>
+            {!uniqueId ? (
+              <EmptyState text="Set up your Syncpedia ID in Settings to see your posts." />
+            ) : myPosts.isLoading ? (
+              <EmptyState text="Loading your posts…" />
+            ) : mapped.length === 0 ? (
+              <EmptyState text="You haven't posted yet. Tap the + button to ask your first question." />
+            ) : (
+              mapped.map((p) => <PostCard key={p.id} post={p} />)
+            )}
+          </>
+        )}
+        {tab !== "Posts" && (
+          <EmptyState text={`Your ${tab.toLowerCase()} will appear here.`} />
+        )}
       </div>
     </MobileShell>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
+      <span className="grid h-10 w-10 place-items-center rounded-full bg-surface text-ink-muted">
+        <FileText strokeWidth={1.5} className="h-5 w-5" />
+      </span>
+      <p className="max-w-[260px] text-[13px] text-ink-muted">{text}</p>
+    </div>
   );
 }
 
