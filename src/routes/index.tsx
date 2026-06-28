@@ -202,9 +202,10 @@ function MentorPinned({ compact = false }: { compact?: boolean }) {
       </div>
       <h3
         className={
-          compact
-            ? "mt-2 text-[15px] font-semibold leading-[1.25] tracking-tight text-white line-clamp-2"
-            : "mt-4 font-serif text-[24px] leading-[1.15] tracking-tight text-white"
+          "font-serif tracking-tight text-white " +
+          (compact
+            ? "mt-2 text-[18px] leading-[1.2] line-clamp-2"
+            : "mt-4 text-[24px] leading-[1.15]")
         }
       >
         {post.title}
