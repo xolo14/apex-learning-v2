@@ -133,33 +133,86 @@ function AdminHot() {
             {pins.data?.length === 0 && (
               <li className="px-5 py-6 text-[13px] text-ink-muted">No pinned items yet.</li>
             )}
-            {pins.data?.map((p) => (
-              <li key={p.id} className="flex items-start gap-3 px-5 py-3">
-                <div className="flex-1">
-                  <p className="text-[13.5px] font-medium">{p.title}</p>
-                  <p className="text-[11px] text-ink-muted">
-                    {p.source} · {new Date(p.pinned_at).toLocaleString()}
-                  </p>
-                </div>
-                {p.url && (
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
+            {pins.data?.map((p) =>
+              editId === p.id ? (
+                <li key={p.id} className="space-y-2 bg-surface/40 px-5 py-3">
+                  <input
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full rounded-lg border border-hairline bg-background px-3 py-1.5 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                  <input
+                    value={editUrl}
+                    onChange={(e) => setEditUrl(e.target.value)}
+                    placeholder="URL"
+                    className="w-full rounded-lg border border-hairline bg-background px-3 py-1.5 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                  <input
+                    value={editSource}
+                    onChange={(e) => setEditSource(e.target.value)}
+                    placeholder="Source"
+                    className="w-full rounded-lg border border-hairline bg-background px-3 py-1.5 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-foreground"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        updM.mutate(
+                          { id: p.id, title: editTitle, url: editUrl || null, source: editSource },
+                          { onSuccess: () => setEditId(null) },
+                        );
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1 text-[12px] text-background"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Save
+                    </button>
+                    <button
+                      onClick={() => setEditId(null)}
+                      className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[12px]"
+                    >
+                      <X className="h-3.5 w-3.5" /> Cancel
+                    </button>
+                  </div>
+                </li>
+              ) : (
+                <li key={p.id} className="flex items-start gap-3 px-5 py-3">
+                  <div className="flex-1">
+                    <p className="text-[13.5px] font-medium">{p.title}</p>
+                    <p className="text-[11px] text-ink-muted">
+                      {p.source} · {new Date(p.pinned_at).toLocaleString()}
+                    </p>
+                  </div>
+                  {p.url && (
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full bg-surface p-2 hover:bg-foreground hover:text-background"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                  <button
+                    onClick={() => {
+                      setEditId(p.id);
+                      setEditTitle(p.title);
+                      setEditUrl(p.url ?? "");
+                      setEditSource(p.source);
+                    }}
                     className="rounded-full bg-surface p-2 hover:bg-foreground hover:text-background"
+                    aria-label="Edit pin"
                   >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
-                <button
-                  onClick={() => rmM.mutate(p.id)}
-                  className="rounded-full bg-surface p-2 text-orange hover:bg-orange hover:text-white"
-                  aria-label="Remove pin"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => rmM.mutate(p.id)}
+                    className="rounded-full bg-surface p-2 text-orange hover:bg-orange hover:text-white"
+                    aria-label="Remove pin"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ),
+            )}
           </ul>
         </section>
 
