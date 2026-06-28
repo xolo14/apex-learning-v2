@@ -25,6 +25,7 @@ import { Route as AdminInternshipsRouteImport } from './routes/admin.internships
 import { Route as AdminHotRouteImport } from './routes/admin.hot'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
+import { Route as ApiPublicCronRefreshHotRouteImport } from './routes/api/public/cron.refresh-hot'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -106,6 +107,11 @@ const AdminCommunitiesRoute = AdminCommunitiesRouteImport.update({
   path: '/communities',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicCronRefreshHotRoute = ApiPublicCronRefreshHotRouteImport.update({
+  id: '/api/public/cron/refresh-hot',
+  path: '/api/public/cron/refresh-hot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/c/$slug': typeof CSlugRoute
   '/p/$id': typeof PIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/c/$slug': typeof CSlugRoute
   '/p/$id': typeof PIdRoute
   '/admin': typeof AdminIndexRoute
+  '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/c/$slug': typeof CSlugRoute
   '/p/$id': typeof PIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/p/$id'
     | '/admin/'
+    | '/api/public/cron/refresh-hot'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/p/$id'
     | '/admin'
+    | '/api/public/cron/refresh-hot'
   id:
     | '__root__'
     | '/'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/c/$slug'
     | '/p/$id'
     | '/admin/'
+    | '/api/public/cron/refresh-hot'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -227,6 +239,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   CSlugRoute: typeof CSlugRoute
   PIdRoute: typeof PIdRoute
+  ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -343,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCommunitiesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/cron/refresh-hot': {
+      id: '/api/public/cron/refresh-hot'
+      path: '/api/public/cron/refresh-hot'
+      fullPath: '/api/public/cron/refresh-hot'
+      preLoaderRoute: typeof ApiPublicCronRefreshHotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -378,6 +398,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   CSlugRoute: CSlugRoute,
   PIdRoute: PIdRoute,
+  ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
