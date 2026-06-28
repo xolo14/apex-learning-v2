@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DensityProvider } from "@/lib/density";
+import { IdentityProvider } from "@/lib/identity";
 import { OnboardingGate } from "@/components/onboarding-gate";
 
 function NotFoundComponent() {
@@ -127,9 +128,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <DensityProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <OnboardingGate />
+        <IdentityProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <OnboardingGate />
+        </IdentityProvider>
       </DensityProvider>
     </QueryClientProvider>
   );
