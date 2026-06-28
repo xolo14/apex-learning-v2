@@ -58,12 +58,13 @@ function Home() {
       {/* Status bar–style chrome */}
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-5 pb-2 pt-[max(env(safe-area-inset-top),14px)]">
-          <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-[10px] bg-foreground text-background">
-              <span className="text-[13px] font-semibold tracking-tight">S</span>
-            </div>
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">Syncpedia</span>
-          </div>
+          <Link to="/" className="flex items-center">
+            <img
+              src={logoAsset.url}
+              alt="Syncpedia"
+              className="h-8 w-auto object-contain"
+            />
+          </Link>
           <div className="flex items-center gap-1.5">
             <DensityToggle />
             <button aria-label="Search" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
