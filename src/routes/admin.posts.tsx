@@ -132,3 +132,80 @@ function AdminPosts() {
     </div>
   );
 }
+
+function EditRow({
+  row,
+  onCancel,
+  onSave,
+  pending,
+}: {
+  row: DbQuestion;
+  onCancel: () => void;
+  onSave: (vars: {
+    id: string;
+    author: string;
+    communitySlug: string;
+    title: string;
+    body: string;
+  }) => void;
+  pending: boolean;
+}) {
+  const [title, setTitle] = useState(row.title);
+  const [body, setBody] = useState(row.body);
+  const [author, setAuthor] = useState(row.author);
+  const [community, setCommunity] = useState(row.community_slug);
+  return (
+    <tr className="bg-surface/40">
+      <td className="px-5 py-3" colSpan={4}>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-lg border border-hairline bg-background px-3 py-2 text-[14px] font-medium focus:outline-none focus:ring-1 focus:ring-foreground"
+        />
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={3}
+          className="mt-2 w-full rounded-lg border border-hairline bg-background px-3 py-2 text-[13px] focus:outline-none focus:ring-1 focus:ring-foreground"
+        />
+        <div className="mt-2 flex gap-2">
+          <input
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder="Author"
+            className="w-48 rounded-lg border border-hairline bg-background px-3 py-1.5 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-foreground"
+          />
+          <select
+            value={community}
+            onChange={(e) => setCommunity(e.target.value)}
+            className="w-56 rounded-lg border border-hairline bg-background px-2 py-1.5 text-[12.5px] focus:outline-none focus:ring-1 focus:ring-foreground"
+          >
+            {communities.map((c) => (
+              <option key={c.slug} value={c.slug}>c/{c.slug} — {c.name}</option>
+            ))}
+          </select>
+        </div>
+      </td>
+      <td />
+      <td className="px-5 py-3">
+        <div className="flex justify-end gap-2">
+          <button
+            disabled={pending}
+            onClick={() =>
+              onSave({ id: row.id, author, communitySlug: community, title, body })
+            }
+            className="inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1 text-[12px] text-background disabled:opacity-50"
+          >
+            <Check className="h-3.5 w-3.5" /> {pending ? "Saving…" : "Save"}
+          </button>
+          <button
+            onClick={onCancel}
+            className="inline-flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-[12px] hover:bg-foreground hover:text-background"
+          >
+            <X className="h-3.5 w-3.5" /> Cancel
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
