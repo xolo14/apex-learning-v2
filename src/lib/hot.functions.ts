@@ -70,7 +70,7 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
                  extract(epoch from published_at)*1000 AS published
           FROM hot_cache
           ORDER BY published_at DESC
-          LIMIT 80
+          LIMIT 500
         `) as {
           id: string;
           title: string;
@@ -150,11 +150,11 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
     };
   });
 
-  // Pins first (newest-pinned first), then live news newest-first.
+  // Pins first (newest-pinned first), then live news newest-first (today on top, yesterday/older stays below).
   pins.sort((a, b) => b.createdAt - a.createdAt);
   live.sort((a, b) => b.createdAt - a.createdAt);
   const merged = [...pins, ...live];
-  return merged.slice(0, 60);
+  return merged.slice(0, 300);
 });
 
 export const listHotPins = createServerFn({ method: "GET" }).handler(async () => {
