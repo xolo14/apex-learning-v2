@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
 import { Route as AskRouteImport } from './routes/ask'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoursesRoute = CoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/profile': typeof ProfileRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/profile': typeof ProfileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/profile': typeof ProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ask' | '/communities' | '/courses'
+  fullPaths: '/' | '/ask' | '/communities' | '/courses' | '/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ask' | '/communities' | '/courses'
-  id: '__root__' | '/' | '/ask' | '/communities' | '/courses'
+  to: '/' | '/ask' | '/communities' | '/courses' | '/profile'
+  id: '__root__' | '/' | '/ask' | '/communities' | '/courses' | '/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +76,18 @@ export interface RootRouteChildren {
   AskRoute: typeof AskRoute
   CommunitiesRoute: typeof CommunitiesRoute
   CoursesRoute: typeof CoursesRoute
+  ProfileRoute: typeof ProfileRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/courses': {
       id: '/courses'
       path: '/courses'
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   AskRoute: AskRoute,
   CommunitiesRoute: CommunitiesRoute,
   CoursesRoute: CoursesRoute,
+  ProfileRoute: ProfileRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
