@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUp, MessageCircle, Bookmark, Share2, BadgeCheck } from "lucide-react";
+import { ArrowUp, MessageCircle, Bookmark, Share2 } from "lucide-react";
 import { communityBySlug, KIND_BUCKET, KIND_LABEL, type Post } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 
 export function PostCard({ post }: { post: Post }) {
   const community = communityBySlug(post.communitySlug);
-  const isMentor = post.mentor;
   const { density } = useDensity();
   const compact = density === "compact";
   const bucket = KIND_BUCKET[post.kind];
@@ -17,16 +16,6 @@ export function PostCard({ post }: { post: Post }) {
         (compact ? "px-4 pb-2.5 pt-3" : "px-5 pb-4 pt-5")
       }
     >
-      {isMentor ? (
-        <span
-          aria-hidden
-          className={
-            "absolute left-0 w-[3px] rounded-r-full bg-forest " +
-            (compact ? "top-3 h-6" : "top-5 h-8")
-          }
-        />
-      ) : null}
-
       <header className={"flex items-center " + (compact ? "gap-2" : "gap-2.5")}>
         <Link
           to="/c/$slug"
@@ -50,21 +39,13 @@ export function PostCard({ post }: { post: Post }) {
             {compact ? null : (
               <span className="flex items-center gap-1 text-[11px] text-ink-muted">
                 {post.author}
-                {isMentor ? (
-                  <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" />
-                ) : null}
                 <span>·</span>
                 {post.time}
               </span>
             )}
           </span>
         </Link>
-        {isMentor ? (
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-forest/8 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-forest">
-            Mentor
-          </span>
-        ) : (
-          <span
+        <span
             className={
               "ml-auto rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.12em] " +
               (bucket === "signal"
@@ -76,21 +57,15 @@ export function PostCard({ post }: { post: Post }) {
           >
             {kindLabel}
           </span>
-        )}
       </header>
 
       <Link to="/p/$id" params={{ id: post.id }} className={compact ? "mt-2 block" : "mt-4 block"}>
         <h3
           className={
-            isMentor
-              ? "font-serif tracking-tight text-foreground " +
-                (compact
-                  ? "text-[18px] leading-[1.2] line-clamp-2"
-                  : "text-[24px] leading-[1.15]")
-              : "font-semibold tracking-tight text-foreground " +
-                (compact
-                  ? "text-[15px] leading-[1.3] line-clamp-2"
-                  : "text-[18px] leading-[1.25]")
+            "font-semibold tracking-tight text-foreground " +
+            (compact
+              ? "text-[15px] leading-[1.3] line-clamp-2"
+              : "text-[18px] leading-[1.25]")
           }
         >
           {post.title}

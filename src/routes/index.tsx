@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Clock, Sparkles, ArrowUpRight } from "lucide-react";
+import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { MobileShell, DensityToggle } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({
 });
 
 const sorts = [
-  { id: "mentor", label: "Mentor", icon: Sparkles },
+  { id: "questions", label: "Questions", icon: MessageCircleQuestion },
   { id: "hot", label: "Hot", icon: Flame },
   { id: "new", label: "New", icon: Clock },
   { id: "following", label: "Following", icon: null as never },
@@ -25,7 +25,7 @@ const sorts = [
 ] as const;
 
 function Home() {
-  const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("mentor");
+  const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("questions");
   const featured = communities.slice(0, 8);
   const { density } = useDensity();
   const compact = density === "compact";
@@ -97,13 +97,8 @@ function Home() {
         </div>
       </header>
 
-      {/* Mentor pinned strip — premium editorial card */}
-      <section className={compact ? "px-4 pt-3" : "px-5 pt-5"}>
-        <MentorPinned compact={compact} />
-      </section>
-
       {/* Communities horizontal rail */}
-      <section className={compact ? "mt-4" : "mt-7"}>
+      <section className={compact ? "mt-3" : "mt-5"}>
         <div className={compact ? "flex items-end justify-between px-4" : "flex items-end justify-between px-5"}>
           <h2 className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
             Your communities
@@ -161,7 +156,7 @@ function Home() {
       {/* Section divider */}
       <div className={"flex items-center gap-3 " + (compact ? "mt-4 px-4" : "mt-8 px-5")}>
         <span className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
-          Discussion
+          Questions & answers
         </span>
         <span className="h-px flex-1 bg-hairline" />
       </div>
@@ -179,64 +174,5 @@ function Home() {
         </p>
       </div>
     </MobileShell>
-  );
-}
-
-function MentorPinned({ compact = false }: { compact?: boolean }) {
-  const post = posts.find((p) => p.mentor)!;
-  return (
-    <Link
-      to="/p/$id"
-      params={{ id: post.id }}
-      className={
-        "block overflow-hidden bg-forest text-white shadow-[0_20px_60px_-30px_rgba(31,81,53,0.6)] " +
-        (compact ? "rounded-[14px] p-3" : "rounded-[22px] p-5")
-      }
-    >
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-white/70">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-1 w-1 rounded-full bg-lime" />
-          Mentor spotlight
-        </span>
-        <span>{post.time} ago</span>
-      </div>
-      <h3
-        className={
-          "font-serif tracking-tight text-white " +
-          (compact
-            ? "mt-2 text-[18px] leading-[1.2] line-clamp-2"
-            : "mt-4 text-[24px] leading-[1.15]")
-        }
-      >
-        {post.title}
-      </h3>
-      {compact ? null : (
-        <p className="mt-2.5 line-clamp-2 text-[13.5px] leading-[1.5] text-white/75">
-          {post.body}
-        </p>
-      )}
-      <div className={"flex items-center gap-2.5 " + (compact ? "mt-3" : "mt-5")}>
-        <span
-          className={
-            "grid place-items-center rounded-full bg-white/10 font-medium text-white ring-1 ring-white/15 " +
-            (compact ? "h-6 w-6 text-[10px]" : "h-8 w-8 text-[11px]")
-          }
-        >
-          {post.initials}
-        </span>
-        <span className="flex flex-col leading-tight">
-          <span className="text-[12.5px] font-medium text-white">{post.author}</span>
-          {compact ? null : <span className="text-[11px] text-white/60">{post.role}</span>}
-        </span>
-        <span
-          className={
-            "ml-auto inline-flex items-center justify-center rounded-full bg-lime text-forest " +
-            (compact ? "h-7 w-7" : "h-8 w-8")
-          }
-        >
-          <ArrowUpRight strokeWidth={2} className="h-[14px] w-[14px]" />
-        </span>
-      </div>
-    </Link>
   );
 }
