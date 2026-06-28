@@ -1,8 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAllQuestions, setQuestionHidden, deleteQuestion } from "@/lib/questions.functions";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import {
+  listAllQuestions,
+  setQuestionHidden,
+  deleteQuestion,
+  updateQuestion,
+  type DbQuestion,
+} from "@/lib/questions.functions";
+import { communities } from "@/lib/feed-data";
+import { Eye, EyeOff, Trash2, Pencil, Check, X } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/admin/posts")({
   component: AdminPosts,
@@ -15,6 +23,13 @@ function AdminPosts() {
   const del = useServerFn(deleteQuestion);
 
   const q = useQuery({ queryKey: ["admin", "posts"], queryFn: () => list() });
+  const updateFn = useServerFn(updateQuestion);
+  const updateM = useMutation({
+    mutationFn: (vars: Parameters<typeof updateQuestion>[0]["data"]) =>
+      updateFn({ data: vars }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "posts"] }),
+  });
+  const [editId, setEditId] = useState<string | null>(null);
 
   const hideM = useMutation({
     mutationFn: (vars: { id: string; hidden: boolean }) => hide({ data: vars }),
