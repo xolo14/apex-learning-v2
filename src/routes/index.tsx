@@ -54,19 +54,19 @@ function Home() {
         </div>
 
         {/* Large editorial title — Apple Journal / Notion mobile */}
-        {compact ? (
-          <div className="flex items-center gap-2 px-5 pb-2 pt-2">
-            <h1 className="text-[15px] font-semibold tracking-tight text-foreground">Feed</h1>
-            <span className="text-[12px] text-ink-muted">· Sunday, Jun 28</span>
-          </div>
-        ) : (
-          <div className="px-5 pb-4 pt-3">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Sunday · June 28</p>
-            <h1 className="mt-1.5 font-serif text-[34px] leading-[1.05] tracking-tight text-foreground">
-              Today on <span className="italic text-forest">Syncpedia</span>
-            </h1>
-          </div>
-        )}
+        <div className={compact ? "px-5 pb-2 pt-1.5" : "px-5 pb-4 pt-3"}>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Sunday · June 28</p>
+          <h1
+            className={
+              "font-serif tracking-tight text-foreground " +
+              (compact
+                ? "mt-0.5 text-[22px] leading-[1.1]"
+                : "mt-1.5 text-[34px] leading-[1.05]")
+            }
+          >
+            Today on <span className="italic text-forest">Syncpedia</span>
+          </h1>
+        </div>
 
         {/* Sort rail */}
         <div
@@ -202,9 +202,10 @@ function MentorPinned({ compact = false }: { compact?: boolean }) {
       </div>
       <h3
         className={
-          compact
-            ? "mt-2 text-[15px] font-semibold leading-[1.25] tracking-tight text-white line-clamp-2"
-            : "mt-4 font-serif text-[24px] leading-[1.15] tracking-tight text-white"
+          "font-serif tracking-tight text-white " +
+          (compact
+            ? "mt-2 text-[18px] leading-[1.2] line-clamp-2"
+            : "mt-4 text-[24px] leading-[1.15]")
         }
       >
         {post.title}
