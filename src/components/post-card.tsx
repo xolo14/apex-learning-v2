@@ -10,6 +10,7 @@ export function PostCard({ post }: { post: Post }) {
   const bucket = KIND_BUCKET[post.kind];
   const kindLabel = KIND_LABEL[post.kind];
   const avatarBg = avatarColor(post.unique_id || post.author);
+  const avatarSize = compact ? "h-7 w-7" : "h-9 w-9";
   return (
     <article
       className={
@@ -19,14 +20,11 @@ export function PostCard({ post }: { post: Post }) {
     >
       <header className={"flex items-center " + (compact ? "gap-2" : "gap-2.5")}>
         <span
-          className={
-            "grid shrink-0 place-items-center rounded-full text-white font-semibold " +
-            (compact ? "h-7 w-7 text-[10px]" : "h-9 w-9 text-[12px]")
-          }
+          className={"grid shrink-0 place-items-center overflow-hidden rounded-full " + avatarSize}
           style={{ backgroundColor: avatarBg }}
           aria-hidden
         >
-          {post.initials}
+          <DefaultAvatar />
         </span>
         <span className="flex min-w-0 flex-col leading-tight">
           <Link
@@ -139,4 +137,25 @@ function avatarColor(seed: string) {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
   return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
+}
+
+// Friendly default mascot avatar (Reddit snoo–style silhouette)
+function DefaultAvatar() {
+  return (
+    <svg viewBox="0 0 40 40" className="h-full w-full" aria-hidden>
+      {/* antenna */}
+      <line x1="20" y1="6" x2="20" y2="13" stroke="rgba(0,0,0,0.55)" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="20" cy="5.5" r="1.8" fill="rgba(0,0,0,0.55)" />
+      {/* head */}
+      <circle cx="20" cy="22" r="9" fill="rgba(0,0,0,0.55)" />
+      {/* ears */}
+      <circle cx="11.5" cy="20" r="2.2" fill="rgba(0,0,0,0.55)" />
+      <circle cx="28.5" cy="20" r="2.2" fill="rgba(0,0,0,0.55)" />
+      {/* eyes */}
+      <circle cx="17" cy="21" r="1.3" fill="#fff" />
+      <circle cx="23" cy="21" r="1.3" fill="#fff" />
+      {/* body */}
+      <path d="M11 30 Q20 36 29 30 L29 34 Q20 39 11 34 Z" fill="rgba(0,0,0,0.55)" />
+    </svg>
+  );
 }
