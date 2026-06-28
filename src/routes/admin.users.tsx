@@ -104,12 +104,12 @@ function AdminUsers() {
               </li>
             )}
             {users.map((u) => (
-              <li key={u.author} className="flex items-center gap-3 px-5 py-3">
+              <li key={u.unique_id} className="flex items-center gap-3 px-5 py-3">
                 <div className="grid h-9 w-9 place-items-center rounded-full bg-forest text-[12px] font-medium text-white">
-                  {u.initials}
+                  ID
                 </div>
                 <div className="flex-1">
-                  <p className="text-[13.5px] font-medium">{u.author}</p>
+                  <p className="text-[13.5px] font-medium font-mono">{u.unique_id}</p>
                   <p className="text-[11px] text-ink-muted">
                     Last post · {new Date(u.latest).toLocaleString()}
                   </p>
