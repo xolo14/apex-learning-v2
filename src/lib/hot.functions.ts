@@ -130,3 +130,20 @@ export const removeHotPin = createServerFn({ method: "POST" })
     await sql()`DELETE FROM hot_pins WHERE id = ${data.id}`;
     return { ok: true };
   });
+
+export const updateHotPin = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: number; title?: string; url?: string | null; source?: string }) => data)
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const title = data.title?.trim().slice(0, 200) ?? null;
+    const url = data.url === undefined ? null : data.url;
+    const source = data.source?.slice(0, 60) ?? null;
+    await sql()`
+      UPDATE hot_pins SET
+        title = COALESCE(${title}, title),
+        url = COALESCE(${url}, url),
+        source = COALESCE(${source}, source)
+      WHERE id = ${data.id}
+    `;
+    return { ok: true };
+  });
