@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -7,6 +8,7 @@ import {
   Share2,
   Bookmark,
   BadgeCheck,
+  Send,
 } from "lucide-react";
 import { MobileShell } from "@/components/mobile-shell";
 import { communityBySlug, posts } from "@/lib/feed-data";
