@@ -174,15 +174,19 @@ function Home() {
       {/* Section divider */}
       <div className={"flex items-center gap-3 " + (compact ? "mt-4 px-4" : "mt-8 px-5")}>
         <span className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
-          Questions & answers
+          {sort === "hot" ? "Hot right now" : sort === "new" ? "New questions" : "Questions & answers"}
         </span>
         <span className="h-px flex-1 bg-hairline" />
       </div>
 
       <div className={compact ? "mt-1" : "mt-2"}>
-        {feed.map((p) => (
-          <PostCard key={p.id} post={p} />
-        ))}
+        {sort === "hot" ? (
+          <HotFeed loading={hotQ.isLoading} error={hotQ.error} items={hotQ.data ?? []} compact={compact} />
+        ) : sort === "new" ? (
+          <NewFeed loading={newQ.isLoading} error={newQ.error} items={newQ.data ?? []} compact={compact} />
+        ) : (
+          feed.map((p) => <PostCard key={p.id} post={p} />)
+        )}
       </div>
 
       <div className="px-5 py-12 text-center">
@@ -193,4 +197,130 @@ function Home() {
       </div>
     </MobileShell>
   );
+}
+
+function HotFeed({
+  loading,
+  error,
+  items,
+  compact,
+}: {
+  loading: boolean;
+  error: unknown;
+  items: HotItem[];
+  compact: boolean;
+}) {
+  if (loading) return <Empty compact={compact}>Loading trending posts…</Empty>;
+  if (error) return <Empty compact={compact}>Couldn't reach trending source.</Empty>;
+  if (!items.length) return <Empty compact={compact}>Nothing trending right now.</Empty>;
+  return (
+    <ul>
+      {items.map((h) => (
+        <li
+          key={h.id}
+          className={
+            "border-b border-hairline " + (compact ? "px-4 py-3" : "px-5 py-4")
+          }
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className={
+                "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] " +
+                (h.bucket === "politics"
+                  ? "bg-foreground/[0.06] text-foreground"
+                  : h.bucket === "memes"
+                    ? "bg-orange/10 text-orange"
+                    : "bg-surface text-ink-muted")
+              }
+            >
+              {h.bucket}
+            </span>
+            <span className="text-[11px] text-ink-muted">{h.source}</span>
+          </div>
+          <a
+            href={h.url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 block font-semibold tracking-tight text-foreground"
+            style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
+          >
+            {h.title}
+          </a>
+          <p className="mt-1.5 text-[12px] text-ink-muted">
+            ▲ {h.score.toLocaleString()} · 💬 {h.comments.toLocaleString()}
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function NewFeed({
+  loading,
+  error,
+  items,
+  compact,
+}: {
+  loading: boolean;
+  error: unknown;
+  items: DbQuestion[];
+  compact: boolean;
+}) {
+  if (loading) return <Empty compact={compact}>Loading new questions…</Empty>;
+  if (error) return <Empty compact={compact}>Couldn't load new questions.</Empty>;
+  if (!items.length)
+    return (
+      <Empty compact={compact}>
+        No new questions yet. Be the first — tap “Ask” to post one.
+      </Empty>
+    );
+  return (
+    <ul>
+      {items.map((q) => (
+        <li
+          key={q.id}
+          className={"border-b border-hairline " + (compact ? "px-4 py-3" : "px-5 py-4")}
+        >
+          <div className="flex items-center gap-2">
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-[11px] font-medium text-white">
+              {q.initials}
+            </span>
+            <span className="text-[12px] text-foreground">{q.author}</span>
+            <span className="text-[11px] text-ink-muted">· c/{q.community_slug}</span>
+            <span className="ml-auto text-[11px] text-ink-muted">
+              {timeAgo(q.created_at)}
+            </span>
+          </div>
+          <h3
+            className="mt-2 font-semibold tracking-tight text-foreground"
+            style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
+          >
+            {q.title}
+          </h3>
+          {!compact && q.body && (
+            <p className="mt-1.5 line-clamp-3 text-[13.5px] leading-[1.5] text-ink-muted">
+              {q.body}
+            </p>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Empty({ children, compact }: { children: React.ReactNode; compact: boolean }) {
+  return (
+    <div className={(compact ? "px-4 py-8 " : "px-5 py-12 ") + "text-center text-[13px] text-ink-muted"}>
+      {children}
+    </div>
+  );
+}
+
+function timeAgo(iso: string) {
+  const d = new Date(iso).getTime();
+  const diff = Math.max(0, Date.now() - d) / 1000;
+  if (diff < 60) return `${Math.floor(diff)}s`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  return `${Math.floor(diff / 86400)}d`;
 }
