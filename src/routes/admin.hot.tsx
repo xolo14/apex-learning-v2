@@ -6,7 +6,7 @@ import { Plus, X, ExternalLink } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/admin/hot")({
-  component: AdminHot;
+  component: AdminHot,
 });
 
 function AdminHot() {
