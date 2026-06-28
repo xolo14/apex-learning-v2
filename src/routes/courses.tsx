@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Play, Clock } from "lucide-react";
+import { useState } from "react";
+import { Play, Clock, MapPin, Briefcase, GraduationCap, ArrowUpRight } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { communities } from "@/lib/feed-data";
 
 export const Route = createFileRoute("/courses")({
-  head: () => ({ meta: [{ title: "Courses — Syncpedia" }] }),
-  component: CoursesPage,
+  head: () => ({ meta: [{ title: "Internship — Syncpedia" }] }),
+  component: LearnPage,
 });
 
 const courses = [
@@ -15,45 +16,133 @@ const courses = [
   { title: "Adversarial Thinking for Defenders", mentor: "Marcus Vidal", community: "cybersec", lessons: 14, hours: "3h 50m" },
 ];
 
-function CoursesPage() {
+type Internship = {
+  role: string;
+  company: string;
+  community: string;
+  location: string;
+  mode: "Remote" | "Hybrid" | "On-site";
+  duration: string;
+  stipend: string;
+};
+
+const internships: Internship[] = [
+  { role: "ML Research Intern", company: "Northwind Labs", community: "ai", location: "Remote · Global", mode: "Remote", duration: "12 weeks", stipend: "$2,400 / mo" },
+  { role: "Product Design Intern", company: "Forma Studio", community: "uiux", location: "Berlin, DE", mode: "Hybrid", duration: "16 weeks", stipend: "€1,800 / mo" },
+  { role: "Quant Analyst Intern", company: "Halden Capital", community: "finance", location: "London, UK", mode: "On-site", duration: "10 weeks", stipend: "£2,200 / mo" },
+  { role: "Security Engineering Intern", company: "Aegis Defense", community: "cybersec", location: "Remote · EU/US", mode: "Remote", duration: "12 weeks", stipend: "$2,600 / mo" },
+];
+
+function LearnPage() {
+  const [tab, setTab] = useState<"courses" | "internship">("internship");
+
   return (
     <MobileShell>
-      <MobileHeader title="Courses" subtitle="Discovered inside your communities" />
+      <MobileHeader
+        title={tab === "courses" ? "Courses" : "Internship"}
+        subtitle={tab === "courses" ? "Discovered inside your communities" : "Apply through your communities"}
+      />
+
+      <div className="sticky top-[58px] z-30 border-b border-hairline bg-background/85 px-5 py-3 backdrop-blur-xl">
+        <div className="inline-flex w-full rounded-full border border-hairline bg-surface p-1">
+          <SegBtn active={tab === "courses"} onClick={() => setTab("courses")} icon={GraduationCap} label="Courses" />
+          <SegBtn active={tab === "internship"} onClick={() => setTab("internship")} icon={Briefcase} label="Internship" />
+        </div>
+      </div>
+
       <div className="px-5 pt-5">
-        {courses.map((c) => {
-          const community = communities.find((x) => x.slug === c.community);
-          return (
-            <article
-              key={c.title}
-              className="mb-3 overflow-hidden rounded-[20px] border border-hairline bg-background"
-            >
-              <div className="flex h-32 items-center justify-center bg-forest/95 text-white">
-                {community ? (
-                  <community.icon strokeWidth={1.5} className="h-12 w-12 opacity-90" />
-                ) : null}
-              </div>
-              <div className="p-4">
-                <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
-                  c/{c.community} · {c.mentor}
-                </div>
-                <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">
-                  {c.title}
-                </h3>
-                <div className="mt-3 flex items-center justify-between text-[12px] text-ink-muted">
-                  <span className="flex items-center gap-1.5">
-                    <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" />
-                    {c.lessons} lessons · {c.hours}
+        {tab === "courses"
+          ? courses.map((c) => {
+              const community = communities.find((x) => x.slug === c.community);
+              return (
+                <article key={c.title} className="mb-3 overflow-hidden rounded-[20px] border border-hairline bg-background">
+                  <div className="flex h-32 items-center justify-center bg-forest/95 text-white">
+                    {community ? <community.icon strokeWidth={1.5} className="h-12 w-12 opacity-90" /> : null}
+                  </div>
+                  <div className="p-4">
+                    <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
+                      c/{c.community} · {c.mentor}
+                    </div>
+                    <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{c.title}</h3>
+                    <div className="mt-3 flex items-center justify-between text-[12px] text-ink-muted">
+                      <span className="flex items-center gap-1.5">
+                        <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                        {c.lessons} lessons · {c.hours}
+                      </span>
+                      <button className="inline-flex items-center gap-1.5 rounded-full bg-orange px-3.5 py-1.5 text-[12px] font-medium text-white active:scale-95">
+                        <Play strokeWidth={2} className="h-[12px] w-[12px]" fill="currentColor" />
+                        Start
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          : internships.map((i) => (
+              <article key={i.role + i.company} className="mb-3 rounded-[20px] border border-hairline bg-background p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
+                      c/{i.community} · {i.mode}
+                    </div>
+                    <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{i.role}</h3>
+                    <p className="text-[13px] text-ink-muted">{i.company}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-[11px] font-medium text-foreground">
+                    {i.stipend}
                   </span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-ink-muted">
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                    {i.location}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                    {i.duration}
+                  </span>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <button className="text-[12px] font-medium text-ink-muted underline-offset-4 hover:underline">
+                    View details
+                  </button>
                   <button className="inline-flex items-center gap-1.5 rounded-full bg-orange px-3.5 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                    <Play strokeWidth={2} className="h-[12px] w-[12px]" fill="currentColor" />
-                    Start
+                    Apply
+                    <ArrowUpRight strokeWidth={2} className="h-[12px] w-[12px]" />
                   </button>
                 </div>
-              </div>
-            </article>
-          );
-        })}
+              </article>
+            ))}
       </div>
     </MobileShell>
+  );
+}
+
+function SegBtn({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: typeof Briefcase;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors " +
+        (active ? "bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "text-ink-muted")
+      }
+    >
+      <Icon strokeWidth={1.75} className="h-[14px] w-[14px]" />
+      {label}
+    </button>
   );
 }
