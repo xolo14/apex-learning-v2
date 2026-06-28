@@ -204,32 +204,30 @@ function SettingsPage() {
             </div>
           </div>
 
-          {/* Avatar styles — horizontal scroll, denser */}
-          <div className="mt-4 -mx-4 overflow-x-auto px-4 pb-1">
-            <div className="flex gap-2">
-              {AVATAR_STYLES.map((s) => {
-                const active = identity.icon === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => identity.setIcon(s.id)}
-                    aria-label={`Set avatar ${s.id}`}
-                    className={
-                      "shrink-0 rounded-xl border p-1 transition " +
-                      (active
-                        ? "border-foreground bg-foreground/5"
-                        : "border-hairline bg-background active:scale-95")
-                    }
-                  >
-                    <IdentityAvatar color={identity.color} icon={s.id} className="h-12 w-12" />
-                  </button>
-                );
-              })}
-            </div>
+          {/* Avatar styles — 8 × 2 grid, all visible */}
+          <div className="mt-4 grid grid-cols-8 gap-1.5">
+            {AVATAR_STYLES.map((s) => {
+              const active = identity.icon === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => identity.setIcon(s.id)}
+                  aria-label={`Set avatar ${s.id}`}
+                  className={
+                    "rounded-lg border p-0.5 transition " +
+                    (active
+                      ? "border-foreground bg-foreground/5"
+                      : "border-hairline bg-background active:scale-95")
+                  }
+                >
+                  <IdentityAvatar color={identity.color} icon={s.id} className="h-full w-full aspect-square" />
+                </button>
+              );
+            })}
           </div>
 
-          {/* Color row */}
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          {/* Colors — 6 × 2 grid, both rows equal */}
+          <div className="mt-3 grid grid-cols-6 gap-2 place-items-center">
             {AVATAR_COLORS.map((c) => {
               const active = identity.color === c;
               return (
@@ -239,7 +237,7 @@ function SettingsPage() {
                   aria-label={`Set color ${c}`}
                   style={{ backgroundColor: c }}
                   className={
-                    "h-6 w-6 rounded-full transition active:scale-90 " +
+                    "h-7 w-7 rounded-full transition active:scale-90 " +
                     (active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "")
                   }
                 />
