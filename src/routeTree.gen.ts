@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
@@ -25,6 +26,11 @@ import { Route as AdminHotRouteImport } from './routes/admin.hot'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/settings': typeof SettingsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/settings': typeof SettingsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/settings': typeof SettingsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/settings'
     | '/admin/communities'
     | '/admin/courses'
     | '/admin/hot'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/settings'
     | '/admin/communities'
     | '/admin/courses'
     | '/admin/hot'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/settings'
     | '/admin/communities'
     | '/admin/courses'
     | '/admin/hot'
@@ -212,12 +224,20 @@ export interface RootRouteChildren {
   CommunitiesRoute: typeof CommunitiesRoute
   CoursesRoute: typeof CoursesRoute
   ProfileRoute: typeof ProfileRoute
+  SettingsRoute: typeof SettingsRoute
   CSlugRoute: typeof CSlugRoute
   PIdRoute: typeof PIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -355,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunitiesRoute: CommunitiesRoute,
   CoursesRoute: CoursesRoute,
   ProfileRoute: ProfileRoute,
+  SettingsRoute: SettingsRoute,
   CSlugRoute: CSlugRoute,
   PIdRoute: PIdRoute,
 }
