@@ -1,8 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Users, Plus, Briefcase, User, type LucideIcon } from "lucide-react";
+import {
+  House,
+  Compass,
+  Plus,
+  GraduationCap,
+  CircleUserRound,
+  Rows3,
+  Rows2,
+  type LucideIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useDensity } from "@/lib/density";
-import { Rows3, Rows2 } from "lucide-react";
 
 export function MobileShell({ children }: { children: ReactNode }) {
   const { density } = useDensity();
@@ -41,11 +49,11 @@ export function DensityToggle() {
 type Tab = { to: string; label: string; icon: LucideIcon; primary?: boolean };
 
 const tabs: Tab[] = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/communities", label: "Communities", icon: Users },
+  { to: "/", label: "Home", icon: House },
+  { to: "/communities", label: "Explore", icon: Compass },
   { to: "/ask", label: "Ask", icon: Plus, primary: true },
-  { to: "/courses", label: "Internship", icon: Briefcase },
-  { to: "/profile", label: "Profile", icon: User },
+  { to: "/courses", label: "Intern", icon: GraduationCap },
+  { to: "/profile", label: "You", icon: CircleUserRound },
 ];
 
 function BottomTabs() {
@@ -77,8 +85,10 @@ function BottomTabs() {
               className="flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors"
             >
               <Icon
-                strokeWidth={active ? 2 : 1.75}
-                className={`h-[20px] w-[20px] transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
+                strokeWidth={active ? 2.25 : 1.75}
+                fill={active ? "currentColor" : "none"}
+                fillOpacity={active ? 0.08 : 0}
+                className={`h-[22px] w-[22px] transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
               />
               <span
                 className={`text-[10px] tracking-tight transition-colors ${active ? "font-medium text-foreground" : "text-ink-muted"}`}
