@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, Image as ImageIcon, Mic, Code2, FileText } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 
 export const Route = createFileRoute("/ask")({
@@ -40,16 +40,8 @@ function AskPage() {
       </div>
 
       <div className="fixed inset-x-0 bottom-24 z-40 mx-auto max-w-[480px] px-5">
-        <div className="flex items-center justify-between rounded-2xl border border-hairline bg-background/95 px-3 py-2 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-          {[ImageIcon, Mic, Code2, FileText].map((Icon, i) => (
-            <button
-              key={i}
-              className="grid h-10 w-10 place-items-center rounded-full text-ink-muted active:bg-surface"
-            >
-              <Icon strokeWidth={1.75} className="h-[18px] w-[18px]" />
-            </button>
-          ))}
-          <span className="ml-auto pr-2 text-[11px] text-ink-muted">Draft saved</span>
+        <div className="flex items-center justify-end rounded-2xl border border-hairline bg-background/95 px-4 py-2.5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+          <span className="text-[11px] text-ink-muted">Draft saved</span>
         </div>
       </div>
     </MobileShell>
