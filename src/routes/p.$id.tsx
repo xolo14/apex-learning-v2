@@ -81,9 +81,33 @@ const replies: Reply[] = [
   },
 ];
 
+const currentUser = {
+  author: "You",
+  initials: "YO",
+  role: "Student",
+  mentor: false,
+  time: "now",
+  votes: 0,
+};
+
 function PostPage() {
   const { post } = Route.useLoaderData();
   const community = communityBySlug(post.communitySlug);
+  const [replyText, setReplyText] = useState("");
+  const [messages, setMessages] = useState<Reply[]>(replies);
+
+  const canSend = replyText.trim().length > 0;
+
+  function sendReply() {
+    const text = replyText.trim();
+    if (!text) return;
+    setMessages((prev) => [
+      ...prev,
+      { ...currentUser, body: text, children: [] },
+    ]);
+    setReplyText("");
+  }
+
   return (
     <MobileShell>
       <header className="sticky top-0 z-40 border-b border-hairline bg-background/85 backdrop-blur-xl">
@@ -165,22 +189,36 @@ function PostPage() {
 
       <div className="px-5 pb-6 pt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[14px] font-medium text-foreground">{post.comments} messages</h2>
+          <h2 className="text-[14px] font-medium text-foreground">{messages.length} messages</h2>
           <button className="text-[12px] text-ink-muted">Newest ▾</button>
         </div>
         <ul className="mt-4 space-y-4">
-          {flattenReplies(replies).map((r, i) => (
+          {flattenReplies(messages).map((r, i) => (
             <ChatBubble key={i} reply={r} />
           ))}
         </ul>
       </div>
 
       <div className="fixed inset-x-0 bottom-24 z-40 mx-auto max-w-[480px] px-4">
-        <div className="rounded-2xl border border-hairline bg-background/95 px-4 py-2.5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+        <div className="flex items-center gap-2 rounded-2xl border border-hairline bg-background/95 px-4 py-2 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
           <input
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && canSend) sendReply();
+            }}
             placeholder="Add a reply…"
-            className="h-9 w-full bg-transparent text-[14px] placeholder:text-ink-muted focus:outline-none"
+            className="h-9 flex-1 bg-transparent text-[14px] placeholder:text-ink-muted focus:outline-none"
           />
+          {canSend ? (
+            <button
+              aria-label="Send"
+              onClick={sendReply}
+              className="grid h-9 w-9 place-items-center rounded-full bg-forest text-white"
+            >
+              <Send strokeWidth={2} className="h-[16px] w-[16px]" />
+            </button>
+          ) : null}
         </div>
       </div>
     </MobileShell>
