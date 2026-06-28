@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "fe0acfa7-48bf-4842-bd68-d299d618738a",
-  "project_id": "44e9f58b-cac8-450f-9fe0-79f49e79144c",
-  "url": "/__l5e/assets-v1/fe0acfa7-48bf-4842-bd68-d299d618738a/syncpedia-logo.jpg",
-  "r2_key": "a/v1/44e9f58b-cac8-450f-9fe0-79f49e79144c/fe0acfa7-48bf-4842-bd68-d299d618738a/syncpedia-logo.jpg",
-  "original_filename": "syncpedia-logo.jpg",
-  "size": 410423,
   "content_type": "image/jpeg",
-  "created_at": "2026-06-28T11:52:14Z"
+  "created_at": "2026-06-28T11:52:14Z",
+  "original_filename": "syncpedia-logo.jpg",
+  "project_id": "8f2eb923-f9a3-43f2-94bd-f809a4256e87",
+  "r2_key": "a/v1/8f2eb923-f9a3-43f2-94bd-f809a4256e87/fe0acfa7-48bf-4842-bd68-d299d618738a/syncpedia-logo.jpg",
+  "size": 410423,
+  "url": "/__l5e/assets-v1/fe0acfa7-48bf-4842-bd68-d299d618738a/syncpedia-logo.jpg",
+  "version": 1
 }
