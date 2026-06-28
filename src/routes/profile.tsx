@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
 import { posts } from "@/lib/feed-data";
+import { useIdentity, IdentityAvatar } from "@/lib/identity";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Syncpedia" }] }),
@@ -14,6 +15,7 @@ const tabs = ["Posts", "Replies", "Bookmarks", "Communities"] as const;
 
 function ProfilePage() {
   const [tab, setTab] = useState<(typeof tabs)[number]>("Posts");
+  const identity = useIdentity();
   return (
     <MobileShell>
       <MobileHeader
@@ -30,9 +32,7 @@ function ProfilePage() {
       />
       <section className="px-5 pt-5">
         <div className="flex items-center gap-4">
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-forest text-[18px] font-medium text-white">
-            AL
-          </div>
+          <IdentityAvatar color={identity.color} icon={identity.icon} className="h-16 w-16 text-[32px]" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-[18px] font-semibold tracking-tight text-foreground">
@@ -40,7 +40,9 @@ function ProfilePage() {
               </span>
               <BadgeCheck strokeWidth={2} className="h-4 w-4 text-forest" />
             </div>
-            <div className="text-[12px] text-ink-muted">Joined March 2026 · Berlin</div>
+            <div className="text-[12px] text-ink-muted">
+              {identity.uniqueId ?? "SP-XXXXXX"} · Joined March 2026
+            </div>
           </div>
         </div>
         <p className="mt-4 text-[14px] leading-[1.55] text-foreground">
