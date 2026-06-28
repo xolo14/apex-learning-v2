@@ -30,6 +30,8 @@ export function OnboardingGate() {
     college: "",
     role: "student" as "student" | "professional",
     company: "",
+    branch: "B.Tech",
+    department: "",
   });
 
   const fetchProfile = useServerFn(getProfileByDevice);
@@ -121,6 +123,8 @@ export function OnboardingGate() {
               role: "student" as const,
               year: form.year,
               college: form.college,
+              branch: form.branch,
+              department: form.department,
             };
       const p = await submitProfile({ data: payload });
       localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
@@ -191,6 +195,7 @@ export function OnboardingGate() {
               </select>
             </Field>
             {form.role === "student" ? (
+              <>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Year">
                   <select
@@ -214,6 +219,39 @@ export function OnboardingGate() {
               />
                 </Field>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Branch">
+                  <select
+                    value={form.branch}
+                    onChange={(e) => update("branch", e.target.value)}
+                    className="input"
+                  >
+                    <option>B.Tech</option>
+                    <option>M.Tech</option>
+                    <option>BBA</option>
+                    <option>MBA</option>
+                    <option>B.Com</option>
+                    <option>M.Com</option>
+                    <option>BCA</option>
+                    <option>MCA</option>
+                    <option>B.Sc</option>
+                    <option>M.Sc</option>
+                    <option>Arts</option>
+                    <option>Diploma</option>
+                    <option>PhD</option>
+                    <option>Other</option>
+                  </select>
+                </Field>
+                <Field label="Department">
+                  <input
+                    placeholder="e.g. CSE, ECE, Marketing"
+                    value={form.department}
+                    onChange={(e) => update("department", e.target.value)}
+                    className="input"
+                  />
+                </Field>
+              </div>
+              </>
             ) : (
               <Field label="Company">
                 <input
