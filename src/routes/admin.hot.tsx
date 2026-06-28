@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listHot, listHotPins, addHotPin, removeHotPin } from "@/lib/hot.functions";
-import { Plus, X, ExternalLink } from "lucide-react";
+import { listHot, listHotPins, addHotPin, removeHotPin, updateHotPin } from "@/lib/hot.functions";
+import { Plus, X, ExternalLink, Pencil, Check } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/admin/hot")({
@@ -15,6 +15,7 @@ function AdminHot() {
   const fPins = useServerFn(listHotPins);
   const fAdd = useServerFn(addHotPin);
   const fRm = useServerFn(removeHotPin);
+  const fUpd = useServerFn(updateHotPin);
 
   const hot = useQuery({
     queryKey: ["admin", "hot"],
@@ -42,6 +43,18 @@ function AdminHot() {
       qc.invalidateQueries({ queryKey: ["admin", "hot"] });
     },
   });
+  const updM = useMutation({
+    mutationFn: (vars: { id: number; title?: string; url?: string | null; source?: string }) =>
+      fUpd({ data: vars }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "hot", "pins"] });
+      qc.invalidateQueries({ queryKey: ["admin", "hot"] });
+    },
+  });
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editSource, setEditSource] = useState("");
 
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
