@@ -13,9 +13,14 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
 import { Route as AskRouteImport } from './routes/ask'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as PIdRouteImport } from './routes/p.$id'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminPostsRouteImport } from './routes/admin.posts'
+import { Route as AdminHotRouteImport } from './routes/admin.hot'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -37,10 +42,20 @@ const AskRoute = AskRouteImport.update({
   path: '/ask',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const PIdRoute = PIdRouteImport.update({
   id: '/p/$id',
@@ -52,15 +67,35 @@ const CSlugRoute = CSlugRouteImport.update({
   path: '/c/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPostsRoute = AdminPostsRouteImport.update({
+  id: '/posts',
+  path: '/posts',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminHotRoute = AdminHotRouteImport.update({
+  id: '/hot',
+  path: '/hot',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/hot': typeof AdminHotRoute
+  '/admin/posts': typeof AdminPostsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
   '/p/$id': typeof PIdRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,29 +103,43 @@ export interface FileRoutesByTo {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/hot': typeof AdminHotRoute
+  '/admin/posts': typeof AdminPostsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
   '/p/$id': typeof PIdRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/profile': typeof ProfileRoute
+  '/admin/hot': typeof AdminHotRoute
+  '/admin/posts': typeof AdminPostsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
   '/p/$id': typeof PIdRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/ask'
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/hot'
+    | '/admin/posts'
+    | '/admin/users'
     | '/c/$slug'
     | '/p/$id'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,21 +147,31 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/hot'
+    | '/admin/posts'
+    | '/admin/users'
     | '/c/$slug'
     | '/p/$id'
+    | '/admin'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/ask'
     | '/communities'
     | '/courses'
     | '/profile'
+    | '/admin/hot'
+    | '/admin/posts'
+    | '/admin/users'
     | '/c/$slug'
     | '/p/$id'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AskRoute: typeof AskRoute
   CommunitiesRoute: typeof CommunitiesRoute
   CoursesRoute: typeof CoursesRoute
@@ -151,12 +210,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AskRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/p/$id': {
       id: '/p/$id'
@@ -172,11 +245,49 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/posts': {
+      id: '/admin/posts'
+      path: '/posts'
+      fullPath: '/admin/posts'
+      preLoaderRoute: typeof AdminPostsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/hot': {
+      id: '/admin/hot'
+      path: '/hot'
+      fullPath: '/admin/hot'
+      preLoaderRoute: typeof AdminHotRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminHotRoute: typeof AdminHotRoute
+  AdminPostsRoute: typeof AdminPostsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminHotRoute: AdminHotRoute,
+  AdminPostsRoute: AdminPostsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AskRoute: AskRoute,
   CommunitiesRoute: CommunitiesRoute,
   CoursesRoute: CoursesRoute,
