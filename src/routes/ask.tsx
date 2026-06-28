@@ -60,17 +60,10 @@ function AskPage() {
         }
       />
       <div className="px-5 pt-5">
-        <input
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          placeholder="Your name"
-          className="w-full rounded-2xl border border-hairline bg-background px-4 py-3 text-[14px] focus:outline-none"
-        />
-
         <button
           type="button"
           onClick={() => setPickerOpen((v) => !v)}
-          className="mt-3 flex w-full items-center justify-between rounded-2xl border border-hairline bg-background px-4 py-3 text-left"
+          className="flex w-full items-center justify-between rounded-2xl border border-hairline bg-background px-4 py-3 text-left"
         >
           <span className="text-[13px] text-ink-muted">Community</span>
           <span className="flex items-center gap-1 text-[14px] font-medium text-foreground">
