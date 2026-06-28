@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Settings, BadgeCheck } from "lucide-react";
 import { useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
@@ -19,9 +19,13 @@ function ProfilePage() {
       <MobileHeader
         title="Profile"
         right={
-          <button aria-label="Settings" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground">
+          <Link
+            to="/settings"
+            aria-label="Settings"
+            className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95"
+          >
             <Settings strokeWidth={1.75} className="h-[18px] w-[18px]" />
-          </button>
+          </Link>
         }
       />
       <section className="px-5 pt-5">

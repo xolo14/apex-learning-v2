@@ -106,20 +106,25 @@ function BottomTabs() {
 export function MobileHeader({
   title,
   subtitle,
+  left,
   right,
 }: {
   title: string;
   subtitle?: string;
+  left?: ReactNode;
   right?: ReactNode;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-hairline bg-background/85 backdrop-blur-xl">
       <div className="flex items-center justify-between px-5 pb-3 pt-[max(env(safe-area-inset-top),14px)]">
-        <div className="min-w-0">
-          <h1 className="truncate text-[20px] font-semibold tracking-tight text-foreground">{title}</h1>
-          {subtitle ? (
-            <p className="truncate text-[12px] text-ink-muted">{subtitle}</p>
-          ) : null}
+        <div className="flex min-w-0 items-center gap-2">
+          {left}
+          <div className="min-w-0">
+            <h1 className="truncate text-[20px] font-semibold tracking-tight text-foreground">{title}</h1>
+            {subtitle ? (
+              <p className="truncate text-[12px] text-ink-muted">{subtitle}</p>
+            ) : null}
+          </div>
         </div>
         {right ? <div className="flex items-center gap-1.5">{right}</div> : null}
       </div>
