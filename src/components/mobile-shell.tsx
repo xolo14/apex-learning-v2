@@ -1,18 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Users, Plus, GraduationCap, User, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { DensityProvider, useDensity } from "@/lib/density";
+import { useDensity } from "@/lib/density";
 import { Rows3, Rows2 } from "lucide-react";
 
 export function MobileShell({ children }: { children: ReactNode }) {
-  return (
-    <DensityProvider>
-      <ShellInner>{children}</ShellInner>
-    </DensityProvider>
-  );
-}
-
-function ShellInner({ children }: { children: ReactNode }) {
   const { density } = useDensity();
   return (
     <div
