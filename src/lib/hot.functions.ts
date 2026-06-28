@@ -53,20 +53,38 @@ async function fetchSub(sub: string, bucket: HotItem["bucket"], limit = 10): Pro
 }
 
 export const listHot = createServerFn({ method: "GET" }).handler(async () => {
-  const [education, politics, memes, pinsRaw] = await Promise.all([
-    Promise.all([
-      fetchSub("education", "education", 8),
-      fetchSub("teachers", "education", 6),
-      fetchSub("GetStudying", "education", 4),
-    ]).then((g) => g.flat()),
-    Promise.all([
-      fetchSub("EducationPolitics", "politics", 6),
-      fetchSub("highereducation", "politics", 5),
-    ]).then((g) => g.flat()),
-    Promise.all([
-      fetchSub("teachermemes", "memes", 6),
-      fetchSub("studentlife", "memes", 5),
-    ]).then((g) => g.flat()),
+  // Refresh world-news cache in the background if stale; never block the response on it.
+  (async () => {
+    try {
+      const { refreshIfStale } = await import("./hot-refresh.server");
+      await refreshIfStale(6);
+    } catch {}
+  })();
+
+  const [cacheRaw, pinsRaw] = await Promise.all([
+    (async () => {
+      try {
+        const { sql } = await import("./db.server");
+        return (await sql()`
+          SELECT id::text, title, url, image_url, source, source_country, category,
+                 extract(epoch from published_at)*1000 AS published
+          FROM hot_cache
+          ORDER BY published_at DESC
+          LIMIT 80
+        `) as {
+          id: string;
+          title: string;
+          url: string;
+          image_url: string | null;
+          source: string | null;
+          source_country: string | null;
+          category: string | null;
+          published: number;
+        }[];
+      } catch {
+        return [];
+      }
+    })(),
     (async () => {
       try {
         const { sql } = await import("./db.server");
@@ -109,9 +127,34 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
     };
   });
 
-  const all = [...pins, ...education, ...politics, ...memes];
-  all.sort((a, b) => b.score - a.score);
-  return all.slice(0, 40);
+  const live: HotItem[] = cacheRaw.map((c) => {
+    const cat = (c.category || "").toLowerCase();
+    const bucket: HotItem["bucket"] =
+      cat === "politics" ? "politics" :
+      cat === "memes" ? "memes" :
+      cat === "tech" ? "tech" :
+      "education";
+    return {
+      id: `live_${c.id}`,
+      title: c.title,
+      url: c.url,
+      source: c.source ? c.source.replace(/^www\./, "") : "news",
+      bucket,
+      score: 0,
+      comments: 0,
+      thumbnail: c.image_url,
+      imageUrl: c.image_url,
+      summary: c.source_country ? `From ${c.source_country}` : null,
+      pinned: false,
+      createdAt: c.published,
+    };
+  });
+
+  // Pins first (newest-pinned first), then live news newest-first.
+  pins.sort((a, b) => b.createdAt - a.createdAt);
+  live.sort((a, b) => b.createdAt - a.createdAt);
+  const merged = [...pins, ...live];
+  return merged.slice(0, 60);
 });
 
 export const listHotPins = createServerFn({ method: "GET" }).handler(async () => {
