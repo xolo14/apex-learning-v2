@@ -236,13 +236,35 @@ function HotFeed({
                   ? "bg-foreground/[0.06] text-foreground"
                   : h.bucket === "memes"
                     ? "bg-orange/10 text-orange"
-                    : "bg-surface text-ink-muted")
+                    : h.bucket === "tech"
+                      ? "bg-forest/10 text-forest"
+                      : "bg-surface text-ink-muted")
               }
             >
               {h.bucket}
             </span>
             <span className="text-[11px] text-ink-muted">{h.source}</span>
+            {h.pinned ? (
+              <span className="ml-auto rounded-full bg-orange/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-orange">
+                Featured
+              </span>
+            ) : null}
           </div>
+          {h.imageUrl ? (
+            <a
+              href={h.url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 block overflow-hidden rounded-2xl bg-surface"
+            >
+              <img
+                src={h.imageUrl}
+                alt={h.title}
+                loading="lazy"
+                className="aspect-[16/9] w-full object-cover"
+              />
+            </a>
+          ) : null}
           <a
             href={h.url}
             target="_blank"
@@ -252,6 +274,16 @@ function HotFeed({
           >
             {h.title}
           </a>
+          {h.summary ? (
+            <p
+              className={
+                "mt-1.5 text-ink-muted " +
+                (compact ? "line-clamp-2 text-[12.5px] leading-[1.45]" : "line-clamp-3 text-[13.5px] leading-[1.5]")
+              }
+            >
+              {h.summary}
+            </p>
+          ) : null}
           <p className="mt-1.5 text-[12px] text-ink-muted">
             ▲ {h.score.toLocaleString()} · 💬 {h.comments.toLocaleString()}
           </p>
