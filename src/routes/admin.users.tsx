@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAllQuestions } from "@/lib/questions.functions";
+import { listProfiles } from "@/lib/profiles.functions";
 import { communities } from "@/lib/feed-data";
 
 export const Route = createFileRoute("/admin/users")({
@@ -11,6 +12,11 @@ export const Route = createFileRoute("/admin/users")({
 function AdminUsers() {
   const list = useServerFn(listAllQuestions);
   const q = useQuery({ queryKey: ["admin", "posts"], queryFn: () => list() });
+
+  const listP = useServerFn(listProfiles);
+  const profilesQ = useQuery({ queryKey: ["admin", "profiles"], queryFn: () => listP() });
+  const profiles = profilesQ.data ?? [];
+  const mentors = profiles.filter((p) => p.role === "mentor");
 
   const userMap = new Map<string, { author: string; initials: string; count: number; latest: string }>();
   for (const row of q.data ?? []) {
@@ -39,6 +45,53 @@ function AdminUsers() {
       </header>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section className="rounded-2xl border border-hairline lg:col-span-2">
+          <header className="flex items-center justify-between border-b border-hairline px-5 py-3">
+            <h2 className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
+              Onboarded profiles ({profiles.length}) · {mentors.length} mentors
+            </h2>
+          </header>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-[13px]">
+              <thead className="text-left text-[11px] uppercase tracking-[0.14em] text-ink-muted">
+                <tr className="border-b border-hairline">
+                  <th className="px-5 py-2 font-medium">Name</th>
+                  <th className="px-5 py-2 font-medium">Role</th>
+                  <th className="px-5 py-2 font-medium">Mentor ID</th>
+                  <th className="px-5 py-2 font-medium">Mobile</th>
+                  <th className="px-5 py-2 font-medium">Gmail</th>
+                  <th className="px-5 py-2 font-medium">Year</th>
+                  <th className="px-5 py-2 font-medium">College</th>
+                  <th className="px-5 py-2 font-medium">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profiles.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-5 py-6 text-ink-muted">
+                      {profilesQ.isLoading ? "Loading…" : "No profiles yet."}
+                    </td>
+                  </tr>
+                )}
+                {profiles.map((p) => (
+                  <tr key={p.id} className="border-b border-hairline last:border-0">
+                    <td className="px-5 py-2 font-medium">{p.name}</td>
+                    <td className="px-5 py-2 capitalize">{p.role}</td>
+                    <td className="px-5 py-2 font-mono text-[12px]">{p.mentor_id ?? "—"}</td>
+                    <td className="px-5 py-2 tabular-nums">{p.mobile}</td>
+                    <td className="px-5 py-2">{p.gmail}</td>
+                    <td className="px-5 py-2">{p.year}</td>
+                    <td className="px-5 py-2">{p.college}</td>
+                    <td className="px-5 py-2 text-ink-muted">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section className="rounded-2xl border border-hairline">
           <header className="border-b border-hairline px-5 py-3">
             <h2 className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">

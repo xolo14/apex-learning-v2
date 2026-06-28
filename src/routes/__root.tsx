@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DensityProvider } from "@/lib/density";
+import { OnboardingGate } from "@/components/onboarding-gate";
 
 function NotFoundComponent() {
   return (
@@ -128,6 +129,7 @@ function RootComponent() {
       <DensityProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <OnboardingGate />
       </DensityProvider>
     </QueryClientProvider>
   );
