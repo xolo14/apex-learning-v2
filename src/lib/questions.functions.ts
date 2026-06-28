@@ -116,6 +116,50 @@ export const deleteQuestion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const votePost = createServerFn({ method: "POST" })
+  .inputValidator((d: { postId: string; deviceKey: string; value: -1 | 0 | 1 }) => {
+    if (!d.postId) throw new Error("postId required");
+    if (!d.deviceKey) throw new Error("deviceKey required");
+    if (![-1, 0, 1].includes(d.value)) throw new Error("invalid value");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const existing = (await sql()`
+      SELECT value FROM post_votes
+      WHERE post_id = ${data.postId} AND device_key = ${data.deviceKey}
+      LIMIT 1
+    `) as { value: number }[];
+    const oldValue = existing[0]?.value ?? 0;
+    const newValue = oldValue === data.value ? 0 : data.value;
+    const delta = newValue - oldValue;
+    if (delta !== 0) {
+      await sql()`
+        INSERT INTO post_votes (post_id, device_key, value, updated_at)
+        VALUES (${data.postId}, ${data.deviceKey}, ${newValue}, now())
+        ON CONFLICT (post_id, device_key)
+        DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+      `;
+      await sql()`UPDATE questions SET votes = votes + ${delta} WHERE id = ${data.postId}`;
+    }
+    const rows = (await sql()`SELECT votes FROM questions WHERE id = ${data.postId} LIMIT 1`) as { votes: number }[];
+    return { value: newValue, votes: rows[0]?.votes ?? 0 };
+  });
+
+export const getMyVotes = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string; postIds: string[] }) => d)
+  .handler(async ({ data }) => {
+    if (!data.deviceKey || data.postIds.length === 0) return {} as Record<string, number>;
+    const { sql } = await import("./db.server");
+    const rows = (await sql()`
+      SELECT post_id, value FROM post_votes
+      WHERE device_key = ${data.deviceKey} AND post_id = ANY(${data.postIds})
+    `) as { post_id: string; value: number }[];
+    const map: Record<string, number> = {};
+    for (const r of rows) map[r.post_id] = r.value;
+    return map;
+  });
+
 export const updateQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: {
     id: string;

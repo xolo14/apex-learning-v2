@@ -127,7 +127,7 @@ function ProfilePage() {
         </div>
         <div className="mt-5 flex items-center gap-6 text-[13px]">
           <Stat n={String(mapped.length)} l="Posts" />
-          <Stat n={String(mapped.reduce((s, p) => s + p.votes, 0))} l="Karma" />
+          <Stat n={String(mapped.reduce((s, p) => s + p.votes, 0))} l="Merit" />
           <Stat n={String(mapped.reduce((s, p) => s + p.comments, 0))} l="Replies" />
         </div>
 
