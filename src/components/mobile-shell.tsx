@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Users, Plus, GraduationCap, User, type LucideIcon } from "lucide-react";
+import { Home, Users, Plus, Briefcase, User, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useDensity } from "@/lib/density";
 import { Rows3, Rows2 } from "lucide-react";
@@ -44,7 +44,7 @@ const tabs: Tab[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/communities", label: "Communities", icon: Users },
   { to: "/ask", label: "Ask", icon: Plus, primary: true },
-  { to: "/courses", label: "Courses", icon: GraduationCap },
+  { to: "/courses", label: "Internship", icon: Briefcase },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
