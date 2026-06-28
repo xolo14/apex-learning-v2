@@ -22,7 +22,12 @@ function AdminPosts() {
   const hide = useServerFn(setQuestionHidden);
   const del = useServerFn(deleteQuestion);
 
-  const q = useQuery({ queryKey: ["admin", "posts"], queryFn: () => list() });
+  const q = useQuery({
+    queryKey: ["admin", "posts"],
+    queryFn: () => list(),
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: true,
+  });
   const updateFn = useServerFn(updateQuestion);
   const updateM = useMutation({
     mutationFn: (vars: Parameters<typeof updateQuestion>[0]["data"]) =>
