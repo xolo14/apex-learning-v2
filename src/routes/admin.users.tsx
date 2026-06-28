@@ -54,9 +54,8 @@ function AdminUsers() {
             <table className="min-w-full text-[13px]">
               <thead className="text-left text-[11px] uppercase tracking-[0.14em] text-ink-muted">
                 <tr className="border-b border-hairline">
-                  <th className="px-5 py-2 font-medium">Name</th>
-                  <th className="px-5 py-2 font-medium">Role</th>
                   <th className="px-5 py-2 font-medium">Unique ID</th>
+                  <th className="px-5 py-2 font-medium">Role</th>
                   <th className="px-5 py-2 font-medium">Mobile</th>
                   <th className="px-5 py-2 font-medium">Gmail</th>
                   <th className="px-5 py-2 font-medium">Year / Company</th>
