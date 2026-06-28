@@ -40,13 +40,17 @@ function Home() {
     queryKey: ["feed", "hot"],
     queryFn: () => fHot(),
     enabled: sort === "hot",
-    staleTime: 60_000,
+    staleTime: 30_000,
+    refetchInterval: sort === "hot" ? 30_000 : false,
+    refetchOnWindowFocus: true,
   });
   const newQ = useQuery({
     queryKey: ["feed", "new"],
     queryFn: () => fNew(),
     enabled: sort === "new",
-    staleTime: 15_000,
+    staleTime: 10_000,
+    refetchInterval: sort === "new" ? 10_000 : false,
+    refetchOnWindowFocus: true,
   });
   return (
     <MobileShell>

@@ -93,6 +93,41 @@ export const deleteQuestion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateQuestion = createServerFn({ method: "POST" })
+  .inputValidator((data: {
+    id: string;
+    author?: string;
+    communitySlug?: string;
+    title?: string;
+    body?: string;
+    tag?: string | null;
+  }) => {
+    if (!data.id) throw new Error("id required");
+    return data;
+  })
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const author = data.author?.slice(0, 80) ?? null;
+    const initials = author
+      ? author.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("") || "??"
+      : null;
+    const community = data.communitySlug?.slice(0, 40) ?? null;
+    const title = data.title?.trim().slice(0, 200) ?? null;
+    const body = data.body?.slice(0, 4000) ?? null;
+    const tag = data.tag === undefined ? null : data.tag;
+    await sql()`
+      UPDATE questions SET
+        author = COALESCE(${author}, author),
+        initials = COALESCE(${initials}, initials),
+        community_slug = COALESCE(${community}, community_slug),
+        title = COALESCE(${title}, title),
+        body = COALESCE(${body}, body),
+        tag = COALESCE(${tag}, tag)
+      WHERE id = ${data.id}
+    `;
+    return { ok: true };
+  });
+
 export const adminStats = createServerFn({ method: "GET" }).handler(async () => {
   const { sql } = await import("./db.server");
   const [q] = (await sql()`SELECT count(*)::int AS c FROM questions`) as { c: number }[];
