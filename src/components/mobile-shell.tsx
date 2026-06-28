@@ -1,13 +1,48 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Users, Plus, GraduationCap, User, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { DensityProvider, useDensity } from "@/lib/density";
+import { Rows3, Rows2 } from "lucide-react";
 
 export function MobileShell({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto min-h-screen max-w-[480px] bg-background text-foreground">
+    <DensityProvider>
+      <ShellInner>{children}</ShellInner>
+    </DensityProvider>
+  );
+}
+
+function ShellInner({ children }: { children: ReactNode }) {
+  const { density } = useDensity();
+  return (
+    <div
+      data-density={density}
+      className="mx-auto min-h-screen max-w-[480px] bg-background text-foreground"
+    >
       <div className="pb-28">{children}</div>
       <BottomTabs />
     </div>
+  );
+}
+
+export function DensityToggle() {
+  const { density, toggle } = useDensity();
+  const compact = density === "compact";
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={`Switch to ${compact ? "airy" : "compact"} density`}
+      aria-pressed={compact}
+      title={compact ? "Compact · tap for Airy" : "Airy · tap for Compact"}
+      className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95"
+    >
+      {compact ? (
+        <Rows3 strokeWidth={1.75} className="h-[18px] w-[18px]" />
+      ) : (
+        <Rows2 strokeWidth={1.75} className="h-[18px] w-[18px]" />
+      )}
+    </button>
   );
 }
 
