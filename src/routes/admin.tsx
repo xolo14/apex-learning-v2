@@ -60,7 +60,7 @@ function AdminLayout() {
                     : "text-foreground hover:bg-surface")
                 }
               >
-                <item.icon strokeWidth={1.75} className="h-[16px] w-[16px]" />
+                <item.icon className="h-[16px] w-[16px]" />
                 {item.label}
               </Link>
             );
