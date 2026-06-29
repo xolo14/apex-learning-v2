@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Sparkles,
+  Gem,
   ChevronLeft,
-  Coins,
+  BadgeDollarSign,
   Trophy,
   Clock,
   Wallet,
