@@ -3,7 +3,7 @@ import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Coi
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { MobileShell, DensityToggle } from "@/components/mobile-shell";
+import { MobileShell } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
 import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
@@ -71,7 +71,6 @@ function Home() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <DensityToggle />
             <button aria-label="Search" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
               <Search strokeWidth={1.75} className="h-[18px] w-[18px]" />
             </button>
