@@ -23,7 +23,27 @@ export function MobileShell({ children }: { children: ReactNode }) {
       className="mx-auto min-h-screen max-w-[480px] bg-background text-foreground"
     >
       <div className="pb-28">{children}</div>
+      <AskFab />
       <BottomTabs />
+    </div>
+  );
+}
+
+function AskFab() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname.startsWith("/ask")) return null;
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-40 mx-auto max-w-[480px] px-5">
+      <div className="flex justify-end pb-[max(env(safe-area-inset-bottom),0px)]">
+        <Link
+          to="/ask"
+          aria-label="Ask"
+          className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-orange px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_28px_-8px_rgba(255,106,19,0.6)] transition-transform active:scale-95"
+        >
+          <Plus strokeWidth={2.25} className="h-[18px] w-[18px]" />
+          Ask
+        </Link>
+      </div>
     </div>
   );
 }
