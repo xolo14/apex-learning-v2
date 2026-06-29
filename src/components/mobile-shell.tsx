@@ -91,16 +91,16 @@ function BottomTabs() {
             <Link
               key={to}
               to={to}
-              className="flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors"
+              className={`flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors ${active ? "bg-foreground/[0.06]" : ""}`}
             >
               <Icon
-                strokeWidth={active ? 2.25 : 1.75}
+                strokeWidth={active ? 2.5 : 1.75}
                 fill={active ? "currentColor" : "none"}
-                fillOpacity={active ? 0.08 : 0}
-                className={`h-[22px] w-[22px] transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
+                fillOpacity={active ? 0.18 : 0}
+                className={`h-6 w-6 transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
               />
               <span
-                className={`text-[10px] tracking-tight transition-colors ${active ? "font-medium text-foreground" : "text-ink-muted"}`}
+                className={`text-[10px] tracking-tight transition-colors ${active ? "font-semibold text-foreground" : "text-ink-muted"}`}
               >
                 {label}
               </span>
