@@ -2,13 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 
 export type FeatureFlags = {
   earnings: boolean;
+  withdraw: boolean;
 };
 
 export const DEFAULT_FLAGS: FeatureFlags = {
   earnings: true,
+  withdraw: false,
 };
 
-const KNOWN_KEYS: (keyof FeatureFlags)[] = ["earnings"];
+const KNOWN_KEYS: (keyof FeatureFlags)[] = ["earnings", "withdraw"];
 
 export const getFeatureFlags = createServerFn({ method: "GET" }).handler(
   async (): Promise<FeatureFlags> => {
