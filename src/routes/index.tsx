@@ -313,72 +313,10 @@ function HotFeed({
   );
 }
 
-function NewFeed({
-  loading,
-  error,
-  items,
-  compact,
-}: {
-  loading: boolean;
-  error: unknown;
-  items: DbQuestion[];
-  compact: boolean;
-}) {
-  if (loading) return <Empty compact={compact}>Loading new questions…</Empty>;
-  if (error) return <Empty compact={compact}>Couldn't load new questions.</Empty>;
-  if (!items.length)
-    return (
-      <Empty compact={compact}>
-        No new questions yet. Be the first — tap “Ask” to post one.
-      </Empty>
-    );
-  return (
-    <ul>
-      {items.map((q) => (
-        <li
-          key={q.id}
-          className={"border-b border-hairline " + (compact ? "px-4 py-3" : "px-5 py-4")}
-        >
-          <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-[11px] font-medium text-white">
-              ID
-            </span>
-            <span className="text-[12px] text-foreground">{q.unique_id}</span>
-            <span className="text-[11px] text-ink-muted">· c/{q.community_slug}</span>
-            <span className="ml-auto text-[11px] text-ink-muted">
-              {timeAgo(q.created_at)}
-            </span>
-          </div>
-          <h3
-            className="mt-2 font-semibold tracking-tight text-foreground"
-            style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
-          >
-            {q.title}
-          </h3>
-          {!compact && q.body && (
-            <p className="mt-1.5 line-clamp-3 text-[13.5px] leading-[1.5] text-ink-muted">
-              {q.body}
-            </p>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function Empty({ children, compact }: { children: React.ReactNode; compact: boolean }) {
   return (
     <div className={(compact ? "px-4 py-8 " : "px-5 py-12 ") + "text-center text-[13px] text-ink-muted"}>
       {children}
     </div>
   );
-}
-
-function timeAgo(iso: string) {
-  const d = new Date(iso).getTime();
-  const diff = Math.max(0, Date.now() - d) / 1000;
-  if (diff < 60) return `${Math.floor(diff)}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  return `${Math.floor(diff / 86400)}d`;
 }
