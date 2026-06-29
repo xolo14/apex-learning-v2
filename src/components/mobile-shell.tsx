@@ -116,11 +116,13 @@ function BottomTabs() {
                   className={`h-[22px] w-[22px] transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
                 />
               )}
-              <span
-                className={`text-[10px] tracking-tight transition-colors ${active ? "font-medium text-foreground" : "text-ink-muted"}`}
-              >
-                {label}
-              </span>
+              {!profile ? (
+                <span
+                  className={`text-[10px] tracking-tight transition-colors ${active ? "font-medium text-foreground" : "text-ink-muted"}`}
+                >
+                  {label}
+                </span>
+              ) : null}
             </Link>
           );
         })}
