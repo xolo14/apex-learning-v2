@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as GigsRouteImport } from './routes/gigs'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
 import { Route as AskRouteImport } from './routes/ask'
@@ -32,9 +34,19 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuizzesRoute = QuizzesRouteImport.update({
+  id: '/quizzes',
+  path: '/quizzes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GigsRoute = GigsRouteImport.update({
+  id: '/gigs',
+  path: '/gigs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesRoute = CoursesRouteImport.update({
@@ -119,7 +131,9 @@ export interface FileRoutesByFullPath {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/gigs': typeof GigsRoute
   '/profile': typeof ProfileRoute
+  '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -137,7 +151,9 @@ export interface FileRoutesByTo {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/gigs': typeof GigsRoute
   '/profile': typeof ProfileRoute
+  '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -157,7 +173,9 @@ export interface FileRoutesById {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/gigs': typeof GigsRoute
   '/profile': typeof ProfileRoute
+  '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -178,7 +196,9 @@ export interface FileRouteTypes {
     | '/ask'
     | '/communities'
     | '/courses'
+    | '/gigs'
     | '/profile'
+    | '/quizzes'
     | '/settings'
     | '/admin/communities'
     | '/admin/courses'
@@ -196,7 +216,9 @@ export interface FileRouteTypes {
     | '/ask'
     | '/communities'
     | '/courses'
+    | '/gigs'
     | '/profile'
+    | '/quizzes'
     | '/settings'
     | '/admin/communities'
     | '/admin/courses'
@@ -215,7 +237,9 @@ export interface FileRouteTypes {
     | '/ask'
     | '/communities'
     | '/courses'
+    | '/gigs'
     | '/profile'
+    | '/quizzes'
     | '/settings'
     | '/admin/communities'
     | '/admin/courses'
@@ -235,7 +259,9 @@ export interface RootRouteChildren {
   AskRoute: typeof AskRoute
   CommunitiesRoute: typeof CommunitiesRoute
   CoursesRoute: typeof CoursesRoute
+  GigsRoute: typeof GigsRoute
   ProfileRoute: typeof ProfileRoute
+  QuizzesRoute: typeof QuizzesRoute
   SettingsRoute: typeof SettingsRoute
   CSlugRoute: typeof CSlugRoute
   PIdRoute: typeof PIdRoute
@@ -251,11 +277,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/quizzes': {
+      id: '/quizzes'
+      path: '/quizzes'
+      fullPath: '/quizzes'
+      preLoaderRoute: typeof QuizzesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gigs': {
+      id: '/gigs'
+      path: '/gigs'
+      fullPath: '/gigs'
+      preLoaderRoute: typeof GigsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses': {
@@ -394,7 +434,9 @@ const rootRouteChildren: RootRouteChildren = {
   AskRoute: AskRoute,
   CommunitiesRoute: CommunitiesRoute,
   CoursesRoute: CoursesRoute,
+  GigsRoute: GigsRoute,
   ProfileRoute: ProfileRoute,
+  QuizzesRoute: QuizzesRoute,
   SettingsRoute: SettingsRoute,
   CSlugRoute: CSlugRoute,
   PIdRoute: PIdRoute,
@@ -403,13 +445,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight } from "lucide-react";
+import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight, Sparkles, Wallet, Coins } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -66,6 +66,10 @@ function Home() {
             />
           </Link>
           <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background">
+              <Coins strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
+              1,240
+            </span>
             <DensityToggle />
             <button aria-label="Search" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
               <Search strokeWidth={1.75} className="h-[18px] w-[18px]" />
@@ -177,6 +181,27 @@ function Home() {
         </div>
       </section>
 
+      {/* Quizzes & Gigs */}
+      <section className={compact ? "mt-4 px-4" : "mt-6 px-5"}>
+        <div className="grid grid-cols-2 gap-3 overflow-hidden rounded-[22px] bg-foreground p-3 text-background">
+          <Link
+            to="/quizzes"
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 active:bg-background/5"
+          >
+            <Sparkles strokeWidth={1.75} className="h-7 w-7" />
+            <span className="text-[15px] font-semibold tracking-tight">Quizzes</span>
+            <span className="h-0.5 w-8 rounded-full bg-background/80" />
+          </Link>
+          <Link
+            to="/gigs"
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 active:bg-background/5"
+          >
+            <Wallet strokeWidth={1.75} className="h-7 w-7" />
+            <span className="text-[15px] font-semibold tracking-tight">Gigs</span>
+          </Link>
+        </div>
+      </section>
+
       {/* Section divider */}
       <div className={"flex items-center gap-3 " + (compact ? "mt-4 px-4" : "mt-8 px-5")}>
         <span className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
@@ -184,6 +209,7 @@ function Home() {
         </span>
         <span className="h-px flex-1 bg-hairline" />
       </div>
+
 
       <div className={compact ? "mt-1" : "mt-2"}>
         {sort === "hot" ? (
