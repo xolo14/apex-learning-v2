@@ -57,7 +57,7 @@ async function fetchQuery(q: string, max = 25): Promise<GdeltArticle[]> {
 export async function refreshHotCache(): Promise<{ inserted: number; total: number }> {
   const results = await Promise.all(
     QUERIES.map(async ({ q, category }) => {
-      const arts = await fetchQuery(q, 25);
+      const arts = await fetchQuery(q, 75);
       return arts.map((a) => ({ a, category }));
     }),
   );
