@@ -40,10 +40,11 @@ function Home() {
   const hotQ = useQuery({
     queryKey: ["feed", "hot"],
     queryFn: () => fHot(),
-    enabled: sort === "hot",
-    staleTime: 30_000,
-    refetchInterval: sort === "hot" ? 30_000 : false,
+    staleTime: 60 * 60_000,
+    refetchInterval: 60 * 60_000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
   const savedIds = useSavedIds();
   const savedPosts = feed.filter((p) => savedIds.includes(p.id));
