@@ -2,13 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Gem,
   ChevronLeft,
-  BadgeDollarSign,
   Trophy,
   Clock,
   Wallet,
   MapPin,
   ArrowUpRight,
 } from "lucide-react";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { useRef, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 
