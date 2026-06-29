@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight, Coins } from "lucide-react";
+import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Coins, Bookmark } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,7 +8,7 @@ import { PostCard } from "@/components/post-card";
 import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 import { listHot, type HotItem } from "@/lib/hot.functions";
-import { listNewQuestions, type DbQuestion } from "@/lib/questions.functions";
+import { useSavedIds } from "@/lib/saved";
 import logoAsset from "@/assets/syncpedia-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -24,8 +24,9 @@ export const Route = createFileRoute("/")({
 const sorts = [
   { id: "questions", label: "Questions", icon: MessageCircleQuestion },
   { id: "hot", label: "Hot", icon: Flame },
-  { id: "new", label: "New", icon: Clock },
+  { id: "events", label: "Events", icon: Calendar },
   { id: "following", label: "Following", icon: null as never },
+  { id: "saved", label: "Saved", icon: Bookmark },
 ] as const;
 
 function Home() {
@@ -35,7 +36,6 @@ function Home() {
   const compact = density === "compact";
   const feed = balancedFeed(posts);
   const fHot = useServerFn(listHot);
-  const fNew = useServerFn(listNewQuestions);
   const hotQ = useQuery({
     queryKey: ["feed", "hot"],
     queryFn: () => fHot(),
@@ -44,14 +44,8 @@ function Home() {
     refetchInterval: sort === "hot" ? 30_000 : false,
     refetchOnWindowFocus: true,
   });
-  const newQ = useQuery({
-    queryKey: ["feed", "new"],
-    queryFn: () => fNew(),
-    enabled: sort === "new",
-    staleTime: 10_000,
-    refetchInterval: sort === "new" ? 10_000 : false,
-    refetchOnWindowFocus: true,
-  });
+  const savedIds = useSavedIds();
+  const savedPosts = feed.filter((p) => savedIds.includes(p.id));
   return (
     <MobileShell>
       {/* Status bar–style chrome */}
@@ -188,7 +182,15 @@ function Home() {
       {/* Section divider */}
       <div className={"flex items-center gap-3 " + (compact ? "mt-4 px-4" : "mt-8 px-5")}>
         <span className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
-          {sort === "hot" ? "Hot right now" : sort === "new" ? "New questions" : "Questions & answers"}
+          {sort === "hot"
+            ? "Hot right now"
+            : sort === "events"
+              ? "Upcoming events"
+              : sort === "saved"
+                ? "Saved posts"
+                : sort === "following"
+                  ? "From people you follow"
+                  : "Questions & answers"}
         </span>
         <span className="h-px flex-1 bg-hairline" />
       </div>
@@ -197,12 +199,21 @@ function Home() {
       <div className={compact ? "mt-1" : "mt-2"}>
         {sort === "hot" ? (
           <HotFeed loading={hotQ.isLoading} error={hotQ.error} items={hotQ.data ?? []} compact={compact} />
-        ) : sort === "new" ? (
-          <NewFeed loading={newQ.isLoading} error={newQ.error} items={newQ.data ?? []} compact={compact} />
+        ) : sort === "events" ? (
+          <Empty compact={compact}>No upcoming events yet. Check back soon.</Empty>
+        ) : sort === "saved" ? (
+          savedPosts.length === 0 ? (
+            <Empty compact={compact}>
+              No saved posts yet. Tap the bookmark on any post to save it here.
+            </Empty>
+          ) : (
+            savedPosts.map((p) => <PostCard key={p.id} post={p} />)
+          )
         ) : (
           feed.map((p) => <PostCard key={p.id} post={p} />)
         )}
       </div>
+
 
       <div className="px-5 py-12 text-center">
         <div className="mx-auto h-px w-10 bg-hairline" />
@@ -302,72 +313,10 @@ function HotFeed({
   );
 }
 
-function NewFeed({
-  loading,
-  error,
-  items,
-  compact,
-}: {
-  loading: boolean;
-  error: unknown;
-  items: DbQuestion[];
-  compact: boolean;
-}) {
-  if (loading) return <Empty compact={compact}>Loading new questions…</Empty>;
-  if (error) return <Empty compact={compact}>Couldn't load new questions.</Empty>;
-  if (!items.length)
-    return (
-      <Empty compact={compact}>
-        No new questions yet. Be the first — tap “Ask” to post one.
-      </Empty>
-    );
-  return (
-    <ul>
-      {items.map((q) => (
-        <li
-          key={q.id}
-          className={"border-b border-hairline " + (compact ? "px-4 py-3" : "px-5 py-4")}
-        >
-          <div className="flex items-center gap-2">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-[11px] font-medium text-white">
-              ID
-            </span>
-            <span className="text-[12px] text-foreground">{q.unique_id}</span>
-            <span className="text-[11px] text-ink-muted">· c/{q.community_slug}</span>
-            <span className="ml-auto text-[11px] text-ink-muted">
-              {timeAgo(q.created_at)}
-            </span>
-          </div>
-          <h3
-            className="mt-2 font-semibold tracking-tight text-foreground"
-            style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
-          >
-            {q.title}
-          </h3>
-          {!compact && q.body && (
-            <p className="mt-1.5 line-clamp-3 text-[13.5px] leading-[1.5] text-ink-muted">
-              {q.body}
-            </p>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function Empty({ children, compact }: { children: React.ReactNode; compact: boolean }) {
   return (
     <div className={(compact ? "px-4 py-8 " : "px-5 py-12 ") + "text-center text-[13px] text-ink-muted"}>
       {children}
     </div>
   );
-}
-
-function timeAgo(iso: string) {
-  const d = new Date(iso).getTime();
-  const diff = Math.max(0, Date.now() - d) / 1000;
-  if (diff < 60) return `${Math.floor(diff)}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  return `${Math.floor(diff / 86400)}d`;
 }
