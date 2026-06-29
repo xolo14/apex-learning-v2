@@ -1,7 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Plus, Rows3, Rows2 } from "lucide-react";
+import {
+  House,
+  Compass,
+  Plus,
+  GraduationCap,
+  CircleUserRound,
+  Rows3,
+  Rows2,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useDensity } from "@/lib/density";
+import { useIdentity, IdentityAvatar } from "@/lib/identity";
 
 export function MobileShell({ children }: { children: ReactNode }) {
   const { density } = useDensity();
@@ -10,8 +21,9 @@ export function MobileShell({ children }: { children: ReactNode }) {
       data-density={density}
       className="mx-auto min-h-screen max-w-[480px] bg-background text-foreground"
     >
-      <div className="pb-6">{children}</div>
+      <div className="pb-28">{children}</div>
       <AskFab />
+      <BottomTabs />
     </div>
   );
 }
@@ -56,6 +68,66 @@ export function DensityToggle() {
   );
 }
 
+type Tab = { to: string; label: string; icon: LucideIcon; profile?: boolean };
+
+const tabs: Tab[] = [
+  { to: "/", label: "Home", icon: House },
+  { to: "/communities", label: "Communities", icon: Compass },
+  { to: "/quizzes", label: "Gigs", icon: Wallet },
+  { to: "/courses", label: "Intern", icon: GraduationCap },
+  { to: "/profile", label: "You", icon: CircleUserRound, profile: true },
+];
+
+function BottomTabs() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const identity = useIdentity();
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[480px] px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2"
+      style={{ background: "linear-gradient(to top, rgba(255,255,255,0.96) 60%, rgba(255,255,255,0))" }}
+    >
+      <div className="flex items-center justify-between rounded-[28px] border border-hairline bg-background/95 px-2 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+        {tabs.map(({ to, label, icon: Icon, profile }) => {
+          const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
+          return (
+            <Link
+              key={to}
+              to={to}
+              className="flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors"
+            >
+              {profile ? (
+                <span
+                  className={
+                    "block rounded-full transition " +
+                    (active ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "")
+                  }
+                >
+                  <IdentityAvatar
+                    color={identity.color}
+                    icon={identity.icon}
+                    className="h-[22px] w-[22px]"
+                  />
+                </span>
+              ) : (
+                <Icon
+                  strokeWidth={active ? 2.25 : 1.75}
+                  fill={active ? "currentColor" : "none"}
+                  fillOpacity={active ? 0.08 : 0}
+                  className={`h-[22px] w-[22px] transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
+                />
+              )}
+              <span
+                className={`text-[10px] tracking-tight transition-colors ${active ? "font-medium text-foreground" : "text-ink-muted"}`}
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
 
 export function MobileHeader({
   title,
