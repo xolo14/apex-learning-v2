@@ -11,6 +11,7 @@ import {
   CurrencyDollarIcon,
   CalendarDaysIcon,
   WalletIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/solid";
 import type { ComponentType, SVGProps } from "react";
 import syncpediaLogo from "@/assets/syncpedia-logo.jpg.asset.json";
@@ -33,6 +34,7 @@ const nav: { to: string; label: string; icon: IconType; exact?: boolean }[] = [
   { to: "/admin/internships", label: "Internship applications", icon: BriefcaseIcon },
   { to: "/admin/events", label: "Events", icon: CalendarDaysIcon },
   { to: "/admin/gigs", label: "Gigs", icon: WalletIcon },
+  { to: "/admin/quizzes", label: "Quizzes", icon: AcademicCapIcon },
   { to: "/admin/coins", label: "Coin rewards", icon: CurrencyDollarIcon },
   { to: "/admin/hot", label: "Hot feed curator", icon: FireIcon },
 ];
