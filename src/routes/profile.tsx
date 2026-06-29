@@ -9,6 +9,7 @@ import { PostCard } from "@/components/post-card";
 import type { Post, PostKind } from "@/lib/feed-data";
 import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
+import { useCoinBalance } from "@/lib/use-coin-balance";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Syncpedia" }] }),
