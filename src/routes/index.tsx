@@ -94,7 +94,14 @@ function Home() {
 
       {/* Large editorial title — scrolls away with content */}
       <div className={compact ? "px-5 pb-2 pt-1.5" : "px-5 pb-4 pt-3"}>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Sunday · June 28</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">
+          {(() => {
+            const d = new Date();
+            const weekday = d.toLocaleDateString("en-US", { weekday: "long" });
+            const month = d.toLocaleDateString("en-US", { month: "long" });
+            return `${weekday} · ${month} ${d.getDate()}`;
+          })()}
+        </p>
         <h1
           className={
             "font-serif tracking-tight text-foreground " +
