@@ -66,13 +66,13 @@ export function DensityToggle() {
   );
 }
 
-type Tab = { to: string; label: string; icon: LucideIcon };
+type Tab = { to: string; label: string; icon: IconType };
 
 const tabs: Tab[] = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/communities", label: "Network", icon: UsersRound },
-  { to: "/quizzes", label: "Earnings", icon: Wallet },
-  { to: "/courses", label: "Internships", icon: Briefcase },
+  { to: "/", label: "Home", icon: HomeIcon },
+  { to: "/communities", label: "Network", icon: UserGroupIcon },
+  { to: "/quizzes", label: "Earnings", icon: WalletIcon },
+  { to: "/courses", label: "Internships", icon: BriefcaseIcon },
 ];
 
 function BottomTabs() {
