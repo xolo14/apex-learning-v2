@@ -8,6 +8,7 @@ import {
 } from "@heroicons/react/24/solid";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useDensity } from "@/lib/density";
+import { useHomeTab } from "@/lib/home-tab";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -28,7 +29,9 @@ export function MobileShell({ children }: { children: ReactNode }) {
 
 function AskFab() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname.startsWith("/ask")) return null;
+  const homeTab = useHomeTab();
+  // Show only on the home Questions tab.
+  if (pathname !== "/" || homeTab !== "questions") return null;
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-40 mx-auto max-w-[480px] px-5">
       <div className="flex justify-end pb-[max(env(safe-area-inset-bottom),0px)]">
