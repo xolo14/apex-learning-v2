@@ -239,87 +239,129 @@ function HotFeed({
   items: HotItem[];
   compact: boolean;
 }) {
+  const [active, setActive] = useState<HotItem | null>(null);
   if (loading) return <Empty compact={compact}>Loading trending posts…</Empty>;
   if (error) return <Empty compact={compact}>Couldn't reach trending source.</Empty>;
   if (!items.length) return <Empty compact={compact}>Nothing trending right now.</Empty>;
   return (
-    <ul>
-      {items.map((h) => (
-        <li
-          key={h.id}
-          className={
-            "border-b border-hairline " + (compact ? "px-4 py-3" : "px-5 py-4")
-          }
-        >
-          <div className="flex items-center gap-2">
-            <span
-              className={
-                "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] " +
-                (h.bucket === "politics"
-                  ? "bg-foreground/[0.06] text-foreground"
-                  : h.bucket === "memes"
-                    ? "bg-orange/10 text-orange"
-                    : h.bucket === "tech"
-                      ? "bg-forest/10 text-forest"
-                      : "bg-surface text-ink-muted")
-              }
-            >
-              {h.bucket}
-            </span>
-            <span className="text-[11px] text-ink-muted">{h.source}</span>
-            {h.pinned ? (
-              <span className="ml-auto rounded-full bg-orange/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-orange">
-                Featured
-              </span>
-            ) : null}
-          </div>
-          {h.imageUrl ? (
-            <a
-              href={h.url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 block overflow-hidden rounded-2xl bg-surface"
-            >
-              <img
-                src={h.imageUrl}
-                alt={h.title}
-                loading="lazy"
-                className="aspect-[16/9] w-full object-cover"
-              />
-            </a>
-          ) : null}
-          <a
-            href={h.url}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 block font-semibold tracking-tight text-foreground"
-            style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
+    <>
+      <ul>
+        {items.map((h) => (
+          <li
+            key={h.id}
+            onClick={() => setActive(h)}
+            className={
+              "cursor-pointer border-b border-hairline active:bg-surface/60 " +
+              (compact ? "px-4 py-3" : "px-5 py-4")
+            }
           >
-            {h.title}
-          </a>
-          {h.summary ? (
+            <div className="flex items-center gap-2">
+              <span
+                className={
+                  "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] " +
+                  (h.bucket === "politics"
+                    ? "bg-foreground/[0.06] text-foreground"
+                    : h.bucket === "memes"
+                      ? "bg-orange/10 text-orange"
+                      : h.bucket === "tech"
+                        ? "bg-forest/10 text-forest"
+                        : "bg-surface text-ink-muted")
+                }
+              >
+                {h.bucket}
+              </span>
+              <span className="text-[11px] text-ink-muted">{h.source}</span>
+              {h.pinned ? (
+                <span className="ml-auto rounded-full bg-orange/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-orange">
+                  Featured
+                </span>
+              ) : null}
+            </div>
+            {h.imageUrl ? (
+              <div className="mt-3 block overflow-hidden rounded-2xl bg-surface">
+                <img
+                  src={h.imageUrl}
+                  alt={h.title}
+                  loading="lazy"
+                  className="aspect-[16/9] w-full object-cover"
+                />
+              </div>
+            ) : null}
             <p
-              className={
-                "mt-1.5 text-ink-muted " +
-                (compact ? "line-clamp-2 text-[12.5px] leading-[1.45]" : "line-clamp-3 text-[13.5px] leading-[1.5]")
-              }
+              className="mt-2 font-semibold tracking-tight text-foreground"
+              style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
             >
-              {h.summary}
+              {h.title}
             </p>
-          ) : null}
-          <p className="mt-1.5 text-[12px] text-ink-muted">
-            ▲ {h.score.toLocaleString()} · 💬 {h.comments.toLocaleString()}
-          </p>
-        </li>
-      ))}
-    </ul>
+            {h.summary ? (
+              <p
+                className={
+                  "mt-1.5 text-ink-muted " +
+                  (compact ? "line-clamp-2 text-[12.5px] leading-[1.45]" : "line-clamp-3 text-[13.5px] leading-[1.5]")
+                }
+              >
+                {h.summary}
+              </p>
+            ) : null}
+            <p className="mt-1.5 text-[12px] text-ink-muted">
+              ▲ {h.score.toLocaleString()} · 💬 {h.comments.toLocaleString()}
+            </p>
+          </li>
+        ))}
+      </ul>
+      {active ? <HotReader item={active} onClose={() => setActive(null)} /> : null}
+    </>
   );
 }
 
-function Empty({ children, compact }: { children: React.ReactNode; compact: boolean }) {
+function HotReader({ item, onClose }: { item: HotItem; onClose: () => void }) {
   return (
-    <div className={(compact ? "px-4 py-8 " : "px-5 py-12 ") + "text-center text-[13px] text-ink-muted"}>
-      {children}
+    <div className="fixed inset-0 z-[100] bg-background">
+      <div className="flex h-full flex-col">
+        <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-hairline bg-background/90 px-4 pb-3 pt-[max(env(safe-area-inset-top),14px)] backdrop-blur-xl">
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-9 w-9 place-items-center rounded-full bg-surface"
+          >
+            <X strokeWidth={1.75} className="h-[18px] w-[18px]" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[13px] font-medium">{item.source}</div>
+            <div className="truncate text-[11px] uppercase tracking-[0.12em] text-ink-muted">
+              {item.bucket}
+            </div>
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto pb-16">
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.title}
+              className="aspect-[16/9] w-full object-cover"
+            />
+          ) : null}
+          <div className="px-5 py-5">
+            <h1 className="text-[22px] font-semibold leading-[1.25] tracking-tight text-foreground">
+              {item.title}
+            </h1>
+            <p className="mt-2 text-[12px] text-ink-muted">
+              {item.source}
+              {item.score > 0 ? ` · ▲ ${item.score.toLocaleString()}` : ""}
+            </p>
+            {item.summary ? (
+              <p className="mt-5 whitespace-pre-line text-[15px] leading-[1.6] text-foreground">
+                {item.summary}
+              </p>
+            ) : (
+              <p className="mt-5 text-[14px] leading-[1.6] text-ink-muted">
+                Full story preview isn't available for this item.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
