@@ -29,7 +29,6 @@ const sorts = [
 ] as const;
 
 function Home() {
-  const identity = useIdentity();
   const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("questions");
   const featured = communities.slice(0, 8);
   const { density } = useDensity();
