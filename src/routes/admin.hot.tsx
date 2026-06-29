@@ -16,17 +16,32 @@ function AdminHot() {
   const fAdd = useServerFn(addHotPin);
   const fRm = useServerFn(removeHotPin);
   const fUpd = useServerFn(updateHotPin);
+  const fRefresh = useServerFn(refreshHotNow);
+  const fStatus = useServerFn(getHotStatus);
 
   const hot = useQuery({
     queryKey: ["admin", "hot"],
     queryFn: () => fHot(),
-    refetchInterval: 30_000,
+    refetchInterval: 60 * 60_000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
   const pins = useQuery({
     queryKey: ["admin", "hot", "pins"],
     queryFn: () => fPins(),
     refetchInterval: 15_000,
+  });
+  const status = useQuery({
+    queryKey: ["admin", "hot", "status"],
+    queryFn: () => fStatus(),
+    refetchInterval: 60_000,
+  });
+  const refreshM = useMutation({
+    mutationFn: () => fRefresh(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "hot"] });
+      qc.invalidateQueries({ queryKey: ["admin", "hot", "status"] });
+    },
   });
 
   const addM = useMutation({
