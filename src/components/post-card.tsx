@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { communityBySlug, KIND_BUCKET, KIND_LABEL, type Post } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 import { votePost } from "@/lib/questions.functions";
+import { useSaved } from "@/lib/saved";
 
 export function PostCard({ post }: { post: Post }) {
   const community = communityBySlug(post.communitySlug);
@@ -164,9 +165,8 @@ export function PostCard({ post }: { post: Post }) {
           <button aria-label="Share" className="grid h-8 w-8 place-items-center rounded-full text-ink-muted active:bg-surface">
             <Share2 strokeWidth={1.75} className="h-[14px] w-[14px]" />
           </button>
-          <button aria-label="Bookmark" className="grid h-8 w-8 place-items-center rounded-full text-ink-muted active:bg-surface">
-            <Bookmark strokeWidth={1.75} className="h-[14px] w-[14px]" />
-          </button>
+          <BookmarkButton postId={post.id} />
+
         </div>
         )}
       </footer>
