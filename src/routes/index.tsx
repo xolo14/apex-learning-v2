@@ -9,7 +9,6 @@ import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 import { listHot, type HotItem } from "@/lib/hot.functions";
 import { useSavedIds } from "@/lib/saved";
-import { IdentityAvatar, useIdentity } from "@/lib/identity";
 
 export const Route = createFileRoute("/")({
   head: () => ({
