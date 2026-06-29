@@ -3,10 +3,11 @@ import {
   House,
   Compass,
   Plus,
-  GraduationCap,
   CircleUserRound,
   Rows3,
   Rows2,
+  Sparkles,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -21,7 +22,27 @@ export function MobileShell({ children }: { children: ReactNode }) {
       className="mx-auto min-h-screen max-w-[480px] bg-background text-foreground"
     >
       <div className="pb-28">{children}</div>
+      <AskFab />
       <BottomTabs />
+    </div>
+  );
+}
+
+function AskFab() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname.startsWith("/ask")) return null;
+  return (
+    <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-40 mx-auto max-w-[480px] px-5">
+      <div className="flex justify-end pb-[max(env(safe-area-inset-bottom),0px)]">
+        <Link
+          to="/ask"
+          aria-label="Ask"
+          className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-orange px-4 py-3 text-[14px] font-semibold text-white shadow-[0_10px_28px_-8px_rgba(255,106,19,0.6)] transition-transform active:scale-95"
+        >
+          <Plus strokeWidth={2.25} className="h-[18px] w-[18px]" />
+          Ask
+        </Link>
+      </div>
     </div>
   );
 }
@@ -47,13 +68,13 @@ export function DensityToggle() {
   );
 }
 
-type Tab = { to: string; label: string; icon: LucideIcon; primary?: boolean; profile?: boolean };
+type Tab = { to: string; label: string; icon: LucideIcon; profile?: boolean };
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: House },
+  { to: "/quizzes", label: "Quizzes", icon: Sparkles },
   { to: "/communities", label: "Communities", icon: Compass },
-  { to: "/ask", label: "Ask", icon: Plus, primary: true },
-  { to: "/courses", label: "Intern", icon: GraduationCap },
+  { to: "/gigs", label: "Gigs", icon: Wallet },
   { to: "/profile", label: "You", icon: CircleUserRound, profile: true },
 ];
 
@@ -66,20 +87,8 @@ function BottomTabs() {
       style={{ background: "linear-gradient(to top, rgba(255,255,255,0.96) 60%, rgba(255,255,255,0))" }}
     >
       <div className="flex items-center justify-between rounded-[28px] border border-hairline bg-background/95 px-2 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-        {tabs.map(({ to, label, icon: Icon, primary, profile }) => {
+        {tabs.map(({ to, label, icon: Icon, profile }) => {
           const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
-          if (primary) {
-            return (
-              <Link
-                key={to}
-                to={to}
-                aria-label={label}
-                className="grid h-12 w-12 place-items-center rounded-full bg-orange text-white shadow-[0_8px_20px_-8px_rgba(255,106,19,0.55)] transition-transform active:scale-95"
-              >
-                <Icon strokeWidth={2} className="h-5 w-5" />
-              </Link>
-            );
-          }
           return (
             <Link
               key={to}
