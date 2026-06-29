@@ -261,3 +261,9 @@ function CoinsPage() {
     </MobileShell>
   );
 }
+
+function CoinsRouteGate() {
+  const earningsEnabled = useEarningsEnabled();
+  if (!earningsEnabled) return <Navigate to="/" />;
+  return <CoinsPage />;
+}
