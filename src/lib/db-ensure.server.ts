@@ -61,6 +61,73 @@ export function ensureSchema() {
         created_at timestamptz DEFAULT now()
       )
     `;
+
+    // -------- Follow requests + mutual follows --------
+    await s`
+      CREATE TABLE IF NOT EXISTS follow_requests (
+        id text PRIMARY KEY,
+        requester_id text NOT NULL,
+        target_id text NOT NULL,
+        status text NOT NULL DEFAULT 'pending',
+        created_at timestamptz DEFAULT now(),
+        UNIQUE(requester_id, target_id)
+      )
+    `;
+    await s`
+      CREATE TABLE IF NOT EXISTS follows (
+        follower_id text NOT NULL,
+        following_id text NOT NULL,
+        created_at timestamptz DEFAULT now(),
+        PRIMARY KEY (follower_id, following_id)
+      )
+    `;
+
+    // -------- Direct messages (text-only) --------
+    await s`
+      CREATE TABLE IF NOT EXISTS dm_threads (
+        id text PRIMARY KEY,
+        user_a text NOT NULL,
+        user_b text NOT NULL,
+        last_message_at timestamptz DEFAULT now(),
+        created_at timestamptz DEFAULT now(),
+        UNIQUE(user_a, user_b)
+      )
+    `;
+    await s`
+      CREATE TABLE IF NOT EXISTS dm_messages (
+        id text PRIMARY KEY,
+        thread_id text NOT NULL,
+        sender_id text NOT NULL,
+        body text NOT NULL,
+        created_at timestamptz DEFAULT now()
+      )
+    `;
+    await s`CREATE INDEX IF NOT EXISTS dm_messages_thread_idx ON dm_messages(thread_id, created_at)`;
+
+    // -------- Push subscriptions --------
+    await s`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        endpoint text PRIMARY KEY,
+        user_id text,
+        p256dh text NOT NULL,
+        auth text NOT NULL,
+        created_at timestamptz DEFAULT now()
+      )
+    `;
+
+    // -------- Quizzes (admin-created) --------
+    await s`
+      CREATE TABLE IF NOT EXISTS quizzes (
+        id text PRIMARY KEY,
+        community_slug text,
+        title text NOT NULL,
+        description text DEFAULT '',
+        questions_count integer DEFAULT 0,
+        minutes integer DEFAULT 0,
+        coins integer DEFAULT 0,
+        created_at timestamptz DEFAULT now()
+      )
+    `;
   })().catch((e) => {
     _ready = null;
     throw e;

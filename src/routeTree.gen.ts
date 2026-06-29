@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as GigsRouteImport } from './routes/gigs'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
@@ -20,7 +21,9 @@ import { Route as AskRouteImport } from './routes/ask'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as UIdRouteImport } from './routes/u.$id'
 import { Route as PIdRouteImport } from './routes/p.$id'
+import { Route as MessagesThreadIdRouteImport } from './routes/messages.$threadId'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminPostsRouteImport } from './routes/admin.posts'
@@ -32,6 +35,7 @@ import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 import { Route as AdminCoinsRouteImport } from './routes/admin.coins'
+import { Route as ApiPublicSitemapRouteImport } from './routes/api/public/sitemap'
 import { Route as ApiPublicCronRefreshHotRouteImport } from './routes/api/public/cron.refresh-hot'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -47,6 +51,11 @@ const QuizzesRoute = QuizzesRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GigsRoute = GigsRouteImport.update({
@@ -89,10 +98,20 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const UIdRoute = UIdRouteImport.update({
+  id: '/u/$id',
+  path: '/u/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PIdRoute = PIdRouteImport.update({
   id: '/p/$id',
   path: '/p/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesThreadIdRoute = MessagesThreadIdRouteImport.update({
+  id: '/$threadId',
+  path: '/$threadId',
+  getParentRoute: () => MessagesRoute,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
@@ -149,6 +168,11 @@ const AdminCoinsRoute = AdminCoinsRouteImport.update({
   path: '/coins',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicSitemapRoute = ApiPublicSitemapRouteImport.update({
+  id: '/api/public/sitemap',
+  path: '/api/public/sitemap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronRefreshHotRoute = ApiPublicCronRefreshHotRouteImport.update({
   id: '/api/public/cron/refresh-hot',
   path: '/api/public/cron/refresh-hot',
@@ -163,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -177,8 +202,11 @@ export interface FileRoutesByFullPath {
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
+  '/u/$id': typeof UIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRoutesByTo {
@@ -188,6 +216,7 @@ export interface FileRoutesByTo {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -202,8 +231,11 @@ export interface FileRoutesByTo {
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
+  '/u/$id': typeof UIdRoute
   '/admin': typeof AdminIndexRoute
+  '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRoutesById {
@@ -215,6 +247,7 @@ export interface FileRoutesById {
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -229,8 +262,11 @@ export interface FileRoutesById {
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
+  '/u/$id': typeof UIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRouteTypes {
@@ -243,6 +279,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/gigs'
+    | '/messages'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -257,8 +294,11 @@ export interface FileRouteTypes {
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
+    | '/messages/$threadId'
     | '/p/$id'
+    | '/u/$id'
     | '/admin/'
+    | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -268,6 +308,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/gigs'
+    | '/messages'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -282,8 +323,11 @@ export interface FileRouteTypes {
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
+    | '/messages/$threadId'
     | '/p/$id'
+    | '/u/$id'
     | '/admin'
+    | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   id:
     | '__root__'
@@ -294,6 +338,7 @@ export interface FileRouteTypes {
     | '/communities'
     | '/courses'
     | '/gigs'
+    | '/messages'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -308,8 +353,11 @@ export interface FileRouteTypes {
     | '/admin/posts'
     | '/admin/users'
     | '/c/$slug'
+    | '/messages/$threadId'
     | '/p/$id'
+    | '/u/$id'
     | '/admin/'
+    | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesById: FileRoutesById
 }
@@ -321,11 +369,14 @@ export interface RootRouteChildren {
   CommunitiesRoute: typeof CommunitiesRoute
   CoursesRoute: typeof CoursesRoute
   GigsRoute: typeof GigsRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   QuizzesRoute: typeof QuizzesRoute
   SettingsRoute: typeof SettingsRoute
   CSlugRoute: typeof CSlugRoute
   PIdRoute: typeof PIdRoute
+  UIdRoute: typeof UIdRoute
+  ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
   ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
 }
 
@@ -350,6 +401,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gigs': {
@@ -408,12 +466,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/u/$id': {
+      id: '/u/$id'
+      path: '/u/$id'
+      fullPath: '/u/$id'
+      preLoaderRoute: typeof UIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/p/$id': {
       id: '/p/$id'
       path: '/p/$id'
       fullPath: '/p/$id'
       preLoaderRoute: typeof PIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/messages/$threadId': {
+      id: '/messages/$threadId'
+      path: '/$threadId'
+      fullPath: '/messages/$threadId'
+      preLoaderRoute: typeof MessagesThreadIdRouteImport
+      parentRoute: typeof MessagesRoute
     }
     '/c/$slug': {
       id: '/c/$slug'
@@ -492,6 +564,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCoinsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/sitemap': {
+      id: '/api/public/sitemap'
+      path: '/api/public/sitemap'
+      fullPath: '/api/public/sitemap'
+      preLoaderRoute: typeof ApiPublicSitemapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/refresh-hot': {
       id: '/api/public/cron/refresh-hot'
       path: '/api/public/cron/refresh-hot'
@@ -532,6 +611,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface MessagesRouteChildren {
+  MessagesThreadIdRoute: typeof MessagesThreadIdRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesThreadIdRoute: MessagesThreadIdRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -540,11 +631,14 @@ const rootRouteChildren: RootRouteChildren = {
   CommunitiesRoute: CommunitiesRoute,
   CoursesRoute: CoursesRoute,
   GigsRoute: GigsRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   ProfileRoute: ProfileRoute,
   QuizzesRoute: QuizzesRoute,
   SettingsRoute: SettingsRoute,
   CSlugRoute: CSlugRoute,
   PIdRoute: PIdRoute,
+  UIdRoute: UIdRoute,
+  ApiPublicSitemapRoute: ApiPublicSitemapRoute,
   ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,
 }
 export const routeTree = rootRouteImport

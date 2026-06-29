@@ -80,14 +80,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Syncpedia — Learn, earn and connect with your community" },
+      {
+        name: "description",
+        content:
+          "Syncpedia is the all-in-one community network for students and professionals — discover events, internships, gigs, quizzes and earn Syncpedia coins.",
+      },
+      { name: "author", content: "Syncpedia" },
+      {
+        name: "keywords",
+        content:
+          "Syncpedia, students, internships, gigs, quizzes, events, learning, community, college network, earn coins",
+      },
+      { name: "theme-color", content: "#0a0a0a" },
+      { name: "robots", content: "index,follow" },
+      { property: "og:site_name", content: "Syncpedia" },
+      { property: "og:title", content: "Syncpedia — Learn, earn and connect" },
+      {
+        property: "og:description",
+        content:
+          "Discover events, internships, gigs, quizzes and earn Syncpedia coins.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@syncpedia" },
+      { name: "twitter:title", content: "Syncpedia" },
+      {
+        name: "twitter:description",
+        content:
+          "Discover events, internships, gigs, quizzes and earn Syncpedia coins.",
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
