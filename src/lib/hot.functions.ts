@@ -220,3 +220,66 @@ export const updateHotPin = createServerFn({ method: "POST" })
     `;
     return { ok: true };
   });
+
+export const fetchHotArticle = createServerFn({ method: "GET" })
+  .inputValidator((data: { url: string }) => {
+    if (!data?.url || !/^https?:\/\//i.test(data.url)) throw new Error("Invalid URL");
+    return { url: data.url };
+  })
+  .handler(async ({ data }) => {
+    try {
+      const res = await fetch(data.url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; SyncpediaBot/1.0; +https://syncpedia.app)",
+          Accept: "text/html,application/xhtml+xml",
+        },
+        redirect: "follow",
+      });
+      if (!res.ok) return { ok: false as const, error: `HTTP ${res.status}` };
+      const html = await res.text();
+
+      // Try <article> first, fallback to <main>, then body
+      const pick = (re: RegExp) => {
+        const m = html.match(re);
+        return m ? m[1] : "";
+      };
+      let scope =
+        pick(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
+        pick(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
+        pick(/<body[^>]*>([\s\S]*?)<\/body>/i) ||
+        html;
+
+      // Strip scripts/styles/nav/aside/header/footer/forms
+      scope = scope
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
+        .replace(/<(nav|aside|header|footer|form|figure|figcaption)[\s\S]*?<\/\1>/gi, "");
+
+      // Extract paragraph text
+      const paragraphs: string[] = [];
+      const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+      let m: RegExpExecArray | null;
+      while ((m = pRe.exec(scope))) {
+        const text = m[1]
+          .replace(/<br\s*\/?>/gi, "\n")
+          .replace(/<[^>]+>/g, "")
+          .replace(/&nbsp;/g, " ")
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (text.length > 40) paragraphs.push(text);
+      }
+
+      const content = paragraphs.join("\n\n").slice(0, 12000);
+      if (!content) return { ok: false as const, error: "No readable content" };
+      return { ok: true as const, content };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Failed" };
+    }
+  });
