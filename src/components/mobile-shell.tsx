@@ -3,7 +3,6 @@ import {
   House,
   Compass,
   Plus,
-  GraduationCap,
   CircleUserRound,
   Rows3,
   Rows2,
