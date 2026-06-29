@@ -32,6 +32,7 @@ function AdminEvents() {
   const [imageUrl, setImageUrl] = useState("");
   const [location, setLocation] = useState("");
   const [startsAt, setStartsAt] = useState("");
+  const [price, setPrice] = useState("0");
   const [coins, setCoins] = useState("0");
 
   return (
@@ -51,10 +52,12 @@ function AdminEvents() {
             mCreate.mutate(
               { data: {
                 title, communitySlug: slug || undefined, description: desc, imageUrl,
-                location, startsAt, coins: Number(coins) || 0,
+                location, startsAt,
+                price: Number(price) || 0,
+                coins: Number(coins) || 0,
               } },
               { onSuccess: () => {
-                setTitle(""); setDesc(""); setImageUrl(""); setLocation(""); setStartsAt(""); setCoins("0");
+                setTitle(""); setDesc(""); setImageUrl(""); setLocation(""); setStartsAt(""); setPrice("0"); setCoins("0");
               } },
             );
           }}
@@ -71,6 +74,9 @@ function AdminEvents() {
           <input value={startsAt} onChange={(e) => setStartsAt(e.target.value)} placeholder="When (e.g. Tue · 7:00 PM)"
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location"
+                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)}
+                 placeholder="Price (₹) — 0 for free"
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
                  placeholder="Coins reward"
@@ -102,7 +108,7 @@ function AdminEvents() {
               <div className="flex-1 min-w-0">
                 <p className="text-[13.5px] font-medium truncate">{e.title}</p>
                 <p className="text-[11px] text-ink-muted truncate">
-                  {e.community_slug ? `/${e.community_slug} · ` : ""}{e.starts_at || "—"} · {e.location || "—"} · +{e.coins} coins
+                  {e.community_slug ? `/${e.community_slug} · ` : ""}{e.starts_at || "—"} · {e.location || "—"} · {e.price > 0 ? `₹${e.price}` : "Free"} · +{e.coins} coins
                 </p>
               </div>
               <button onClick={() => mDelete.mutate({ data: { id: e.id } })}
