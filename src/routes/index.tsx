@@ -49,6 +49,7 @@ function Home() {
   });
   const savedIds = useSavedIds();
   const savedPosts = feed.filter((p) => savedIds.includes(p.id));
+  const savedHot = useSavedHot();
   return (
     <MobileShell>
       {/* Status bar–style chrome */}
