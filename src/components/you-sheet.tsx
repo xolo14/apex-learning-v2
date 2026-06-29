@@ -168,13 +168,17 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 
       <div className="border-t border-hairline px-5 py-4">
         <div className="grid grid-cols-2 gap-2.5">
-          {stats.map(({ label, value, icon: Icon, tint }) => (
+          {stats.map(({ label, value, icon: Icon, tint, coin }) => (
             <div
               key={label}
               className="rounded-2xl border border-hairline bg-surface/60 p-3"
             >
               <div className="flex items-center gap-1.5">
-                <Icon className={"h-3.5 w-3.5 " + tint} />
+                {coin ? (
+                  <img src={goldCoin} alt="" className="h-3.5 w-3.5 object-contain" />
+                ) : Icon ? (
+                  <Icon className={"h-3.5 w-3.5 " + tint} />
+                ) : null}
                 <span className="truncate text-[10.5px] uppercase tracking-[0.12em] text-ink-muted">
                   {label}
                 </span>
