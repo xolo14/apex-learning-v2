@@ -69,7 +69,7 @@ function Home() {
               aria-label="Open coins"
               className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background active:scale-95"
             >
-              <Coins strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
+              <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
               1,240
             </Link>
           </div>
