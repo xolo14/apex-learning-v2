@@ -25,7 +25,10 @@ import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminPostsRouteImport } from './routes/admin.posts'
 import { Route as AdminInternshipsRouteImport } from './routes/admin.internships'
+import { Route as AdminInternshipPostingsRouteImport } from './routes/admin.internship-postings'
 import { Route as AdminHotRouteImport } from './routes/admin.hot'
+import { Route as AdminGigsRouteImport } from './routes/admin.gigs'
+import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 import { Route as AdminCoinsRouteImport } from './routes/admin.coins'
@@ -111,9 +114,24 @@ const AdminInternshipsRoute = AdminInternshipsRouteImport.update({
   path: '/internships',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInternshipPostingsRoute = AdminInternshipPostingsRouteImport.update({
+  id: '/internship-postings',
+  path: '/internship-postings',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminHotRoute = AdminHotRouteImport.update({
   id: '/hot',
   path: '/hot',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGigsRoute = AdminGigsRouteImport.update({
+  id: '/gigs',
+  path: '/gigs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCoursesRoute = AdminCoursesRouteImport.update({
@@ -151,7 +169,10 @@ export interface FileRoutesByFullPath {
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/gigs': typeof AdminGigsRoute
   '/admin/hot': typeof AdminHotRoute
+  '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -173,7 +194,10 @@ export interface FileRoutesByTo {
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/gigs': typeof AdminGigsRoute
   '/admin/hot': typeof AdminHotRoute
+  '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -197,7 +221,10 @@ export interface FileRoutesById {
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/gigs': typeof AdminGigsRoute
   '/admin/hot': typeof AdminHotRoute
+  '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/users': typeof AdminUsersRoute
@@ -222,7 +249,10 @@ export interface FileRouteTypes {
     | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
+    | '/admin/events'
+    | '/admin/gigs'
     | '/admin/hot'
+    | '/admin/internship-postings'
     | '/admin/internships'
     | '/admin/posts'
     | '/admin/users'
@@ -244,7 +274,10 @@ export interface FileRouteTypes {
     | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
+    | '/admin/events'
+    | '/admin/gigs'
     | '/admin/hot'
+    | '/admin/internship-postings'
     | '/admin/internships'
     | '/admin/posts'
     | '/admin/users'
@@ -267,7 +300,10 @@ export interface FileRouteTypes {
     | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
+    | '/admin/events'
+    | '/admin/gigs'
     | '/admin/hot'
+    | '/admin/internship-postings'
     | '/admin/internships'
     | '/admin/posts'
     | '/admin/users'
@@ -407,11 +443,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminInternshipsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/internship-postings': {
+      id: '/admin/internship-postings'
+      path: '/internship-postings'
+      fullPath: '/admin/internship-postings'
+      preLoaderRoute: typeof AdminInternshipPostingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/hot': {
       id: '/admin/hot'
       path: '/hot'
       fullPath: '/admin/hot'
       preLoaderRoute: typeof AdminHotRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gigs': {
+      id: '/admin/gigs'
+      path: '/gigs'
+      fullPath: '/admin/gigs'
+      preLoaderRoute: typeof AdminGigsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/courses': {
@@ -449,7 +506,10 @@ interface AdminRouteChildren {
   AdminCoinsRoute: typeof AdminCoinsRoute
   AdminCommunitiesRoute: typeof AdminCommunitiesRoute
   AdminCoursesRoute: typeof AdminCoursesRoute
+  AdminEventsRoute: typeof AdminEventsRoute
+  AdminGigsRoute: typeof AdminGigsRoute
   AdminHotRoute: typeof AdminHotRoute
+  AdminInternshipPostingsRoute: typeof AdminInternshipPostingsRoute
   AdminInternshipsRoute: typeof AdminInternshipsRoute
   AdminPostsRoute: typeof AdminPostsRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -460,7 +520,10 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCoinsRoute: AdminCoinsRoute,
   AdminCommunitiesRoute: AdminCommunitiesRoute,
   AdminCoursesRoute: AdminCoursesRoute,
+  AdminEventsRoute: AdminEventsRoute,
+  AdminGigsRoute: AdminGigsRoute,
   AdminHotRoute: AdminHotRoute,
+  AdminInternshipPostingsRoute: AdminInternshipPostingsRoute,
   AdminInternshipsRoute: AdminInternshipsRoute,
   AdminPostsRoute: AdminPostsRoute,
   AdminUsersRoute: AdminUsersRoute,
