@@ -253,70 +253,120 @@ function HotFeed({
     <>
       <ul>
         {items.map((h) => (
-          <li
-            key={h.id}
-            onClick={() => setActive(h)}
-            className={
-              "cursor-pointer border-b border-hairline active:bg-surface/60 " +
-              (compact ? "px-4 py-3" : "px-5 py-4")
-            }
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className={
-                  "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] " +
-                  (h.bucket === "politics"
-                    ? "bg-foreground/[0.06] text-foreground"
-                    : h.bucket === "memes"
-                      ? "bg-orange/10 text-orange"
-                      : h.bucket === "tech"
-                        ? "bg-forest/10 text-forest"
-                        : "bg-surface text-ink-muted")
-                }
-              >
-                {h.bucket}
-              </span>
-              <span className="text-[11px] text-ink-muted">{h.source}</span>
-              {h.pinned ? (
-                <span className="ml-auto rounded-full bg-orange/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-orange">
-                  Featured
-                </span>
-              ) : null}
-            </div>
-            {h.imageUrl ? (
-              <div className="mt-3 block overflow-hidden rounded-2xl bg-surface">
-                <img
-                  src={h.imageUrl}
-                  alt={h.title}
-                  loading="lazy"
-                  className="aspect-[16/9] w-full object-cover"
-                />
-              </div>
-            ) : null}
-            <p
-              className="mt-2 font-semibold tracking-tight text-foreground"
-              style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
-            >
-              {h.title}
-            </p>
-            {h.summary ? (
-              <p
-                className={
-                  "mt-1.5 text-ink-muted " +
-                  (compact ? "line-clamp-2 text-[12.5px] leading-[1.45]" : "line-clamp-3 text-[13.5px] leading-[1.5]")
-                }
-              >
-                {h.summary}
-              </p>
-            ) : null}
-            <p className="mt-1.5 text-[12px] text-ink-muted">
-              ▲ {h.score.toLocaleString()} · 💬 {h.comments.toLocaleString()}
-            </p>
-          </li>
+          <HotRow key={h.id} h={h} compact={compact} onOpen={() => setActive(h)} />
         ))}
       </ul>
       {active ? <HotReader item={active} onClose={() => setActive(null)} /> : null}
     </>
+  );
+}
+
+function HotRow({ h, compact, onOpen }: { h: HotItem; compact: boolean; onOpen: () => void }) {
+  const { saved, toggle } = useSavedHotToggle(h);
+  return (
+    <li
+      onClick={onOpen}
+      className={
+        "cursor-pointer border-b border-hairline active:bg-surface/60 " +
+        (compact ? "px-4 py-3" : "px-5 py-4")
+      }
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={
+            "rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] " +
+            (h.bucket === "politics"
+              ? "bg-foreground/[0.06] text-foreground"
+              : h.bucket === "memes"
+                ? "bg-orange/10 text-orange"
+                : h.bucket === "tech"
+                  ? "bg-forest/10 text-forest"
+                  : "bg-surface text-ink-muted")
+          }
+        >
+          {h.bucket}
+        </span>
+        <span className="text-[11px] text-ink-muted">{h.source}</span>
+        {h.pinned ? (
+          <span className="ml-2 rounded-full bg-orange/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-orange">
+            Featured
+          </span>
+        ) : null}
+        <button
+          type="button"
+          aria-label={saved ? "Remove from saved" : "Save"}
+          aria-pressed={saved}
+          onClick={(e) => toggle(e)}
+          className={
+            "ml-auto grid h-8 w-8 place-items-center rounded-full active:scale-95 " +
+            (saved ? "bg-foreground text-background" : "bg-surface text-foreground")
+          }
+        >
+          <Bookmark strokeWidth={1.75} className="h-[16px] w-[16px]" fill={saved ? "currentColor" : "none"} />
+        </button>
+      </div>
+      {h.imageUrl ? (
+        <div className="mt-3 block overflow-hidden rounded-2xl bg-surface">
+          <img
+            src={h.imageUrl}
+            alt={h.title}
+            loading="lazy"
+            className="aspect-[16/9] w-full object-cover"
+          />
+        </div>
+      ) : null}
+      <p
+        className="mt-2 font-semibold tracking-tight text-foreground"
+        style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
+      >
+        {h.title}
+      </p>
+      {h.summary ? (
+        <p
+          className={
+            "mt-1.5 text-ink-muted " +
+            (compact ? "line-clamp-2 text-[12.5px] leading-[1.45]" : "line-clamp-3 text-[13.5px] leading-[1.5]")
+          }
+        >
+          {h.summary}
+        </p>
+      ) : null}
+      <p className="mt-1.5 text-[12px] text-ink-muted">
+        ▲ {h.score.toLocaleString()} · 💬 {h.comments.toLocaleString()}
+      </p>
+    </li>
+  );
+}
+
+function SavedHotList({ items, compact }: { items: SavedHot[]; compact: boolean }) {
+  return (
+    <ul>
+      {items.map((h) => {
+        const hot: HotItem = {
+          id: h.id,
+          title: h.title,
+          url: h.url,
+          source: h.source,
+          bucket: h.bucket,
+          score: 0,
+          comments: 0,
+          thumbnail: h.imageUrl,
+          imageUrl: h.imageUrl,
+          summary: h.summary,
+          createdAt: h.savedAt,
+        };
+        return (
+          <HotRow
+            key={`saved_${h.id}`}
+            h={hot}
+            compact={compact}
+            onOpen={() => {
+              if (h.url) window.open(h.url, "_blank", "noopener,noreferrer");
+            }}
+          />
+        );
+      })}
+    </ul>
   );
 }
 
