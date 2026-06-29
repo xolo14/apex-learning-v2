@@ -34,15 +34,15 @@ function NetworkPage() {
     navigate({ search: { tab: t }, replace: true });
 
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "mentors">("all");
-  const mentorSlugs = useMemo(
+  const [filter, setFilter] = useState<"all" | "pros">("all");
+  const proSlugs = useMemo(
     () => new Set(posts.filter((p) => p.mentor).map((p) => p.communitySlug)),
     [],
   );
   const filtered = communities.filter(
     (c) =>
       c.name.toLowerCase().includes(q.toLowerCase()) &&
-      (filter === "all" || mentorSlugs.has(c.slug)),
+      (filter === "all" || proSlugs.has(c.slug)),
   );
 
   const [drag, setDrag] = useState(0);
@@ -143,7 +143,7 @@ function NetworkPage() {
               filter={filter}
               setFilter={setFilter}
               filtered={filtered}
-              mentorSlugs={mentorSlugs}
+              proSlugs={proSlugs}
             />
           </section>
           <section className="w-1/2 shrink-0">
@@ -161,19 +161,19 @@ function CommunitiesView({
   filter,
   setFilter,
   filtered,
-  mentorSlugs,
+  proSlugs,
 }: {
   q: string;
   setQ: (v: string) => void;
-  filter: "all" | "mentors";
-  setFilter: (v: "all" | "mentors") => void;
+  filter: "all" | "pros";
+  setFilter: (v: "all" | "pros") => void;
   filtered: typeof communities;
-  mentorSlugs: Set<string>;
+  proSlugs: Set<string>;
 }) {
   return (
     <>
-      <div className="flex items-center gap-2 px-5">
-        <label className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-surface px-3.5">
+      <div className="px-5">
+        <label className="flex h-11 items-center gap-2 rounded-2xl bg-surface px-3.5">
           <Search strokeWidth={1.75} className="h-[16px] w-[16px] text-ink-muted" />
           <input
             value={q}
@@ -182,25 +182,29 @@ function CommunitiesView({
             className="h-full flex-1 bg-transparent text-[14px] placeholder:text-ink-muted focus:outline-none"
           />
         </label>
-        <div className="flex h-11 items-center rounded-2xl bg-surface p-1">
+        <div className="relative mt-3 grid grid-cols-2 rounded-full bg-surface p-1 text-[12.5px] font-medium">
+          <span
+            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-foreground transition-transform duration-300"
+            style={{ transform: filter === "pros" ? "translateX(100%)" : "translateX(0)" }}
+          />
           <button
             onClick={() => setFilter("all")}
             className={
-              "h-full rounded-xl px-3 text-[12.5px] font-medium tracking-tight transition-colors " +
-              (filter === "all" ? "bg-background text-foreground shadow-sm" : "text-ink-muted")
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (filter === "all" ? "text-background" : "text-ink-muted")
             }
           >
             All
           </button>
           <button
-            onClick={() => setFilter("mentors")}
+            onClick={() => setFilter("pros")}
             className={
-              "inline-flex h-full items-center gap-1 rounded-xl px-3 text-[12.5px] font-medium tracking-tight transition-colors " +
-              (filter === "mentors" ? "bg-background text-foreground shadow-sm" : "text-ink-muted")
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (filter === "pros" ? "text-background" : "text-ink-muted")
             }
           >
-            <BadgeCheck strokeWidth={2} className="h-[13px] w-[13px] text-forest" />
-            Mentors
+            <BadgeCheck strokeWidth={2} className="h-[13px] w-[13px]" />
+            Professionals
           </button>
         </div>
       </div>
@@ -218,13 +222,24 @@ function CommunitiesView({
               params={{ slug: c.slug }}
               className="flex items-center gap-3.5 border-b border-hairline px-5 py-3.5 active:bg-surface/60"
             >
-              <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-forest text-white">
-                <c.icon strokeWidth={2} className="h-[18px] w-[18px]" />
-              </span>
+              {c.image_url ? (
+                <img
+                  src={c.image_url}
+                  alt=""
+                  className="h-11 w-11 shrink-0 rounded-[14px] object-cover"
+                />
+              ) : (
+                <span
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] text-white"
+                  style={{ backgroundColor: c.tint ?? "#111827" }}
+                >
+                  <c.icon strokeWidth={2} className="h-[18px] w-[18px]" />
+                </span>
+              )}
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5 truncate text-[15px] font-medium text-foreground">
                   c/{c.slug}
-                  {mentorSlugs.has(c.slug) ? (
+                  {proSlugs.has(c.slug) ? (
                     <BadgeCheck strokeWidth={2.25} className="h-3.5 w-3.5 text-forest" />
                   ) : null}
                 </span>

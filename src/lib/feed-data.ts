@@ -1,21 +1,21 @@
 import {
-  Sparkles,
-  Brain,
-  Bot,
-  HeartPulse,
-  Video,
-  Shield,
-  CircuitBoard,
-  Code2,
-  Briefcase,
-  LineChart,
-  Palette,
-  Cloud,
-  PenTool,
-  Megaphone,
-  Camera,
-  Database,
-  Rocket,
+  Atom,
+  Network,
+  Cpu,
+  Lightbulb,
+  Film,
+  ShieldCheck,
+  Workflow,
+  SquareTerminal,
+  Building2,
+  TrendingUp,
+  Layers,
+  CloudCog,
+  MousePointer2,
+  Radio,
+  Aperture,
+  BarChart3,
+  Flame,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,29 +23,31 @@ export type Community = {
   slug: string;
   name: string;
   icon: LucideIcon;
+  tint?: string;
   members: string;
   online: number;
   about: string;
+  image_url?: string;
 };
 
 export const communities: Community[] = [
-  { slug: "ai", name: "Artificial Intelligence", icon: Sparkles, members: "184k", online: 2841, about: "Frontier models, agents, eval, alignment." },
-  { slug: "ml", name: "Machine Learning", icon: Brain, members: "121k", online: 1932, about: "Foundations, applied research, MLOps." },
-  { slug: "robotics", name: "Robotics", icon: Bot, members: "38k", online: 612, about: "Manipulation, perception, sim-to-real." },
-  { slug: "psychology", name: "Psychology", icon: HeartPulse, members: "72k", online: 1204, about: "Cognition, behavior, applied research." },
-  { slug: "video", name: "Video Editing", icon: Video, members: "58k", online: 894, about: "Color, story, motion, post pipelines." },
-  { slug: "cybersec", name: "Cyber Security", icon: Shield, members: "94k", online: 1487, about: "Offensive, defensive, threat intel." },
-  { slug: "automation", name: "Automation", icon: CircuitBoard, members: "44k", online: 738, about: "Pipelines, RPA, agent workflows." },
-  { slug: "programming", name: "Programming", icon: Code2, members: "212k", online: 3104, about: "Languages, systems, craft." },
-  { slug: "business", name: "Business", icon: Briefcase, members: "102k", online: 1620, about: "Strategy, operations, leadership." },
-  { slug: "finance", name: "Finance", icon: LineChart, members: "88k", online: 1342, about: "Markets, valuation, quant." },
-  { slug: "design", name: "Graphic Design", icon: Palette, members: "76k", online: 1108, about: "Type, brand, editorial." },
-  { slug: "cloud", name: "Cloud Computing", icon: Cloud, members: "63k", online: 974, about: "Architecture, infra, platform." },
-  { slug: "uiux", name: "UI / UX", icon: PenTool, members: "147k", online: 2210, about: "Interaction, systems, craft." },
-  { slug: "marketing", name: "Marketing", icon: Megaphone, members: "98k", online: 1456, about: "Growth, brand, storytelling." },
-  { slug: "photography", name: "Photography", icon: Camera, members: "54k", online: 826, about: "Light, frame, narrative." },
-  { slug: "data", name: "Data Science", icon: Database, members: "115k", online: 1789, about: "Analysis, modeling, decisions." },
-  { slug: "startup", name: "Startup", icon: Rocket, members: "69k", online: 1058, about: "Building 0→1, fundraising, hiring." },
+  { slug: "ai", name: "Artificial Intelligence", icon: Atom, tint: "#6D5BFF", members: "184k", online: 2841, about: "Frontier models, agents, eval, alignment." },
+  { slug: "ml", name: "Machine Learning", icon: Network, tint: "#0EA5A4", members: "121k", online: 1932, about: "Foundations, applied research, MLOps." },
+  { slug: "robotics", name: "Robotics", icon: Cpu, tint: "#475569", members: "38k", online: 612, about: "Manipulation, perception, sim-to-real." },
+  { slug: "psychology", name: "Psychology", icon: Lightbulb, tint: "#D97706", members: "72k", online: 1204, about: "Cognition, behavior, applied research." },
+  { slug: "video", name: "Video Editing", icon: Film, tint: "#DB2777", members: "58k", online: 894, about: "Color, story, motion, post pipelines." },
+  { slug: "cybersec", name: "Cyber Security", icon: ShieldCheck, tint: "#0F766E", members: "94k", online: 1487, about: "Offensive, defensive, threat intel." },
+  { slug: "automation", name: "Automation", icon: Workflow, tint: "#7C3AED", members: "44k", online: 738, about: "Pipelines, RPA, agent workflows." },
+  { slug: "programming", name: "Programming", icon: SquareTerminal, tint: "#111827", members: "212k", online: 3104, about: "Languages, systems, craft." },
+  { slug: "business", name: "Business", icon: Building2, tint: "#1F2937", members: "102k", online: 1620, about: "Strategy, operations, leadership." },
+  { slug: "finance", name: "Finance", icon: TrendingUp, tint: "#15803D", members: "88k", online: 1342, about: "Markets, valuation, quant." },
+  { slug: "design", name: "Graphic Design", icon: Layers, tint: "#E11D48", members: "76k", online: 1108, about: "Type, brand, editorial." },
+  { slug: "cloud", name: "Cloud Computing", icon: CloudCog, tint: "#0284C7", members: "63k", online: 974, about: "Architecture, infra, platform." },
+  { slug: "uiux", name: "UI / UX", icon: MousePointer2, tint: "#9333EA", members: "147k", online: 2210, about: "Interaction, systems, craft." },
+  { slug: "marketing", name: "Marketing", icon: Radio, tint: "#EA580C", members: "98k", online: 1456, about: "Growth, brand, storytelling." },
+  { slug: "photography", name: "Photography", icon: Aperture, tint: "#0F172A", members: "54k", online: 826, about: "Light, frame, narrative." },
+  { slug: "data", name: "Data Science", icon: BarChart3, tint: "#2563EB", members: "115k", online: 1789, about: "Analysis, modeling, decisions." },
+  { slug: "startup", name: "Startup", icon: Flame, tint: "#DC2626", members: "69k", online: 1058, about: "Building 0→1, fundraising, hiring." },
 ];
 
 export type Post = {
