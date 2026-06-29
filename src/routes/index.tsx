@@ -13,6 +13,7 @@ import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { useCoinBalance } from "@/lib/use-coin-balance";
+import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { setHomeTab, type HomeTab } from "@/lib/home-tab";
 
 export const Route = createFileRoute("/")({
