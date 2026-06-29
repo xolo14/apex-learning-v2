@@ -128,6 +128,27 @@ export function ensureSchema() {
         created_at timestamptz DEFAULT now()
       )
     `;
+
+    // -------- Coin ledger (one row per (user, action_key); enforces one-time awards) --------
+    await s`
+      CREATE TABLE IF NOT EXISTS coin_ledger (
+        user_unique_id text NOT NULL,
+        action_key text NOT NULL,
+        amount integer NOT NULL CHECK (amount >= 0),
+        created_at timestamptz DEFAULT now(),
+        PRIMARY KEY (user_unique_id, action_key)
+      )
+    `;
+    await s`CREATE INDEX IF NOT EXISTS coin_ledger_user_idx ON coin_ledger(user_unique_id)`;
+
+    // -------- One account per email and per mobile --------
+    // Best-effort: ignore failure if duplicates already exist in legacy data.
+    try {
+      await s`CREATE UNIQUE INDEX IF NOT EXISTS profiles_gmail_uniq ON profiles (lower(gmail)) WHERE gmail IS NOT NULL AND gmail <> ''`;
+    } catch {}
+    try {
+      await s`CREATE UNIQUE INDEX IF NOT EXISTS profiles_mobile_uniq ON profiles (mobile) WHERE mobile IS NOT NULL AND mobile <> ''`;
+    } catch {}
   })().catch((e) => {
     _ready = null;
     throw e;
