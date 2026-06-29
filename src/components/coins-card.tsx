@@ -1,5 +1,6 @@
-import { Coins, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 
 export function CoinsCard({
   name,
