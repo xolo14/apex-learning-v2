@@ -9,6 +9,7 @@ import {
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useDensity } from "@/lib/density";
 import { useHomeTab } from "@/lib/home-tab";
+import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -80,13 +81,15 @@ const tabs: Tab[] = [
 
 function BottomTabs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const earnings = useEarningsEnabled();
+  const visible = earnings ? tabs : tabs.filter((t) => t.to !== "/quizzes");
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[480px] px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2"
       style={{ background: "linear-gradient(to top, rgba(255,255,255,0.96) 60%, rgba(255,255,255,0))" }}
     >
       <div className="flex items-center justify-between rounded-[28px] border border-hairline bg-background/95 px-2 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-        {tabs.map(({ to, label, icon: Icon }) => {
+        {visible.map(({ to, label, icon: Icon }) => {
           const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
           return (
             <Link
