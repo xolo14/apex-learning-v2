@@ -10,7 +10,10 @@ import {
 } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
+import { listGigs } from "@/lib/communities.functions";
 
 export const Route = createFileRoute("/quizzes")({
   head: () => ({ meta: [{ title: "Earn — Quizzes & Earnings | Syncpedia" }] }),
@@ -27,12 +30,6 @@ const quizzes = [
   { title: "Threat Modeling Drill", community: "cybersec", q: 12, mins: 9, reward: 45 },
 ];
 
-const gigs = [
-  { title: "Write 5 blog posts on RAG", poster: "Northwind Labs", community: "ai", location: "Remote", duration: "1 week", pay: "₹27,000", coins: 120 },
-  { title: "Design a 12-screen onboarding", poster: "Forma Studio", community: "uiux", location: "Async", duration: "2 weeks", pay: "₹47,000", coins: 180 },
-  { title: "Backtest a momentum strategy", poster: "Halden Capital", community: "finance", location: "Remote", duration: "5 days", pay: "₹30,000", coins: 140 },
-  { title: "Audit a Next.js app for XSS", poster: "Aegis Defense", community: "cybersec", location: "Remote", duration: "3 days", pay: "₹20,000", coins: 90 },
-];
 
 function EarnPage() {
   const { tab } = Route.useSearch();
