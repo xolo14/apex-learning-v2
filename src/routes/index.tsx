@@ -78,10 +78,14 @@ function Home() {
             <button aria-label="Search" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
               <Search strokeWidth={1.75} className="h-[18px] w-[18px]" />
             </button>
-            <button aria-label="Notifications" className="relative grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
+            <Link
+              to="/messages"
+              aria-label="Messages and notifications"
+              className="relative grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95"
+            >
               <Bell strokeWidth={1.75} className="h-[18px] w-[18px]" />
               <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-orange ring-2 ring-background" />
-            </button>
+            </Link>
           </div>
         </div>
       </header>
