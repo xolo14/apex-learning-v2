@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as GigsRouteImport } from './routes/gigs'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
 import { Route as AskRouteImport } from './routes/ask'
@@ -41,6 +42,11 @@ const QuizzesRoute = QuizzesRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GigsRoute = GigsRouteImport.update({
+  id: '/gigs',
+  path: '/gigs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesRoute = CoursesRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/gigs': typeof GigsRoute
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/gigs': typeof GigsRoute
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/ask': typeof AskRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
+  '/gigs': typeof GigsRoute
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/ask'
     | '/communities'
     | '/courses'
+    | '/gigs'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/ask'
     | '/communities'
     | '/courses'
+    | '/gigs'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/ask'
     | '/communities'
     | '/courses'
+    | '/gigs'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -247,6 +259,7 @@ export interface RootRouteChildren {
   AskRoute: typeof AskRoute
   CommunitiesRoute: typeof CommunitiesRoute
   CoursesRoute: typeof CoursesRoute
+  GigsRoute: typeof GigsRoute
   ProfileRoute: typeof ProfileRoute
   QuizzesRoute: typeof QuizzesRoute
   SettingsRoute: typeof SettingsRoute
@@ -276,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gigs': {
+      id: '/gigs'
+      path: '/gigs'
+      fullPath: '/gigs'
+      preLoaderRoute: typeof GigsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses': {
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   AskRoute: AskRoute,
   CommunitiesRoute: CommunitiesRoute,
   CoursesRoute: CoursesRoute,
+  GigsRoute: GigsRoute,
   ProfileRoute: ProfileRoute,
   QuizzesRoute: QuizzesRoute,
   SettingsRoute: SettingsRoute,

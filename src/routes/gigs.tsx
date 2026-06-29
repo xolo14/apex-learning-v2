@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Wallet, ChevronLeft, Coins, MapPin, Clock, ArrowUpRight } from "lucide-react";
+import { ChevronLeft, Coins, MapPin, Clock, ArrowUpRight } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 
 export const Route = createFileRoute("/gigs")({
