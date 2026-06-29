@@ -15,6 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
+import { useCoinBalance } from "@/lib/use-coin-balance";
 
 export const Route = createFileRoute("/quizzes")({
   head: () => ({
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/quizzes")({
 function EarnPage() {
   const { tab } = Route.useSearch();
   const navigate = Route.useNavigate();
+  const { balance: coinBalance } = useCoinBalance();
   const setTab = (t: "quizzes" | "gigs") =>
     navigate({ search: { tab: t }, replace: true });
 
@@ -91,10 +93,14 @@ function EarnPage() {
           </Link>
         }
         right={
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-[12px] font-semibold text-background">
+          <Link
+            to="/coins"
+            aria-label="View coins"
+            className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-[12px] font-semibold text-background active:scale-95"
+          >
             <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-            1,240
-          </span>
+            {coinBalance.toLocaleString()}
+          </Link>
         }
       />
 
