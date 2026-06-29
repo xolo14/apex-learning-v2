@@ -9,7 +9,7 @@ import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 import { listHot, type HotItem } from "@/lib/hot.functions";
 import { useSavedIds } from "@/lib/saved";
-import { YouTrigger } from "@/components/you-sheet";
+import { IdentityAvatar, useIdentity } from "@/lib/identity";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,6 +30,7 @@ const sorts = [
 ] as const;
 
 function Home() {
+  const identity = useIdentity();
   const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("questions");
   const featured = communities.slice(0, 8);
   const { density } = useDensity();
@@ -51,7 +52,13 @@ function Home() {
       {/* Status bar–style chrome */}
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-5 pb-2 pt-[max(env(safe-area-inset-top),14px)]">
-          <YouTrigger />
+          <Link
+            to="/profile"
+            aria-label="Open profile"
+            className="rounded-full ring-1 ring-hairline active:scale-95 transition"
+          >
+            <IdentityAvatar color={identity.color} icon={identity.icon} className="h-10 w-10" />
+          </Link>
 
           <div className="flex items-center gap-1.5">
             <Link
