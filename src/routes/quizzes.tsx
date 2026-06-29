@@ -89,35 +89,32 @@ function EarnPage() {
         }
       />
 
-      {/* Segmented tabs */}
-      <div className="px-5 pt-4">
-        <div className="relative grid grid-cols-2 rounded-full bg-surface p-1 text-[13px] font-medium">
-          <span
-            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-foreground transition-transform duration-300"
-            style={{ transform: tab === "gigs" ? "translateX(100%)" : "translateX(0)" }}
-          />
-          <button
-            onClick={() => setTab("quizzes")}
-            className={
-              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
-              (tab === "quizzes" ? "text-background" : "text-ink-muted")
-            }
-          >
-            <Sparkles strokeWidth={1.75} className="h-[14px] w-[14px]" />
-            Quizzes
-          </button>
-          <button
-            onClick={() => setTab("gigs")}
-            className={
-              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
-              (tab === "gigs" ? "text-background" : "text-ink-muted")
-            }
-          >
-            <Wallet strokeWidth={1.75} className="h-[14px] w-[14px]" />
-            Gigs
-          </button>
+      {/* Underline tabs — matches Network */}
+      <div className="sticky top-[60px] z-30 border-b border-hairline bg-background/90 backdrop-blur-xl">
+        <div className="flex items-center gap-1 px-3">
+          {(["quizzes", "gigs"] as const).map((t) => {
+            const active = tab === t;
+            const Icon = t === "quizzes" ? Sparkles : Wallet;
+            return (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={
+                  "relative inline-flex shrink-0 items-center gap-1.5 px-3 py-3 text-[13px] capitalize tracking-tight transition-colors " +
+                  (active ? "text-foreground" : "text-ink-muted")
+                }
+              >
+                <Icon strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                {t}
+                {active ? (
+                  <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-foreground" />
+                ) : null}
+              </button>
+            );
+          })}
         </div>
       </div>
+
 
       {/* Swipeable pager (transform-based, full pane drag) */}
       <div
