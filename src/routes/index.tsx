@@ -182,7 +182,15 @@ function Home() {
       {/* Section divider */}
       <div className={"flex items-center gap-3 " + (compact ? "mt-4 px-4" : "mt-8 px-5")}>
         <span className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
-          {sort === "hot" ? "Hot right now" : sort === "new" ? "New questions" : "Questions & answers"}
+          {sort === "hot"
+            ? "Hot right now"
+            : sort === "events"
+              ? "Upcoming events"
+              : sort === "saved"
+                ? "Saved posts"
+                : sort === "following"
+                  ? "From people you follow"
+                  : "Questions & answers"}
         </span>
         <span className="h-px flex-1 bg-hairline" />
       </div>
@@ -191,12 +199,21 @@ function Home() {
       <div className={compact ? "mt-1" : "mt-2"}>
         {sort === "hot" ? (
           <HotFeed loading={hotQ.isLoading} error={hotQ.error} items={hotQ.data ?? []} compact={compact} />
-        ) : sort === "new" ? (
-          <NewFeed loading={newQ.isLoading} error={newQ.error} items={newQ.data ?? []} compact={compact} />
+        ) : sort === "events" ? (
+          <Empty compact={compact}>No upcoming events yet. Check back soon.</Empty>
+        ) : sort === "saved" ? (
+          savedPosts.length === 0 ? (
+            <Empty compact={compact}>
+              No saved posts yet. Tap the bookmark on any post to save it here.
+            </Empty>
+          ) : (
+            savedPosts.map((p) => <PostCard key={p.id} post={p} />)
+          )
         ) : (
           feed.map((p) => <PostCard key={p.id} post={p} />)
         )}
       </div>
+
 
       <div className="px-5 py-12 text-center">
         <div className="mx-auto h-px w-10 bg-hairline" />
