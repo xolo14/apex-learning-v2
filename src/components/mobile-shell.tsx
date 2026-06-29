@@ -1,18 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  House,
-  Compass,
-  Plus,
-  GraduationCap,
-  CircleUserRound,
-  Rows3,
-  Rows2,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { Plus, Rows3, Rows2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useDensity } from "@/lib/density";
-import { useIdentity, IdentityAvatar } from "@/lib/identity";
 
 export function MobileShell({ children }: { children: ReactNode }) {
   const { density } = useDensity();
@@ -21,9 +10,8 @@ export function MobileShell({ children }: { children: ReactNode }) {
       data-density={density}
       className="mx-auto min-h-screen max-w-[480px] bg-background text-foreground"
     >
-      <div className="pb-28">{children}</div>
+      <div className="pb-6">{children}</div>
       <AskFab />
-      <BottomTabs />
     </div>
   );
 }
