@@ -68,14 +68,10 @@ export async function refreshHotCache(): Promise<{ inserted: number; total: numb
     const ex = map.get(item.a.url);
     if (!ex || (!ex.a.socialimage && item.a.socialimage)) map.set(item.a.url, item);
   }
-  const items = [...map.values()].filter((x) => x.a.socialimage);
-  // Fallback: include some imageless ones to guarantee min volume.
-  if (items.length < 40) {
-    for (const item of map.values()) {
-      if (items.length >= 60) break;
-      if (!item.a.socialimage) items.push(item);
-    }
-  }
+  // Keep items with images first; then top up with imageless ones to guarantee a high daily volume (target 500+).
+  const withImg = [...map.values()].filter((x) => x.a.socialimage);
+  const withoutImg = [...map.values()].filter((x) => !x.a.socialimage);
+  const items = [...withImg, ...withoutImg].slice(0, 800);
 
   let inserted = 0;
   for (const { a, category } of items) {
