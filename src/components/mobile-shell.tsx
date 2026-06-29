@@ -1,17 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { Plus, Rows3, Rows2 } from "lucide-react";
 import {
-  Home,
-  UsersRound,
-  Plus,
-  Briefcase,
-  CircleUserRound,
-  Rows3,
-  Rows2,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
-import type { ReactNode } from "react";
+  HomeIcon,
+  UserGroupIcon,
+  WalletIcon,
+  BriefcaseIcon,
+} from "@heroicons/react/24/solid";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useDensity } from "@/lib/density";
+
+type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
 
 export function MobileShell({ children }: { children: ReactNode }) {
