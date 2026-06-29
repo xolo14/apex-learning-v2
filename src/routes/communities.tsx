@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, BadgeCheck, Calendar, MapPin } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Search, BadgeCheck, Calendar, MapPin, Users, CalendarDays } from "lucide-react";
+import { useRef, useState, useMemo } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { communities, posts } from "@/lib/feed-data";
 
 export const Route = createFileRoute("/communities")({
   head: () => ({ meta: [{ title: "Network — Syncpedia" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: s.tab === "events" ? ("events" as const) : ("communities" as const),
+  }),
   component: NetworkPage,
 });
 
@@ -49,50 +52,115 @@ const sampleEvents = [
 ];
 
 function NetworkPage() {
-  const [tab, setTab] = useState<"communities" | "events">("communities");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setTab = (t: "communities" | "events") =>
+    navigate({ search: { tab: t }, replace: true });
+
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "mentors">("all");
   const mentorSlugs = useMemo(
     () => new Set(posts.filter((p) => p.mentor).map((p) => p.communitySlug)),
     [],
   );
-  const filtered = communities.filter((c) =>
-    c.name.toLowerCase().includes(q.toLowerCase()) &&
-    (filter === "all" || mentorSlugs.has(c.slug)),
+  const filtered = communities.filter(
+    (c) =>
+      c.name.toLowerCase().includes(q.toLowerCase()) &&
+      (filter === "all" || mentorSlugs.has(c.slug)),
   );
+
+  const [drag, setDrag] = useState(0);
+  const startX = useRef<number | null>(null);
+  const width = useRef(0);
+  const paneRef = useRef<HTMLDivElement>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    startX.current = e.clientX;
+    width.current = paneRef.current?.clientWidth ?? 1;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (startX.current == null) return;
+    const dx = e.clientX - startX.current;
+    const max = width.current;
+    const clamped =
+      tab === "communities"
+        ? Math.min(0, Math.max(-max, dx))
+        : Math.max(0, Math.min(max, dx));
+    setDrag(clamped);
+  };
+  const onPointerUp = () => {
+    if (startX.current == null) return;
+    const threshold = width.current * 0.18;
+    if (tab === "communities" && drag < -threshold) setTab("events");
+    else if (tab === "events" && drag > threshold) setTab("communities");
+    startX.current = null;
+    setDrag(0);
+  };
+
+  const basePct = tab === "events" ? -50 : 0;
+  const dragPct = width.current ? (drag / width.current) * 50 : 0;
+
   return (
     <MobileShell>
-      <MobileHeader title="Network" subtitle="Communities & events" />
+      <MobileHeader
+        title={tab === "communities" ? "Communities" : "Events"}
+        subtitle={
+          tab === "communities"
+            ? "People building together"
+            : "Meetups, demos & live sessions"
+        }
+      />
 
-      <div className="sticky top-[64px] z-30 border-b border-hairline bg-background/90 backdrop-blur-xl">
-        <div className="flex items-center gap-1 px-3">
-          {(["communities", "events"] as const).map((t) => {
-            const active = tab === t;
-            return (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={
-                  "relative shrink-0 px-3 py-3 text-[13px] capitalize tracking-tight transition-colors " +
-                  (active ? "text-foreground" : "text-ink-muted")
-                }
-              >
-                {t}
-                {active ? (
-                  <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-foreground" />
-                ) : null}
-              </button>
-            );
-          })}
+      {/* Segmented tabs — same style as Internship page */}
+      <div className="px-5 pt-4">
+        <div className="relative grid grid-cols-2 rounded-full bg-surface p-1 text-[13px] font-medium">
+          <span
+            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-foreground transition-transform duration-300"
+            style={{
+              transform: tab === "events" ? "translateX(100%)" : "translateX(0)",
+            }}
+          />
+          <button
+            onClick={() => setTab("communities")}
+            className={
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (tab === "communities" ? "text-background" : "text-ink-muted")
+            }
+          >
+            <Users strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            Communities
+          </button>
+          <button
+            onClick={() => setTab("events")}
+            className={
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (tab === "events" ? "text-background" : "text-ink-muted")
+            }
+          >
+            <CalendarDays strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            Events
+          </button>
         </div>
       </div>
 
+      {/* Swipeable pager */}
       <div
-        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
-        style={{ scrollbarWidth: "none" }}
+        ref={paneRef}
+        className="mt-4 overflow-hidden touch-pan-y"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
-        <section className="w-full shrink-0 snap-center">
-          {tab === "communities" ? (
+        <div
+          className="flex w-[200%]"
+          style={{
+            transform: `translateX(${basePct + dragPct}%)`,
+            transition: drag === 0 ? "transform 300ms ease" : "none",
+          }}
+        >
+          <section className="w-1/2 shrink-0">
             <CommunitiesView
               q={q}
               setQ={setQ}
@@ -101,10 +169,11 @@ function NetworkPage() {
               filtered={filtered}
               mentorSlugs={mentorSlugs}
             />
-          ) : (
+          </section>
+          <section className="w-1/2 shrink-0">
             <EventsView />
-          )}
-        </section>
+          </section>
+        </div>
       </div>
     </MobileShell>
   );
@@ -127,7 +196,7 @@ function CommunitiesView({
 }) {
   return (
     <>
-      <div className="flex items-center gap-2 px-5 pt-4">
+      <div className="flex items-center gap-2 px-5">
         <label className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-surface px-3.5">
           <Search strokeWidth={1.75} className="h-[16px] w-[16px] text-ink-muted" />
           <input
@@ -200,7 +269,7 @@ function CommunitiesView({
 
 function EventsView() {
   return (
-    <ul className="pt-2">
+    <ul>
       {sampleEvents.map((e) => (
         <li
           key={e.id}
