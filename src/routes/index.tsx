@@ -7,7 +7,7 @@ import { MobileShell } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
 import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
-import { listHot, type HotItem } from "@/lib/hot.functions";
+import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
 import { useSavedIds } from "@/lib/saved";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 
