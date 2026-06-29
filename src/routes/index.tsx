@@ -51,13 +51,8 @@ function Home() {
       {/* Status bar–style chrome */}
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-5 pb-2 pt-[max(env(safe-area-inset-top),14px)]">
-          <Link to="/" className="flex items-center">
-            <img
-              src={logoAsset.url}
-              alt="Syncpedia"
-              className="h-10 w-auto object-contain"
-            />
-          </Link>
+          <YouTrigger />
+
           <div className="flex items-center gap-1.5">
             <Link
               to="/coins"
