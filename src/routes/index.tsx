@@ -365,3 +365,12 @@ function HotReader({ item, onClose }: { item: HotItem; onClose: () => void }) {
   );
 }
 
+function Empty({ children, compact }: { children: React.ReactNode; compact: boolean }) {
+  return (
+    <div className={(compact ? "px-4 py-8 " : "px-5 py-12 ") + "text-center text-[13px] text-ink-muted"}>
+      {children}
+    </div>
+  );
+}
+
+
