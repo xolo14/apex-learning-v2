@@ -2,13 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Gem,
   ChevronLeft,
-  BadgeDollarSign,
   Trophy,
   Clock,
   Wallet,
   MapPin,
   ArrowUpRight,
 } from "lucide-react";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { useRef, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 
@@ -83,7 +83,7 @@ function EarnPage() {
         }
         right={
           <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-[12px] font-semibold text-background">
-            <BadgeDollarSign strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
+            <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
             1,240
           </span>
         }
@@ -157,7 +157,7 @@ function EarnPage() {
                     </span>
                   </span>
                   <button className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange px-3 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                    <BadgeDollarSign strokeWidth={2} className="h-[12px] w-[12px]" />
+                    <img src={goldCoin} alt="" className="h-[12px] w-[12px] object-contain" />
                     +{q.reward}
                   </button>
                 </div>
@@ -189,7 +189,7 @@ function EarnPage() {
                     {g.duration}
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-orange">
-                    <BadgeDollarSign strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                    <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
                     +{g.coins}
                   </span>
                 </div>

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Coins, Bookmark, X } from "lucide-react";
+import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X } from "lucide-react";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -68,7 +69,7 @@ function Home() {
               aria-label="Open coins"
               className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background active:scale-95"
             >
-              <Coins strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
+              <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
               1,240
             </Link>
           </div>

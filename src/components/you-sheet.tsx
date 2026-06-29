@@ -12,6 +12,7 @@ import {
   WalletIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { listMyQuestions } from "@/lib/questions.functions";
@@ -86,12 +87,12 @@ function YouPanel({ onClose }: { onClose: () => void }) {
   });
   const savedIds = useSavedIds();
 
-  const stats = [
+  const stats: Array<{ label: string; value: number; icon?: typeof DocumentTextIcon; tint: string; coin?: boolean }> = [
     { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: DocumentTextIcon, tint: "text-forest" },
     { label: "Events Attended", value: 0, icon: CalendarDaysIcon, tint: "text-orange" },
     { label: "Internships Applied", value: 0, icon: BriefcaseIcon, tint: "text-foreground" },
     { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
-    { label: "Coins Earned", value: 1240, icon: TrophyIcon, tint: "text-orange" },
+    { label: "Coins Earned", value: 1240, tint: "text-orange", coin: true },
     { label: "Saved", value: savedIds.length, icon: BookmarkIcon, tint: "text-foreground" },
   ];
 
@@ -167,13 +168,17 @@ function YouPanel({ onClose }: { onClose: () => void }) {
 
       <div className="border-t border-hairline px-5 py-4">
         <div className="grid grid-cols-2 gap-2.5">
-          {stats.map(({ label, value, icon: Icon, tint }) => (
+          {stats.map(({ label, value, icon: Icon, tint, coin }) => (
             <div
               key={label}
               className="rounded-2xl border border-hairline bg-surface/60 p-3"
             >
               <div className="flex items-center gap-1.5">
-                <Icon className={"h-3.5 w-3.5 " + tint} />
+                {coin ? (
+                  <img src={goldCoin} alt="" className="h-3.5 w-3.5 object-contain" />
+                ) : Icon ? (
+                  <Icon className={"h-3.5 w-3.5 " + tint} />
+                ) : null}
                 <span className="truncate text-[10.5px] uppercase tracking-[0.12em] text-ink-muted">
                   {label}
                 </span>
@@ -202,7 +207,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
             className="flex items-center justify-between rounded-2xl bg-surface px-3 py-3 text-[14px] font-medium text-foreground active:scale-[0.99]"
           >
             <span className="inline-flex items-center gap-2">
-              <TrophyIcon className="h-4 w-4 text-orange" />
+              <img src={goldCoin} alt="" className="h-4 w-4 object-contain" />
               View coins
             </span>
             <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
