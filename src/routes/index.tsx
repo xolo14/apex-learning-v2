@@ -13,6 +13,7 @@ import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { useCoinBalance } from "@/lib/use-coin-balance";
+import { setHomeTab, type HomeTab } from "@/lib/home-tab";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,7 +36,11 @@ const sorts = [
 function Home() {
   const identity = useIdentity();
   const { balance: coinBalance } = useCoinBalance();
-  const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("questions");
+  const [sort, setSortState] = useState<HomeTab>("questions");
+  const setSort = (v: HomeTab) => {
+    setSortState(v);
+    setHomeTab(v);
+  };
   const featured = communities.slice(0, 8);
   const { density } = useDensity();
   const compact = density === "compact";
