@@ -5,7 +5,7 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { communities } from "@/lib/feed-data";
 
 export const Route = createFileRoute("/courses")({
-  head: () => ({ meta: [{ title: "Internship — Syncpedia" }] }),
+  head: () => ({ meta: [{ title: "Internships — Syncpedia" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "courses" ? ("courses" as const) : ("internship" as const),
   }),
@@ -74,7 +74,7 @@ function LearnPage() {
   return (
     <MobileShell>
       <MobileHeader
-        title={tab === "courses" ? "Courses" : "Internship"}
+        title={tab === "courses" ? "Courses" : "Internships"}
         subtitle={tab === "courses" ? "Discovered inside your communities" : "Apply through your communities"}
       />
 

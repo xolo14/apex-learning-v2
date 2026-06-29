@@ -13,7 +13,7 @@ import { useRef, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 
 export const Route = createFileRoute("/quizzes")({
-  head: () => ({ meta: [{ title: "Earn — Quizzes & Gigs | Syncpedia" }] }),
+  head: () => ({ meta: [{ title: "Earn — Quizzes & Earnings | Syncpedia" }] }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "gigs" ? ("gigs" as const) : ("quizzes" as const),
   }),
@@ -75,7 +75,7 @@ function EarnPage() {
     <MobileShell>
       <MobileHeader
         title="Earn"
-        subtitle="Swipe between quizzes and gigs"
+        subtitle="Swipe between quizzes and earnings"
         left={
           <Link to="/" aria-label="Back" className="grid h-9 w-9 place-items-center rounded-full bg-surface">
             <ChevronLeft strokeWidth={1.75} className="h-[18px] w-[18px]" />
