@@ -207,7 +207,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
             className="flex items-center justify-between rounded-2xl bg-surface px-3 py-3 text-[14px] font-medium text-foreground active:scale-[0.99]"
           >
             <span className="inline-flex items-center gap-2">
-              <TrophyIcon className="h-4 w-4 text-orange" />
+              <img src={goldCoin} alt="" className="h-4 w-4 object-contain" />
               View coins
             </span>
             <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
