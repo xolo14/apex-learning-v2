@@ -56,7 +56,16 @@ export function CoinsCard({
         <div className="font-serif text-[44px] leading-none tracking-tight">
           {balance.toLocaleString()}
         </div>
-        <div className="mt-1 text-[11px] text-background/60">Available balance</div>
+        <div className="mt-1 flex items-center gap-2 text-[11px] text-background/60">
+          <span>Available balance</span>
+          <span className="h-1 w-1 rounded-full bg-background/30" />
+          <span className="font-medium text-background/80">
+            ≈ ₹{(balance / 10).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          </span>
+        </div>
+        <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-background/45">
+          10 coins = ₹1 · Withdrawable
+        </div>
       </div>
 
       <div className="relative mt-6 flex items-end justify-between">
