@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { listMyQuestions } from "@/lib/questions.functions";
 import { useSavedIds } from "@/lib/saved";
+import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 export function YouTrigger({ className = "" }: { className?: string }) {
   const identity = useIdentity();
