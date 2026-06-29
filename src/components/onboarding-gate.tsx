@@ -4,6 +4,23 @@ import { createProfile, getProfileByDevice, type DbProfile } from "@/lib/profile
 
 const DEVICE_KEY = "syncpedia_device_key";
 const PROFILE_CACHE = "syncpedia_profile";
+const INTERESTS_KEY = "syncpedia_interests";
+
+type Interest = { id: string; label: string; emoji: string; gradient: string };
+const INTERESTS: Interest[] = [
+  { id: "tech", label: "Technology", emoji: "💻", gradient: "from-sky-400 to-indigo-500" },
+  { id: "career", label: "Career", emoji: "💼", gradient: "from-amber-400 to-orange-500" },
+  { id: "startup", label: "Startups", emoji: "🚀", gradient: "from-fuchsia-400 to-pink-500" },
+  { id: "design", label: "Design", emoji: "🎨", gradient: "from-rose-400 to-red-500" },
+  { id: "finance", label: "Finance", emoji: "📈", gradient: "from-emerald-400 to-teal-500" },
+  { id: "ai", label: "AI & ML", emoji: "🧠", gradient: "from-violet-400 to-purple-600" },
+  { id: "gaming", label: "Gaming", emoji: "🎮", gradient: "from-cyan-400 to-blue-500" },
+  { id: "news", label: "News", emoji: "📰", gradient: "from-yellow-400 to-amber-500" },
+  { id: "sports", label: "Sports", emoji: "🏆", gradient: "from-lime-400 to-green-500" },
+  { id: "travel", label: "Travel", emoji: "🌍", gradient: "from-teal-400 to-cyan-500" },
+  { id: "wellness", label: "Wellness", emoji: "🌱", gradient: "from-green-400 to-emerald-500" },
+  { id: "music", label: "Music", emoji: "🎧", gradient: "from-pink-400 to-fuchsia-500" },
+];
 
 function getDeviceKey(): string {
   let k = localStorage.getItem(DEVICE_KEY);
@@ -20,7 +37,8 @@ export function OnboardingGate() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [issued, setIssued] = useState<DbProfile | null>(null);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [interests, setInterests] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -58,42 +76,18 @@ export function OnboardingGate() {
       .finally(() => setReady(true));
   }, [fetchProfile]);
 
-  if (!ready || profile || issued) {
-    if (issued) {
-      return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-background p-6 text-center shadow-xl">
-            <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <h2 className="mt-3 text-lg font-semibold">Welcome, {issued.name.split(" ")[0]}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Your Syncpedia ID is ready.</p>
-            <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-4">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Your unique ID</p>
-              <p className="mt-1 select-all font-mono text-2xl font-semibold text-primary">{issued.unique_id}</p>
-              <p className="mt-2 text-[11px] text-muted-foreground">Yours alone — keep it safe.</p>
-            </div>
-            <button
-              onClick={() => {
-                setProfile(issued);
-                setIssued(null);
-              }}
-              className="mt-5 w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Enter Syncpedia
-            </button>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  }
+  if (!ready || profile || issued) return null;
 
   const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v as never }));
 
   function goNext(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (step === 0) {
+      if (interests.length < 3) return setError("Pick at least 3 interests");
+      setStep(1);
+      return;
+    }
     if (!form.name.trim()) return setError("Please enter your name");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.gmail)) return setError("Please enter a valid email");
     setStep(2);
@@ -128,7 +122,8 @@ export function OnboardingGate() {
             };
       const p = await submitProfile({ data: payload });
       localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
-      setIssued(p);
+      try { localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests)); } catch {}
+      setProfile(p);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save");
     } finally {
@@ -139,18 +134,62 @@ export function OnboardingGate() {
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
       <form
-        onSubmit={step === 1 ? goNext : onSubmit}
+        onSubmit={step === 2 ? onSubmit : goNext}
         className="w-full max-w-md rounded-t-2xl bg-background p-5 shadow-xl sm:rounded-2xl"
       >
         <h2 className="mt-4 text-lg font-semibold">
 
-          {step === 1 ? "Welcome to Syncpedia" : "A few more details"}
+          {step === 0 ? "Choose your interests" : step === 1 ? "Welcome to Syncpedia" : "A few more details"}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {step === 1 ? "Let's start with the basics." : "Almost there."}
+          {step === 0
+            ? "Pick a few topics — we'll tailor your feed."
+            : step === 1
+              ? "Let's start with the basics."
+              : "Almost there."}
         </p>
 
-        {step === 1 ? (
+        {step === 0 ? (
+          <div className="mt-4">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {INTERESTS.map((it) => {
+                const active = interests.includes(it.id);
+                return (
+                  <button
+                    key={it.id}
+                    type="button"
+                    onClick={() =>
+                      setInterests((cur) =>
+                        cur.includes(it.id) ? cur.filter((x) => x !== it.id) : [...cur, it.id]
+                      )
+                    }
+                    className={`group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 transition ${
+                      active
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border/60 hover:border-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br ${it.gradient} text-2xl shadow-md ring-1 ring-black/5 transition group-active:scale-95`}
+                    >
+                      <span className="drop-shadow-sm">{it.emoji}</span>
+                    </span>
+                    <span className="text-[11px] font-medium leading-tight">{it.label}</span>
+                    {active && (
+                      <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                        ✓
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-center text-[11px] text-muted-foreground">
+              {interests.length}/3 selected (min)
+            </p>
+            {error && <p className="mt-2 text-center text-sm text-destructive">{error}</p>}
+          </div>
+        ) : step === 1 ? (
           <div className="mt-4 space-y-3">
             <Field label="Full name">
               <input
@@ -267,12 +306,12 @@ export function OnboardingGate() {
         )}
 
         <div className="mt-5 flex gap-2">
-          {step === 2 && (
+          {step !== 0 && (
             <button
               type="button"
               onClick={() => {
                 setError(null);
-                setStep(1);
+                setStep((s) => (s === 2 ? 1 : 0) as 0 | 1 | 2);
               }}
               className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent"
             >
@@ -284,7 +323,7 @@ export function OnboardingGate() {
             disabled={submitting}
             className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {step === 1 ? "Next" : submitting ? "Creating your ID…" : "Finish"}
+            {step === 0 ? "Continue" : step === 1 ? "Next" : submitting ? "Setting up…" : "Enter Syncpedia"}
           </button>
         </div>
 
