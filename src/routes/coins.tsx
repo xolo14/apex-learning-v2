@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ChevronLeft, ArrowDownLeft, ArrowUpRight, Sparkles, Wallet, Banknote, X } from "lucide-react";
+import { ChevronLeft, ArrowDownLeft, ArrowUpRight, Sparkles, Wallet, Banknote, X, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { CoinsCard } from "@/components/coins-card";
@@ -37,6 +37,7 @@ function CoinsPage() {
   const [name, setName] = useState("You");
   const { balance, entries } = useCoinBalance();
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [upi, setUpi] = useState("");
   const [submitted, setSubmitted] = useState<null | { coins: number; rupees: number; upi: string }>(null);
@@ -80,28 +81,40 @@ function CoinsPage() {
       <div className="px-5 pt-5">
         <CoinsCard name={name} balance={balance} />
 
-        <button
-          onClick={() => {
-            setShowWithdraw(true);
-            setSubmitted(null);
-          }}
-          className="mt-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-hairline bg-background px-4 py-3.5 text-left active:bg-surface"
-        >
-          <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-forest/10 text-forest">
-              <Banknote strokeWidth={1.75} className="h-4 w-4" />
-            </span>
-            <div>
-              <div className="text-[14px] font-semibold tracking-tight text-foreground">
+        <div className="mt-4">
+          <button
+            onClick={() => setWithdrawOpen((v) => !v)}
+            aria-expanded={withdrawOpen}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-hairline bg-background px-4 py-3 text-left active:bg-surface"
+          >
+            <div className="flex items-center gap-3">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-forest/10 text-forest">
+                <Banknote strokeWidth={1.75} className="h-4 w-4" />
+              </span>
+              <div className="text-[13.5px] font-semibold tracking-tight text-foreground">
                 Withdraw to UPI
               </div>
-              <div className="text-[11px] text-ink-muted">
+            </div>
+            <ChevronDown
+              strokeWidth={1.75}
+              className={`h-4 w-4 text-ink-muted transition-transform ${withdrawOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {withdrawOpen && (
+            <button
+              onClick={() => {
+                setShowWithdraw(true);
+                setSubmitted(null);
+              }}
+              className="mt-2 flex w-full items-center justify-between gap-3 rounded-2xl border border-hairline bg-surface px-4 py-3 text-left active:opacity-90"
+            >
+              <div className="text-[12px] text-ink-muted">
                 10 coins = ₹1 · min {MIN_WITHDRAW_COINS} coins
               </div>
-            </div>
-          </div>
-          <span className="text-[12px] font-medium text-ink-muted">Cash out →</span>
-        </button>
+              <span className="text-[12px] font-medium text-foreground">Cash out →</span>
+            </button>
+          )}
+        </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <Link
