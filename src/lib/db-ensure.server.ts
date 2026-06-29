@@ -25,6 +25,7 @@ export function ensureSchema() {
         created_at timestamptz DEFAULT now()
       )
     `;
+    await s`ALTER TABLE events ADD COLUMN IF NOT EXISTS price numeric DEFAULT 0`;
 
     // Gigs
     await s`

@@ -44,6 +44,7 @@ export type DbEvent = {
   image_url: string;
   location: string;
   starts_at: string;
+  price: number;
   coins: number;
   created_at: string;
 };
@@ -292,6 +293,7 @@ export const listEvents = createServerFn({ method: "GET" }).handler(async () => 
   const s = await db();
   const rows = (await s`
     SELECT id, community_slug, title, description, image_url, location, starts_at,
+           COALESCE(price, 0)::float AS price,
            COALESCE(coins, 0)::int AS coins, created_at
     FROM events ORDER BY created_at DESC
   `) as DbEvent[];
@@ -306,6 +308,7 @@ export const createEvent = createServerFn({ method: "POST" })
     imageUrl?: string;
     location?: string;
     startsAt?: string;
+    price?: number;
     coins?: number;
   }) => {
     if (!d.title?.trim()) throw new Error("Title required");
@@ -315,10 +318,11 @@ export const createEvent = createServerFn({ method: "POST" })
     const s = await db();
     const id = rid("evt");
     await s`
-      INSERT INTO events (id, community_slug, title, description, image_url, location, starts_at, coins)
+      INSERT INTO events (id, community_slug, title, description, image_url, location, starts_at, price, coins)
       VALUES (${id}, ${data.communitySlug || null}, ${data.title.slice(0, 200)},
         ${(data.description || "").slice(0, 2000)}, ${(data.imageUrl || "").slice(0, 800)},
         ${(data.location || "").slice(0, 200)}, ${(data.startsAt || "").slice(0, 100)},
+        ${Number(data.price) || 0},
         ${Math.max(0, Math.floor(Number(data.coins) || 0))})
     `;
     return { id };
