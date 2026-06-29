@@ -51,7 +51,13 @@ function Home() {
       {/* Status bar–style chrome */}
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-5 pb-2 pt-[max(env(safe-area-inset-top),14px)]">
-          <YouTrigger />
+          <Link
+            to="/profile"
+            aria-label="Open profile"
+            className="rounded-full ring-1 ring-hairline active:scale-95 transition"
+          >
+            <IdentityAvatar color={identity.color} icon={identity.icon} className="h-10 w-10" />
+          </Link>
 
           <div className="flex items-center gap-1.5">
             <Link
