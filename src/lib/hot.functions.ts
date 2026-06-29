@@ -57,7 +57,7 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
   (async () => {
     try {
       const { refreshIfStale } = await import("./hot-refresh.server");
-      await refreshIfStale(6);
+      await refreshIfStale(1);
     } catch {}
   })();
 
