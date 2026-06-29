@@ -26,7 +26,6 @@ const sorts = [
   { id: "hot", label: "Hot", icon: Flame },
   { id: "new", label: "New", icon: Clock },
   { id: "following", label: "Following", icon: null as never },
-  { id: "saved", label: "Saved", icon: null as never },
 ] as const;
 
 function Home() {
