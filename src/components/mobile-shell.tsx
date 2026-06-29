@@ -69,13 +69,13 @@ export function DensityToggle() {
   );
 }
 
-type Tab = { to: string; label: string; icon: LucideIcon; primary?: boolean; profile?: boolean };
+type Tab = { to: string; label: string; icon: LucideIcon; profile?: boolean };
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: House },
+  { to: "/quizzes", label: "Quizzes", icon: Sparkles },
   { to: "/communities", label: "Communities", icon: Compass },
-  { to: "/ask", label: "Ask", icon: Plus, primary: true },
-  { to: "/courses", label: "Intern", icon: GraduationCap },
+  { to: "/gigs", label: "Gigs", icon: Wallet },
   { to: "/profile", label: "You", icon: CircleUserRound, profile: true },
 ];
 
