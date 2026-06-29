@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import {
   Gem,
   ChevronLeft,
@@ -16,6 +16,7 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
+import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 export const Route = createFileRoute("/quizzes")({
   head: () => ({
@@ -32,8 +33,14 @@ export const Route = createFileRoute("/quizzes")({
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "gigs" ? ("gigs" as const) : ("quizzes" as const),
   }),
-  component: EarnPage,
+  component: EarnRouteGate,
 });
+
+function EarnRouteGate() {
+  const earningsEnabled = useEarningsEnabled();
+  if (!earningsEnabled) return <Navigate to="/" />;
+  return <EarnPage />;
+}
 
 function EarnPage() {
   const { tab } = Route.useSearch();
