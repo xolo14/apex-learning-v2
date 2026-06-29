@@ -75,12 +75,16 @@ function AdminEvents() {
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location"
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)}
-                 placeholder="Price (₹) — 0 for free"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
-                 placeholder="Coins reward"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Price (₹) · 0 = Free</span>
+            <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Coins reward (on attend)</span>
+            <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
           <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description"
                  className="md:col-span-2 rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <button type="submit"
