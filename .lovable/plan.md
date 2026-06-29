@@ -1,46 +1,54 @@
 ## Goal
-Hide every profile's real name from other people. Only the generated Syncpedia ID (`SP-XXXXXX`) should be visible publicly; the profile owner still sees their own name during onboarding.
+Add real social features (follows + DM chat), push notifications for new content, and proper SEO — all backed by the existing Neon DB. Remove demo/fake data so empty states show until admins post real content.
 
-## Scope of changes
+## Scope
 
-### Database
-- Add `unique_id TEXT` column to the `questions` table.
-- Backfill existing rows by matching `questions.author` to `profiles.name` where possible; set unmatched rows to `NULL` (displayed as "Anonymous").
+### 1. SEO on every page
+- Add per-route `head()` with unique `title`, `description`, `og:title`, `og:description`, `og:url`, canonical.
+- Brand: "Syncpedia — <page>". Root sets sitewide defaults + Organization JSON-LD.
+- Create `src/routes/sitemap[.]xml.ts` (dynamic) and `public/robots.txt`.
+- Routes covered: `/`, `/communities`, `/courses`, `/quizzes`, `/coins`, `/profile`, `/ask`, `/c/$slug`, `/p/$id`.
 
-### Server functions (`src/lib/questions.functions.ts`)
-- Add `unique_id` to `DbQuestion` type.
-- Return `unique_id` from `listNewQuestions` and `listAllQuestions`.
-- Change `createQuestion` to accept the device key, look up the profile's `unique_id`, and store it in the new column.
-- Update `updateQuestion` so the admin can edit `unique_id` alongside other fields.
+### 2. Remove fake data
+- Audit `src/lib/feed-data.ts` and any seeded demo posts/events/gigs/courses/internships.
+- Public pages render only DB rows. Empty state: "Nothing here yet — check back soon."
+- Keep admin-created content as the only source.
 
-### Ask page (`src/routes/ask.tsx`)
-- Read the device key from localStorage and send it when creating a post.
-- Remove the manual author name input; use the profile's unique ID as the public identifier.
+### 3. Follow system (mutual-accept)
+New Neon tables:
+- `follow_requests(id, requester_id, target_id, status['pending'|'accepted'|'declined'], created_at)` unique(requester,target).
+- `follows(follower_id, following_id, created_at)` — written only when accepted (both directions for "mutual").
+Server fns: `sendFollowRequest`, `respondFollowRequest`, `listIncomingRequests`, `listFollowing`, `isMutualFollow`.
+UI: Follow button on profiles, Requests inbox in `/profile`.
 
-### Public display components
-- `src/components/post-card.tsx` — show `unique_id` instead of `author`.
-- `src/routes/index.tsx` — show `unique_id` in the feed.
-- `src/routes/p.$id.tsx` — show `unique_id` for posts and replies.
+### 4. Direct chat (text only, mutual-follow gated)
+Tables:
+- `dm_threads(id, user_a, user_b, created_at)` unique pair.
+- `dm_messages(id, thread_id, sender_id, body text, created_at)` — **text only, no attachments**.
+Server fns guarded by `isMutualFollow` check; reject if not mutual.
+New route `/messages` (thread list) and `/messages/$threadId`. Composer is a `<textarea>` — no file input.
 
-### Admin pages
-- `src/routes/admin.users.tsx` — replace the "Name" column with "Unique ID" in the profiles table; show unique IDs for active members.
-- `src/routes/admin.posts.tsx` — show `unique_id` instead of `author` in the posts table.
-- `src/routes/admin.index.tsx` — show `unique_id` in the recent posts list.
+### 5. Push notifications for new content
+- Web Push (VAPID). New table `push_subscriptions(user_id, endpoint, p256dh, auth)`.
+- Service worker `public/sw-push.js` (push + notificationclick only — separate from any app-shell SW, safe per PWA rules).
+- On admin create of Event / Internship / Quiz / Gig: server fn fans out push to all subscribers with title + deep link.
+- Settings toggle in `/profile` → "Enable notifications" (requests permission, subscribes).
+- Secrets needed: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (I'll generate).
 
-### Onboarding (`src/components/onboarding-gate.tsx`)
-- Keep showing the user's own first name on the success screen (owner-only view).
+## Technical notes
+- Backend = Neon via existing `src/lib/db.server.ts` and `createServerFn`. No Lovable Cloud needed.
+- Schema applied through `src/lib/db-ensure.server.ts` (existing pattern).
+- Identity = the existing `syncpedia:identity` uniqueId (already used as user id across the app).
+- Web push uses the `web-push` npm package inside server fns.
+- Service worker registered only in production (Lovable preview guard).
 
-## SQL migration (to run against Neon)
-```sql
-ALTER TABLE questions ADD COLUMN unique_id TEXT;
+## Out of scope (ask if needed)
+- Image/voice messages in DMs (explicitly excluded per request).
+- Realtime delivery (chat will poll every few seconds; can upgrade to SSE later).
+- Email notifications.
 
-UPDATE questions q
-SET unique_id = p.unique_id
-FROM profiles p
-WHERE q.author = p.name;
-
-UPDATE questions SET unique_id = 'Anonymous' WHERE unique_id IS NULL;
-```
-
-## Verification
-- Run `bunx tsgo --noEmit` to confirm type-check passes.
+## Deliverable order
+1. Schema + follow system + UI.
+2. DM chat (mutual-only, text).
+3. Push notifications + SW + admin fan-out.
+4. SEO heads + sitemap/robots + remove fake data.

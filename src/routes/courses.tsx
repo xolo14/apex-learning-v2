@@ -8,7 +8,17 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listCourses, listInternshipPostings } from "@/lib/communities.functions";
 
 export const Route = createFileRoute("/courses")({
-  head: () => ({ meta: [{ title: "Courses & Internships — Syncpedia" }] }),
+  head: () => ({
+    meta: [
+      { title: "Courses & Internships — Syncpedia" },
+      {
+        name: "description",
+        content:
+          "Find courses and internships on Syncpedia — paid and free, with INR pricing and coin rewards.",
+      },
+      { property: "og:title", content: "Courses & Internships — Syncpedia" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "courses" ? ("courses" as const) : ("internship" as const),
   }),

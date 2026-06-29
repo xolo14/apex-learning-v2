@@ -325,6 +325,15 @@ export const createEvent = createServerFn({ method: "POST" })
         ${Number(data.price) || 0},
         ${Math.max(0, Math.floor(Number(data.coins) || 0))})
     `;
+    try {
+      const { sendPushToAll } = await import("./push.server");
+      await sendPushToAll({
+        title: "New event on Syncpedia",
+        body: data.title.slice(0, 120),
+        url: "/communities?tab=events",
+        tag: `evt-${id}`,
+      });
+    } catch {}
     return { id };
   });
 
@@ -375,6 +384,15 @@ export const createGig = createServerFn({ method: "POST" })
         ${(data.duration || "").slice(0, 80)},
         ${Number(data.pay) || 0}, ${Math.max(0, Math.floor(Number(data.coins) || 0))})
     `;
+    try {
+      const { sendPushToAll } = await import("./push.server");
+      await sendPushToAll({
+        title: "New earning opportunity",
+        body: data.title.slice(0, 120),
+        url: "/quizzes?tab=earnings",
+        tag: `gig-${id}`,
+      });
+    } catch {}
     return { id };
   });
 
@@ -426,6 +444,15 @@ export const createInternshipPosting = createServerFn({ method: "POST" })
         ${(data.mode || "Remote").slice(0, 30)}, ${(data.duration || "").slice(0, 80)},
         ${Number(data.stipend) || 0}, ${Math.max(0, Math.floor(Number(data.coins) || 0))})
     `;
+    try {
+      const { sendPushToAll } = await import("./push.server");
+      await sendPushToAll({
+        title: "New internship posted",
+        body: `${data.role}${data.company ? " · " + data.company : ""}`.slice(0, 120),
+        url: "/courses?tab=internships",
+        tag: `ipt-${id}`,
+      });
+    } catch {}
     return { id };
   });
 

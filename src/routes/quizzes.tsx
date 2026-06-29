@@ -14,22 +14,25 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listGigs } from "@/lib/communities.functions";
+import { listQuizzes } from "@/lib/social.functions";
 
 export const Route = createFileRoute("/quizzes")({
-  head: () => ({ meta: [{ title: "Earn — Quizzes & Earnings | Syncpedia" }] }),
+  head: () => ({
+    meta: [
+      { title: "Quizzes & Earnings — Syncpedia" },
+      {
+        name: "description",
+        content:
+          "Take quizzes, complete gigs and earn Syncpedia coins redeemable for ₹ INR.",
+      },
+      { property: "og:title", content: "Quizzes & Earnings — Syncpedia" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "gigs" ? ("gigs" as const) : ("quizzes" as const),
   }),
   component: EarnPage,
 });
-
-const quizzes = [
-  { title: "Prompt Engineering 101", community: "ai", q: 12, mins: 8, reward: 40 },
-  { title: "Color Theory Rapid Round", community: "uiux", q: 10, mins: 6, reward: 30 },
-  { title: "Risk & Return Basics", community: "finance", q: 15, mins: 10, reward: 50 },
-  { title: "Threat Modeling Drill", community: "cybersec", q: 12, mins: 9, reward: 45 },
-];
-
 
 function EarnPage() {
   const { tab } = Route.useSearch();
@@ -40,6 +43,10 @@ function EarnPage() {
   const listG = useServerFn(listGigs);
   const gigsQ = useQuery({ queryKey: ["public", "gigs"], queryFn: () => listG() });
   const gigs = gigsQ.data ?? [];
+
+  const listQ = useServerFn(listQuizzes);
+  const quizzesQ = useQuery({ queryKey: ["public", "quizzes"], queryFn: () => listQ() });
+  const quizzes = quizzesQ.data ?? [];
 
 
   // Drag state
@@ -138,11 +145,18 @@ function EarnPage() {
           }}
         >
           <section className="w-1/2 shrink-0 px-5">
+            {quizzes.length === 0 && (
+              <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
+                {quizzesQ.isLoading ? "Loading…" : "No quizzes yet."}
+              </p>
+            )}
             {quizzes.map((q) => (
-              <article key={q.title} className="mb-3 rounded-[20px] border border-hairline bg-background p-4">
+              <article key={q.id} className="mb-3 rounded-[20px] border border-hairline bg-background p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">c/{q.community}</div>
+                    <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
+                      {q.community_slug ? `c/${q.community_slug}` : "Syncpedia"}
+                    </div>
                     <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{q.title}</h3>
                   </div>
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-forest text-white">
@@ -152,16 +166,18 @@ function EarnPage() {
                 <div className="mt-3 flex items-center justify-between text-[12px] text-ink-muted">
                   <span className="inline-flex items-center gap-3">
                     <span className="inline-flex items-center gap-1.5">
-                      <Trophy strokeWidth={1.75} className="h-[14px] w-[14px]" /> {q.q} Q
+                      <Trophy strokeWidth={1.75} className="h-[14px] w-[14px]" /> {q.questions_count} Q
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                      <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" /> {q.mins}m
+                      <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" /> {q.minutes}m
                     </span>
                   </span>
-                  <button className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange px-3 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                    <img src={goldCoin} alt="" className="h-[12px] w-[12px] object-contain" />
-                    +{q.reward}
-                  </button>
+                  {q.coins > 0 && (
+                    <button className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange px-3 py-1.5 text-[12px] font-medium text-white active:scale-95">
+                      <img src={goldCoin} alt="" className="h-[12px] w-[12px] object-contain" />
+                      +{q.coins}
+                    </button>
+                  )}
                 </div>
               </article>
             ))}
