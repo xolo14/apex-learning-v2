@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageSquare, Users, Flame, ExternalLink, Layers, BookOpen, Briefcase } from "lucide-react";
+import { BarChart3, Newspaper, UsersRound, TrendingUp, ExternalLink, Network, Library, Briefcase } from "lucide-react";
 import syncpediaLogo from "@/assets/syncpedia-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/admin")({
@@ -8,14 +8,14 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const nav: { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }[] = [
-  { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/admin/posts", label: "Posts & comments", icon: MessageSquare },
-  { to: "/admin/users", label: "Members directory", icon: Users },
-  { to: "/admin/communities", label: "Communities", icon: Layers },
-  { to: "/admin/courses", label: "Courses", icon: BookOpen },
+const nav: { to: string; label: string; icon: typeof BarChart3; exact?: boolean }[] = [
+  { to: "/admin", label: "Overview", icon: BarChart3, exact: true },
+  { to: "/admin/posts", label: "Posts & comments", icon: Newspaper },
+  { to: "/admin/users", label: "Members directory", icon: UsersRound },
+  { to: "/admin/communities", label: "Communities", icon: Network },
+  { to: "/admin/courses", label: "Courses", icon: Library },
   { to: "/admin/internships", label: "Internships", icon: Briefcase },
-  { to: "/admin/hot", label: "Hot feed curator", icon: Flame },
+  { to: "/admin/hot", label: "Hot feed curator", icon: TrendingUp },
 ];
 
 function AdminLayout() {
