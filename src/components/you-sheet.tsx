@@ -2,7 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bookmark, Pencil, Check, X, Crown, CalendarDays, ScrollText, Briefcase, Wallet, Settings, ArrowUpRight } from "lucide-react";
+import { Pencil, Check, X, ArrowUpRight } from "lucide-react";
+import {
+  BookmarkIcon,
+  TrophyIcon,
+  CalendarDaysIcon,
+  DocumentTextIcon,
+  BriefcaseIcon,
+  WalletIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/solid";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { listMyQuestions } from "@/lib/questions.functions";
@@ -78,12 +87,12 @@ function YouPanel({ onClose }: { onClose: () => void }) {
   const savedIds = useSavedIds();
 
   const stats = [
-    { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: ScrollText, tint: "text-forest" },
-    { label: "Events Attended", value: 0, icon: CalendarDays, tint: "text-orange" },
-    { label: "Internships Applied", value: 0, icon: Briefcase, tint: "text-foreground" },
-    { label: "Earnings", value: 0, icon: Wallet, tint: "text-forest" },
-    { label: "Coins Earned", value: 1240, icon: Crown, tint: "text-orange" },
-    { label: "Saved", value: savedIds.length, icon: Bookmark, tint: "text-foreground" },
+    { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: DocumentTextIcon, tint: "text-forest" },
+    { label: "Events Attended", value: 0, icon: CalendarDaysIcon, tint: "text-orange" },
+    { label: "Internships Applied", value: 0, icon: BriefcaseIcon, tint: "text-foreground" },
+    { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
+    { label: "Coins Earned", value: 1240, icon: TrophyIcon, tint: "text-orange" },
+    { label: "Saved", value: savedIds.length, icon: BookmarkIcon, tint: "text-foreground" },
   ];
 
   return (
@@ -104,7 +113,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
                 <span className="truncate text-[17px] font-semibold tracking-tight text-foreground">
                   {profileName}
                 </span>
-                <Crown strokeWidth={2} className="h-4 w-4 shrink-0 text-forest" />
+                <TrophyIcon className="h-4 w-4 shrink-0 text-forest" />
               </div>
             )}
             <div className="mt-0.5 font-mono text-[11px] tracking-[0.14em] text-ink-muted">
@@ -164,7 +173,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
               className="rounded-2xl border border-hairline bg-surface/60 p-3"
             >
               <div className="flex items-center gap-1.5">
-                <Icon strokeWidth={1.75} className={"h-3.5 w-3.5 " + tint} />
+                <Icon className={"h-3.5 w-3.5 " + tint} />
                 <span className="truncate text-[10.5px] uppercase tracking-[0.12em] text-ink-muted">
                   {label}
                 </span>
@@ -193,7 +202,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
             className="flex items-center justify-between rounded-2xl bg-surface px-3 py-3 text-[14px] font-medium text-foreground active:scale-[0.99]"
           >
             <span className="inline-flex items-center gap-2">
-              <Crown className="h-4 w-4 text-orange" strokeWidth={2} />
+              <TrophyIcon className="h-4 w-4 text-orange" />
               View coins
             </span>
             <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
@@ -204,7 +213,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
             className="flex items-center justify-between rounded-2xl bg-surface px-3 py-3 text-[14px] font-medium text-foreground active:scale-[0.99]"
           >
             <span className="inline-flex items-center gap-2">
-              <Settings className="h-4 w-4" strokeWidth={1.75} />
+              <Cog6ToothIcon className="h-4 w-4" />
               Settings
             </span>
             <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
