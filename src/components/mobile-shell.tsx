@@ -1,13 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  House,
-  Compass,
+  Home,
+  Globe,
   Plus,
-  GraduationCap,
+  Award,
   CircleUserRound,
   Rows3,
   Rows2,
-  Wallet,
+  Gem,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { BadgeCheck, Pencil, Check, X, Coins, Calendar, FileText, Briefcase, Wallet, Settings, ArrowUpRight } from "lucide-react";
+import { Bookmark, Pencil, Check, X, Crown, CalendarDays, ScrollText, Building2, Gem, Settings, ArrowUpRight } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { listMyQuestions } from "@/lib/questions.functions";
