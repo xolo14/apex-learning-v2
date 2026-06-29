@@ -89,9 +89,28 @@ function AdminHot() {
           Trending curator
         </h1>
         <p className="mt-2 text-[13px] text-ink-muted">
-          Live trending from Reddit (education, education politics, teacher memes).
-          Pin items to force them to the top of the Hot tab in the app.
+          Live trending news auto-refreshes every hour. Pin items to force them to the top of the Hot tab in the app.
         </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => refreshM.mutate()}
+            disabled={refreshM.isPending}
+            className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-[12px] font-medium text-background disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshM.isPending ? "animate-spin" : ""}`} />
+            {refreshM.isPending ? "Refreshing…" : "Refresh now"}
+          </button>
+          <span className="text-[12px] text-ink-muted">
+            {status.data?.lastFetched
+              ? `Last updated ${new Date(status.data.lastFetched).toLocaleString()} · ${status.data.total} items`
+              : "No cache yet"}
+          </span>
+          {refreshM.data && (
+            <span className="text-[12px] text-ink-muted">
+              +{refreshM.data.inserted} new
+            </span>
+          )}
+        </div>
       </header>
 
       <section className="mt-8 rounded-2xl border border-hairline p-5">
