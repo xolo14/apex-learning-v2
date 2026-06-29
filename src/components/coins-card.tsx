@@ -1,5 +1,6 @@
-import { Coins, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 
 export function CoinsCard({
   name,
@@ -38,9 +39,12 @@ export function CoinsCard({
 
       <div className="relative flex items-start justify-between">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-background/10 ring-1 ring-background/15">
-            <Coins strokeWidth={2} className="h-[16px] w-[16px] text-orange" />
-          </span>
+          <img
+            src={goldCoin}
+            alt="Syncpedia Gold Coin"
+            className="h-10 w-10 object-contain"
+            loading="eager"
+          />
           <div className="text-[10px] uppercase tracking-[0.18em] text-background/70">
             Syncpedia Coins
           </div>
