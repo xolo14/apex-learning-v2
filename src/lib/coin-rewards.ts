@@ -11,16 +11,21 @@ export type CoinRewards = {
 };
 
 export const DEFAULT_COIN_REWARDS: CoinRewards = {
-  gigCompleted: 250,
-  quizCompleted: 25,
-  quizPerfectBonus: 50,
-  eventAttended: 40,
-  eventHosted: 200,
-  coursePaidEnrolled: 150,
-  courseFreeEnrolled: 30,
-  courseCompleted: 300,
-  internshipApplied: 75,
+  // Zeroed by policy: only the one-time signup bonus (50) is awarded by default.
+  // Admins can opt-in to per-action rewards; each action is one-time per account.
+  gigCompleted: 0,
+  quizCompleted: 0,
+  quizPerfectBonus: 0,
+  eventAttended: 0,
+  eventHosted: 0,
+  coursePaidEnrolled: 0,
+  courseFreeEnrolled: 0,
+  courseCompleted: 0,
+  internshipApplied: 0,
 };
+
+// One-time signup bonus credited automatically when a profile is created.
+export const SIGNUP_BONUS_COINS = 50;
 
 const KEY = "syncpedia.coin-rewards.v1";
 
