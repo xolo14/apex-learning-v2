@@ -6,6 +6,7 @@ export type DbCommunity = {
   name: string;
   about: string;
   icon_key: string;
+  image_url: string;
   status: "pending" | "approved";
   creator_name: string;
   creator_role: "admin" | "mentor" | "user";
@@ -94,7 +95,9 @@ async function db() {
 export const listCommunities = createServerFn({ method: "GET" }).handler(async () => {
   const s = await db();
   const rows = (await s`
-    SELECT id, slug, name, about, icon_key, status, creator_name, creator_role, created_at, approved_at
+    SELECT id, slug, name, about, icon_key,
+           COALESCE(image_url, '') AS image_url,
+           status, creator_name, creator_role, created_at, approved_at
     FROM communities ORDER BY created_at DESC
   `) as DbCommunity[];
   return rows;
@@ -105,6 +108,7 @@ export const createCommunity = createServerFn({ method: "POST" })
     name: string;
     about?: string;
     iconKey?: string;
+    imageUrl?: string;
     creatorName?: string;
     creatorRole?: "admin" | "mentor" | "user";
   }) => {
@@ -119,9 +123,10 @@ export const createCommunity = createServerFn({ method: "POST" })
     const status = role === "user" ? "pending" : "approved";
     const approved = status === "approved" ? new Date().toISOString() : null;
     await s`
-      INSERT INTO communities (id, slug, name, about, icon_key, status, creator_name, creator_role, approved_at)
+      INSERT INTO communities (id, slug, name, about, icon_key, image_url, status, creator_name, creator_role, approved_at)
       VALUES (${id}, ${slug}, ${data.name.slice(0, 80)}, ${(data.about || "").slice(0, 280)},
-        ${data.iconKey || "sparkles"}, ${status}, ${(data.creatorName || "Anonymous").slice(0, 80)},
+        ${data.iconKey || "sparkles"}, ${(data.imageUrl || "").slice(0, 800)},
+        ${status}, ${(data.creatorName || "Anonymous").slice(0, 80)},
         ${role}, ${approved})
     `;
     return { id, slug, status };
@@ -137,14 +142,15 @@ export const updateCommunityStatus = createServerFn({ method: "POST" })
   });
 
 export const updateCommunity = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string; name?: string; about?: string; iconKey?: string }) => d)
+  .inputValidator((d: { id: string; name?: string; about?: string; iconKey?: string; imageUrl?: string }) => d)
   .handler(async ({ data }) => {
     const s = await db();
     await s`
       UPDATE communities SET
         name = COALESCE(${data.name ?? null}, name),
         about = COALESCE(${data.about ?? null}, about),
-        icon_key = COALESCE(${data.iconKey ?? null}, icon_key)
+        icon_key = COALESCE(${data.iconKey ?? null}, icon_key),
+        image_url = COALESCE(${data.imageUrl ?? null}, image_url)
       WHERE id = ${data.id}
     `;
     return { ok: true };
