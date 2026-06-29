@@ -141,6 +141,15 @@ export function ensureSchema() {
     `;
     await s`CREATE INDEX IF NOT EXISTS coin_ledger_user_idx ON coin_ledger(user_unique_id)`;
 
+    // -------- Feature flags (admin-toggled globals) --------
+    await s`
+      CREATE TABLE IF NOT EXISTS feature_flags (
+        key text PRIMARY KEY,
+        enabled boolean NOT NULL DEFAULT true,
+        updated_at timestamptz DEFAULT now()
+      )
+    `;
+
     // -------- One account per email and per mobile --------
     // Best-effort: ignore failure if duplicates already exist in legacy data.
     try {

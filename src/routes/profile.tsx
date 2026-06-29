@@ -10,6 +10,7 @@ import type { Post, PostKind } from "@/lib/feed-data";
 import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
+import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Syncpedia" }] }),
@@ -98,6 +99,7 @@ function ProfilePage() {
 
   const mapped = useMemo(() => (myPosts.data ?? []).map(toPost), [myPosts.data]);
   const { balance: coinBalance } = useCoinBalance();
+  const earningsEnabled = useEarningsEnabled();
 
   return (
     <MobileShell>
@@ -182,9 +184,11 @@ function ProfilePage() {
             </button>
           )}
         </div>
-        <Link to="/coins" className="mt-5 block active:scale-[0.99] transition-transform">
-          <CoinsCard name={profileName} balance={coinBalance} />
-        </Link>
+        {earningsEnabled ? (
+          <Link to="/coins" className="mt-5 block active:scale-[0.99] transition-transform">
+            <CoinsCard name={profileName} balance={coinBalance} />
+          </Link>
+        ) : null}
       </section>
 
 

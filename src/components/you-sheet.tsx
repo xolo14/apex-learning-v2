@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { listMyQuestions } from "@/lib/questions.functions";
 import { useSavedIds } from "@/lib/saved";
+import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 export function YouTrigger({ className = "" }: { className?: string }) {
   const identity = useIdentity();
@@ -86,13 +87,18 @@ function YouPanel({ onClose }: { onClose: () => void }) {
     enabled: !!uniqueId,
   });
   const savedIds = useSavedIds();
+  const earningsEnabled = useEarningsEnabled();
 
   const stats: Array<{ label: string; value: number; icon?: typeof DocumentTextIcon; tint: string; coin?: boolean }> = [
     { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: DocumentTextIcon, tint: "text-forest" },
     { label: "Events Attended", value: 0, icon: CalendarDaysIcon, tint: "text-orange" },
     { label: "Internships Applied", value: 0, icon: BriefcaseIcon, tint: "text-foreground" },
-    { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
-    { label: "Coins Earned", value: 1240, tint: "text-orange", coin: true },
+    ...(earningsEnabled
+      ? ([
+          { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
+          { label: "Coins Earned", value: 1240, tint: "text-orange", coin: true },
+        ] as const)
+      : []),
     { label: "Saved", value: savedIds.length, icon: BookmarkIcon, tint: "text-foreground" },
   ];
 
@@ -201,17 +207,19 @@ function YouPanel({ onClose }: { onClose: () => void }) {
             <span>Open full profile</span>
             <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
           </Link>
-          <Link
-            to="/coins"
-            onClick={onClose}
-            className="flex items-center justify-between rounded-2xl bg-surface px-3 py-3 text-[14px] font-medium text-foreground active:scale-[0.99]"
-          >
-            <span className="inline-flex items-center gap-2">
-              <img src={goldCoin} alt="" className="h-4 w-4 object-contain" />
-              View coins
-            </span>
-            <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
-          </Link>
+          {earningsEnabled ? (
+            <Link
+              to="/coins"
+              onClick={onClose}
+              className="flex items-center justify-between rounded-2xl bg-surface px-3 py-3 text-[14px] font-medium text-foreground active:scale-[0.99]"
+            >
+              <span className="inline-flex items-center gap-2">
+                <img src={goldCoin} alt="" className="h-4 w-4 object-contain" />
+                View coins
+              </span>
+              <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} />
+            </Link>
+          ) : null}
           <Link
             to="/settings"
             onClick={onClose}

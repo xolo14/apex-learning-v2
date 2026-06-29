@@ -7,6 +7,10 @@ import {
   setCoinRewards,
   type CoinRewards,
 } from "@/lib/coin-rewards";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { setFeatureFlag } from "@/lib/feature-flags.functions";
+import { useFeatureFlags } from "@/lib/use-feature-flags";
 
 export const Route = createFileRoute("/admin/coins")({
   component: AdminCoins,
@@ -59,6 +63,20 @@ const GROUPS: FieldGroup[] = [
 function AdminCoins() {
   const [values, setValues] = useState<CoinRewards>(DEFAULT_COIN_REWARDS);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const flags = useFeatureFlags();
+  const qc = useQueryClient();
+  const setFlag = useServerFn(setFeatureFlag);
+  const [busy, setBusy] = useState(false);
+
+  const toggleEarnings = async (next: boolean) => {
+    setBusy(true);
+    try {
+      await setFlag({ data: { key: "earnings", enabled: next } });
+      await qc.invalidateQueries({ queryKey: ["feature-flags"] });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     setValues(getCoinRewards());
@@ -101,6 +119,33 @@ function AdminCoins() {
           </button>
         </div>
       </header>
+
+      <section className="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-hairline bg-surface/40 p-5">
+        <div className="min-w-0">
+          <h2 className="font-serif text-[20px] leading-tight">Earnings feature</h2>
+          <p className="mt-1 text-[12.5px] text-ink-muted">
+            When off, the Earnings tab, coin balances, the Coins page, Quizzes and Gigs disappear completely from the app for every member.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={flags.earnings}
+          disabled={busy}
+          onClick={() => toggleEarnings(!flags.earnings)}
+          className={
+            "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors " +
+            (flags.earnings ? "bg-foreground" : "bg-hairline")
+          }
+        >
+          <span
+            className={
+              "inline-block h-5 w-5 transform rounded-full bg-background shadow transition-transform " +
+              (flags.earnings ? "translate-x-6" : "translate-x-1")
+            }
+          />
+        </button>
+      </section>
 
       {savedAt && (
         <div className="mt-4 rounded-lg border border-hairline bg-surface px-4 py-2 text-[12.5px] text-ink-muted">

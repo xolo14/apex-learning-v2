@@ -1,13 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { ChevronLeft, ArrowDownLeft, ArrowUpRight, Sparkles, Wallet, Banknote, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { CoinsCard } from "@/components/coins-card";
 import { useCoinBalance } from "@/lib/use-coin-balance";
+import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 export const Route = createFileRoute("/coins")({
   head: () => ({ meta: [{ title: "Coins — Syncpedia" }] }),
-  component: CoinsPage,
+  component: CoinsRouteGate,
 });
 
 const ACTION_LABELS: Record<string, string> = {
@@ -259,4 +260,10 @@ function CoinsPage() {
       )}
     </MobileShell>
   );
+}
+
+function CoinsRouteGate() {
+  const earningsEnabled = useEarningsEnabled();
+  if (!earningsEnabled) return <Navigate to="/" />;
+  return <CoinsPage />;
 }
