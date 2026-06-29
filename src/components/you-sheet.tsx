@@ -12,6 +12,7 @@ import {
   WalletIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { listMyQuestions } from "@/lib/questions.functions";
@@ -91,7 +92,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
     { label: "Events Attended", value: 0, icon: CalendarDaysIcon, tint: "text-orange" },
     { label: "Internships Applied", value: 0, icon: BriefcaseIcon, tint: "text-foreground" },
     { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
-    { label: "Coins Earned", value: 1240, icon: TrophyIcon, tint: "text-orange" },
+    { label: "Coins Earned", value: 1240, icon: null as never, tint: "text-orange", coin: true },
     { label: "Saved", value: savedIds.length, icon: BookmarkIcon, tint: "text-foreground" },
   ];
 
