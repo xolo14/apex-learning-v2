@@ -80,8 +80,8 @@ function YouPanel({ onClose }: { onClose: () => void }) {
   const stats = [
     { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: ScrollText, tint: "text-forest" },
     { label: "Events Attended", value: 0, icon: CalendarDays, tint: "text-orange" },
-    { label: "Internships Applied", value: 0, icon: Building2, tint: "text-foreground" },
-    { label: "Earnings", value: 0, icon: Gem, tint: "text-forest" },
+    { label: "Internships Applied", value: 0, icon: Briefcase, tint: "text-foreground" },
+    { label: "Earnings", value: 0, icon: Wallet, tint: "text-forest" },
     { label: "Coins Earned", value: 1240, icon: Crown, tint: "text-orange" },
     { label: "Saved", value: savedIds.length, icon: Bookmark, tint: "text-foreground" },
   ];
