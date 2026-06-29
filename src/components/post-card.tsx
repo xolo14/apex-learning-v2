@@ -174,10 +174,28 @@ export function PostCard({ post }: { post: Post }) {
   );
 }
 
+function BookmarkButton({ postId }: { postId: string }) {
+  const { saved, toggle } = useSaved(postId);
+  return (
+    <button
+      aria-label={saved ? "Unsave" : "Save"}
+      aria-pressed={saved}
+      onClick={toggle}
+      className={
+        "grid h-8 w-8 place-items-center rounded-full active:bg-surface " +
+        (saved ? "text-orange" : "text-ink-muted")
+      }
+    >
+      <Bookmark strokeWidth={1.75} className="h-[14px] w-[14px]" fill={saved ? "currentColor" : "none"} />
+    </button>
+  );
+}
+
 function formatNumber(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
   return String(n);
 }
+
 
 const AVATAR_PALETTE = [
   "#1f6f54", // forest
