@@ -2,7 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Check, X, Trash2, Pencil, Plus } from "lucide-react";
+import {
+  Check, X, Trash2, Pencil, Plus,
+  Atom, Network, Cpu, Lightbulb, Film, ShieldCheck, Workflow,
+  SquareTerminal, Building2, TrendingUp, Layers, CloudCog,
+  MousePointer2, Radio, Aperture, BarChart3, Flame,
+} from "lucide-react";
 import {
   listCommunities,
   createCommunity,
@@ -11,6 +16,18 @@ import {
   deleteCommunity,
   type DbCommunity,
 } from "@/lib/communities.functions";
+
+const ICON_OPTIONS = [
+  { key: "atom", Icon: Atom }, { key: "network", Icon: Network },
+  { key: "cpu", Icon: Cpu }, { key: "lightbulb", Icon: Lightbulb },
+  { key: "film", Icon: Film }, { key: "shield", Icon: ShieldCheck },
+  { key: "workflow", Icon: Workflow }, { key: "terminal", Icon: SquareTerminal },
+  { key: "building", Icon: Building2 }, { key: "trending", Icon: TrendingUp },
+  { key: "layers", Icon: Layers }, { key: "cloud", Icon: CloudCog },
+  { key: "cursor", Icon: MousePointer2 }, { key: "radio", Icon: Radio },
+  { key: "aperture", Icon: Aperture }, { key: "chart", Icon: BarChart3 },
+  { key: "flame", Icon: Flame },
+] as const;
 
 export const Route = createFileRoute("/admin/communities")({
   component: AdminCommunities,
@@ -39,6 +56,8 @@ function AdminCommunities() {
 
   const [name, setName] = useState("");
   const [about, setAbout] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [iconKey, setIconKey] = useState<string>("atom");
   const [editId, setEditId] = useState<string | null>(null);
 
   const rows = q.data ?? [];
@@ -62,35 +81,69 @@ function AdminCommunities() {
           Add new (admin)
         </h2>
         <form
-          className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-[1fr_2fr_auto]"
+          className="mt-3 space-y-3"
           onSubmit={(e) => {
             e.preventDefault();
             if (!name.trim()) return;
             mCreate.mutate(
-              { data: { name, about, creatorName: "Admin", creatorRole: "admin" } },
-              { onSuccess: () => { setName(""); setAbout(""); } },
+              { data: { name, about, imageUrl, iconKey, creatorName: "Admin", creatorRole: "admin" } },
+              { onSuccess: () => { setName(""); setAbout(""); setImageUrl(""); setIconKey("atom"); } },
             );
           }}
         >
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Community name"
+              className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
+            />
+            <input
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+              placeholder="Short description"
+              className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
+            />
+          </div>
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Community name"
-            className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            placeholder="Avatar image URL (optional — overrides icon)"
+            className="w-full rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
           />
-          <input
-            value={about}
-            onChange={(e) => setAbout(e.target.value)}
-            placeholder="Short description"
-            className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
-          />
-          <button
-            type="submit"
-            disabled={mCreate.isPending}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-[13px] text-background disabled:opacity-50"
-          >
-            <Plus className="h-4 w-4" /> Add
-          </button>
+          <div>
+            <p className="mb-2 text-[11px] uppercase tracking-[0.14em] text-ink-muted">Pick an icon</p>
+            <div className="flex flex-wrap gap-2">
+              {ICON_OPTIONS.map(({ key, Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setIconKey(key)}
+                  className={
+                    "grid h-10 w-10 place-items-center rounded-xl border transition " +
+                    (iconKey === key
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-hairline bg-background text-foreground hover:bg-surface")
+                  }
+                  aria-label={key}
+                >
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            {imageUrl ? (
+              <img src={imageUrl} alt="" className="h-10 w-10 rounded-xl object-cover" />
+            ) : <span />}
+            <button
+              type="submit"
+              disabled={mCreate.isPending}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-[13px] text-background disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" /> Add community
+            </button>
+          </div>
         </form>
       </section>
 
