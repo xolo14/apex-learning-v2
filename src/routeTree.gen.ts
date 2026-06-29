@@ -15,6 +15,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as GigsRouteImport } from './routes/gigs'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
+import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as AskRouteImport } from './routes/ask'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -57,6 +58,11 @@ const CoursesRoute = CoursesRouteImport.update({
 const CommunitiesRoute = CommunitiesRouteImport.update({
   id: '/communities',
   path: '/communities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoinsRoute = CoinsRouteImport.update({
+  id: '/coins',
+  path: '/coins',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AskRoute = AskRouteImport.update({
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/ask': typeof AskRoute
+  '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ask': typeof AskRoute
+  '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/ask': typeof AskRoute
+  '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ask'
+    | '/coins'
     | '/communities'
     | '/courses'
     | '/gigs'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/ask'
+    | '/coins'
     | '/communities'
     | '/courses'
     | '/gigs'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ask'
+    | '/coins'
     | '/communities'
     | '/courses'
     | '/gigs'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AskRoute: typeof AskRoute
+  CoinsRoute: typeof CoinsRoute
   CommunitiesRoute: typeof CommunitiesRoute
   CoursesRoute: typeof CoursesRoute
   GigsRoute: typeof GigsRoute
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/communities'
       fullPath: '/communities'
       preLoaderRoute: typeof CommunitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coins': {
+      id: '/coins'
+      path: '/coins'
+      fullPath: '/coins'
+      preLoaderRoute: typeof CoinsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ask': {
@@ -432,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AskRoute: AskRoute,
+  CoinsRoute: CoinsRoute,
   CommunitiesRoute: CommunitiesRoute,
   CoursesRoute: CoursesRoute,
   GigsRoute: GigsRoute,
