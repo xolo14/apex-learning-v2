@@ -6,6 +6,11 @@ import { useIdentity, IdentityAvatar, AVATAR_COLORS, AVATAR_STYLES } from "@/lib
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkUniqueIdAvailable, updateUniqueId } from "@/lib/profiles.functions";
+import {
+  enablePushNotifications,
+  disablePushNotifications,
+  isPushEnabled,
+} from "@/lib/push-client";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — Syncpedia" }] }),
@@ -28,6 +33,29 @@ function SettingsPage() {
     "idle" | "checking" | "available" | "taken" | "invalid" | "saving" | "saved" | "error"
   >("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Push notifications
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  useEffect(() => {
+    setPushOn(isPushEnabled());
+  }, []);
+  async function togglePush() {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushOn) {
+        await disablePushNotifications();
+        setPushOn(false);
+      } else {
+        const res = await enablePushNotifications(identity.uniqueId ?? "");
+        if (res.ok) setPushOn(true);
+        else alert(res.reason === "denied" ? "Notifications were blocked." : "Notifications unavailable.");
+      }
+    } finally {
+      setPushBusy(false);
+    }
+  }
 
   // Live availability check (debounced)
   useEffect(() => {
@@ -263,7 +291,18 @@ function SettingsPage() {
               ))}
             </div>
           </Row>
-          <Row icon={Bell} label="Notifications" hint="Push, email, mentions" />
+          <Row icon={Bell} label="Push notifications" hint="New events, internships, gigs & quizzes">
+            <button
+              onClick={togglePush}
+              disabled={pushBusy}
+              className={
+                "rounded-full px-3 py-1 text-[12px] font-medium " +
+                (pushOn ? "bg-foreground text-background" : "bg-surface text-foreground border border-hairline")
+              }
+            >
+              {pushBusy ? "…" : pushOn ? "On" : "Enable"}
+            </button>
+          </Row>
           <Row icon={Lock} label="Privacy" hint="Who can DM and tag you" />
           <Row icon={Eye} label="Blocked accounts" hint="Manage your block list" />
           <Row icon={Globe} label="Language" hint="English (US)" />
