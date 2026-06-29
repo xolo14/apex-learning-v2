@@ -87,13 +87,18 @@ function YouPanel({ onClose }: { onClose: () => void }) {
     enabled: !!uniqueId,
   });
   const savedIds = useSavedIds();
+  const earningsEnabled = useEarningsEnabled();
 
   const stats: Array<{ label: string; value: number; icon?: typeof DocumentTextIcon; tint: string; coin?: boolean }> = [
     { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: DocumentTextIcon, tint: "text-forest" },
     { label: "Events Attended", value: 0, icon: CalendarDaysIcon, tint: "text-orange" },
     { label: "Internships Applied", value: 0, icon: BriefcaseIcon, tint: "text-foreground" },
-    { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
-    { label: "Coins Earned", value: 1240, tint: "text-orange", coin: true },
+    ...(earningsEnabled
+      ? ([
+          { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
+          { label: "Coins Earned", value: 1240, tint: "text-orange", coin: true },
+        ] as const)
+      : []),
     { label: "Saved", value: savedIds.length, icon: BookmarkIcon, tint: "text-foreground" },
   ];
 
