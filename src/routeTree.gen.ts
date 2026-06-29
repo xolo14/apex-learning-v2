@@ -28,6 +28,7 @@ import { Route as AdminInternshipsRouteImport } from './routes/admin.internships
 import { Route as AdminHotRouteImport } from './routes/admin.hot'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
+import { Route as AdminCoinsRouteImport } from './routes/admin.coins'
 import { Route as ApiPublicCronRefreshHotRouteImport } from './routes/api/public/cron.refresh-hot'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -125,6 +126,11 @@ const AdminCommunitiesRoute = AdminCommunitiesRouteImport.update({
   path: '/communities',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCoinsRoute = AdminCoinsRouteImport.update({
+  id: '/coins',
+  path: '/coins',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiPublicCronRefreshHotRoute = ApiPublicCronRefreshHotRouteImport.update({
   id: '/api/public/cron/refresh-hot',
   path: '/api/public/cron/refresh-hot',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
+  '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
+  '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
+  '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
   '/admin/hot': typeof AdminHotRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/quizzes'
     | '/settings'
+    | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
     | '/admin/hot'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/quizzes'
     | '/settings'
+    | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
     | '/admin/hot'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/quizzes'
     | '/settings'
+    | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
     | '/admin/hot'
@@ -416,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCommunitiesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/coins': {
+      id: '/admin/coins'
+      path: '/coins'
+      fullPath: '/admin/coins'
+      preLoaderRoute: typeof AdminCoinsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/public/cron/refresh-hot': {
       id: '/api/public/cron/refresh-hot'
       path: '/api/public/cron/refresh-hot'
@@ -427,6 +446,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminCoinsRoute: typeof AdminCoinsRoute
   AdminCommunitiesRoute: typeof AdminCommunitiesRoute
   AdminCoursesRoute: typeof AdminCoursesRoute
   AdminHotRoute: typeof AdminHotRoute
@@ -437,6 +457,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCoinsRoute: AdminCoinsRoute,
   AdminCommunitiesRoute: AdminCommunitiesRoute,
   AdminCoursesRoute: AdminCoursesRoute,
   AdminHotRoute: AdminHotRoute,
