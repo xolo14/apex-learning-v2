@@ -180,7 +180,11 @@ function ProfilePage() {
             </button>
           )}
         </div>
+        <Link to="/coins" className="mt-5 block active:scale-[0.99] transition-transform">
+          <CoinsCard name={profileName} balance={1240} />
+        </Link>
       </section>
+
 
       <div className="sticky top-[64px] z-30 mt-6 border-y border-hairline bg-background/90 backdrop-blur-xl">
         <div className="flex items-center gap-1 overflow-x-auto px-4">
