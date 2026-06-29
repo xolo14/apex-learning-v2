@@ -52,15 +52,14 @@ function Home() {
       {/* Status bar–style chrome */}
       <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-5 pb-2 pt-[max(env(safe-area-inset-top),14px)]">
-          <Link
-            to="/profile"
-            aria-label="Open profile"
-            className="rounded-full ring-1 ring-hairline active:scale-95 transition"
-          >
-            <IdentityAvatar color={identity.color} icon={identity.icon} className="h-10 w-10" />
-          </Link>
-
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2.5">
+            <Link
+              to="/profile"
+              aria-label="Open profile"
+              className="rounded-full ring-1 ring-hairline active:scale-95 transition"
+            >
+              <IdentityAvatar color={identity.color} icon={identity.icon} className="h-10 w-10" />
+            </Link>
             <Link
               to="/coins"
               aria-label="Open coins"
@@ -69,6 +68,9 @@ function Home() {
               <Coins strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
               1,240
             </Link>
+          </div>
+
+          <div className="flex items-center gap-1.5">
             <DensityToggle />
             <button aria-label="Search" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
               <Search strokeWidth={1.75} className="h-[18px] w-[18px]" />
