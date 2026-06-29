@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Sparkles,
+  Gem,
   ChevronLeft,
-  Coins,
+  BadgeDollarSign,
   Trophy,
   Clock,
   Wallet,
@@ -83,7 +83,7 @@ function EarnPage() {
         }
         right={
           <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-[12px] font-semibold text-background">
-            <Coins strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
+            <BadgeDollarSign strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
             1,240
           </span>
         }
@@ -103,7 +103,7 @@ function EarnPage() {
               (tab === "quizzes" ? "text-background" : "text-ink-muted")
             }
           >
-            <Sparkles strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            <Gem strokeWidth={1.75} className="h-[14px] w-[14px]" />
             Quizzes
           </button>
           <button
@@ -144,7 +144,7 @@ function EarnPage() {
                     <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{q.title}</h3>
                   </div>
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-forest text-white">
-                    <Sparkles strokeWidth={1.75} className="h-[18px] w-[18px]" />
+                    <Gem strokeWidth={1.75} className="h-[18px] w-[18px]" />
                   </span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-[12px] text-ink-muted">
@@ -157,7 +157,7 @@ function EarnPage() {
                     </span>
                   </span>
                   <button className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange px-3 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                    <Coins strokeWidth={2} className="h-[12px] w-[12px]" />
+                    <BadgeDollarSign strokeWidth={2} className="h-[12px] w-[12px]" />
                     +{q.reward}
                   </button>
                 </div>
@@ -189,7 +189,7 @@ function EarnPage() {
                     {g.duration}
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-orange">
-                    <Coins strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                    <BadgeDollarSign strokeWidth={1.75} className="h-[14px] w-[14px]" />
                     +{g.coins}
                   </span>
                 </div>
