@@ -181,6 +181,27 @@ function Home() {
         </div>
       </section>
 
+      {/* Quizzes & Gigs */}
+      <section className={compact ? "mt-4 px-4" : "mt-6 px-5"}>
+        <div className="grid grid-cols-2 gap-3 overflow-hidden rounded-[22px] bg-foreground p-3 text-background">
+          <Link
+            to="/quizzes"
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 active:bg-background/5"
+          >
+            <Sparkles strokeWidth={1.75} className="h-7 w-7" />
+            <span className="text-[15px] font-semibold tracking-tight">Quizzes</span>
+            <span className="h-0.5 w-8 rounded-full bg-background/80" />
+          </Link>
+          <Link
+            to="/gigs"
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 active:bg-background/5"
+          >
+            <Wallet strokeWidth={1.75} className="h-7 w-7" />
+            <span className="text-[15px] font-semibold tracking-tight">Gigs</span>
+          </Link>
+        </div>
+      </section>
+
       {/* Section divider */}
       <div className={"flex items-center gap-3 " + (compact ? "mt-4 px-4" : "mt-8 px-5")}>
         <span className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
@@ -188,6 +209,7 @@ function Home() {
         </span>
         <span className="h-px flex-1 bg-hairline" />
       </div>
+
 
       <div className={compact ? "mt-1" : "mt-2"}>
         {sort === "hot" ? (
