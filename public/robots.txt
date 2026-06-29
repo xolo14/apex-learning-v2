@@ -3,4 +3,5 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 
-Sitemap: /api/public/sitemap
+# Point search engines at this app’s sitemap (set host to your deploy URL, e.g. app.syncpedia.in)
+Sitemap: https://app.syncpedia.in/api/public/sitemap

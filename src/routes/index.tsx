@@ -15,14 +15,16 @@ import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { setHomeTab, type HomeTab } from "@/lib/home-tab";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Syncpedia — Where communities learn together" },
-      { name: "description", content: "A community-first learning network. Learn from mentors, grow with communities." },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Where communities learn together",
+      description:
+        "Syncpedia community — questions, events, gigs, quizzes and coins.",
+      path: "/",
+    }),
   component: Home,
 });
 

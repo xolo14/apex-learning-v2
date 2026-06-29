@@ -6,19 +6,15 @@ import { Clock, MapPin, Briefcase, GraduationCap, ArrowUpRight, ExternalLink } f
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listCourses, listInternshipPostings } from "@/lib/communities.functions";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/courses")({
-  head: () => ({
-    meta: [
-      { title: "Courses & Internships — Syncpedia" },
-      {
-        name: "description",
-        content:
-          "Find courses and internships on Syncpedia — paid and free, with INR pricing and coin rewards.",
-      },
-      { property: "og:title", content: "Courses & Internships — Syncpedia" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Courses & Internships",
+      description: "Community courses and internships on Syncpedia.",
+      path: "/courses",
+    }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "courses" ? ("courses" as const) : ("internship" as const),
   }),

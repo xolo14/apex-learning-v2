@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { createProfile, getProfileByDevice, type DbProfile } from "@/lib/profiles.functions";
+import { createProfile, getProfileByDevice, loginProfile, type DbProfile } from "@/lib/profiles.functions";
 
 const DEVICE_KEY = "syncpedia_device_key";
 const PROFILE_CACHE = "syncpedia_profile";
@@ -37,6 +37,8 @@ export function OnboardingGate() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [issued, setIssued] = useState<DbProfile | null>(null);
+  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [loginHint, setLoginHint] = useState<string | null>(null);
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [interests, setInterests] = useState<string[]>([]);
 
@@ -54,6 +56,22 @@ export function OnboardingGate() {
 
   const fetchProfile = useServerFn(getProfileByDevice);
   const submitProfile = useServerFn(createProfile);
+  const submitLogin = useServerFn(loginProfile);
+
+  function saveProfile(p: DbProfile) {
+    localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
+    setProfile(p);
+  }
+
+  function goToLogin(hint?: string) {
+    setLoginHint(hint ?? "We found your account — log in with your email and mobile to continue.");
+    setMode("login");
+    setError(null);
+  }
+
+  function isProfile(p: unknown): p is DbProfile {
+    return !!p && typeof p === "object" && "unique_id" in p && "device_key" in p;
+  }
 
   useEffect(() => {
     const cached = localStorage.getItem(PROFILE_CACHE);
@@ -93,6 +111,29 @@ export function OnboardingGate() {
     setStep(2);
   }
 
+  async function onLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.gmail)) {
+      return setError("Please enter a valid email");
+    }
+    if (!/^\d{7,15}$/.test(form.mobile.replace(/\D/g, ""))) {
+      return setError("Please enter a valid mobile number");
+    }
+    setSubmitting(true);
+    try {
+      const key = getDeviceKey();
+      const p = await submitLogin({
+        data: { deviceKey: key, mobile: form.mobile, gmail: form.gmail },
+      });
+      saveProfile(p);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not sign in");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -120,10 +161,17 @@ export function OnboardingGate() {
               branch: form.branch,
               department: form.department,
             };
-      const p = await submitProfile({ data: payload });
-      localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
+      const result = await submitProfile({ data: payload });
+      if (!isProfile(result) && result.status === "existing") {
+        goToLogin();
+        return;
+      }
+      if (!isProfile(result)) {
+        setError("Something went wrong. Please try again.");
+        return;
+      }
       try { localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests)); } catch {}
-      setProfile(p);
+      saveProfile(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save");
     } finally {
@@ -133,6 +181,64 @@ export function OnboardingGate() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
+      {mode === "login" ? (
+        <form
+          onSubmit={onLogin}
+          className="w-full max-w-md rounded-t-2xl bg-background p-5 shadow-xl sm:rounded-2xl"
+        >
+          <h2 className="mt-4 text-lg font-semibold">Welcome back</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {loginHint ?? "Log in with the email and mobile you used when you signed up."}
+          </p>
+          <div className="mt-4 space-y-3">
+            <Field label="Email">
+              <input
+                autoFocus
+                required
+                type="email"
+                value={form.gmail}
+                onChange={(e) => update("gmail", e.target.value)}
+                className="input"
+              />
+            </Field>
+            <Field label="Mobile number">
+              <input
+                required
+                inputMode="tel"
+                value={form.mobile}
+                onChange={(e) => update("mobile", e.target.value)}
+                className="input"
+              />
+            </Field>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
+          <div className="mt-5 flex gap-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {submitting ? "Logging in…" : "Log in"}
+            </button>
+          </div>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            New here?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup");
+                setLoginHint(null);
+                setError(null);
+                setStep(0);
+              }}
+              className="font-medium text-primary hover:underline"
+            >
+              Create an account
+            </button>
+          </p>
+          <style>{inputStyles}</style>
+        </form>
+      ) : (
       <form
         onSubmit={step === 2 ? onSubmit : goNext}
         className="w-full max-w-md rounded-t-2xl bg-background p-5 shadow-xl sm:rounded-2xl"
@@ -327,7 +433,30 @@ export function OnboardingGate() {
           </button>
         </div>
 
-        <style>{`
+        {step === 0 && (
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setLoginHint(null);
+                goToLogin();
+              }}
+              className="font-medium text-primary hover:underline"
+            >
+              Log in
+            </button>
+          </p>
+        )}
+
+        <style>{inputStyles}</style>
+      </form>
+      )}
+    </div>
+  );
+}
+
+const inputStyles = `
           .input {
             width: 100%;
             border-radius: 0.5rem;
@@ -338,11 +467,7 @@ export function OnboardingGate() {
             outline: none;
           }
           .input:focus { border-color: var(--primary); }
-        `}</style>
-      </form>
-    </div>
-  );
-}
+        `;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

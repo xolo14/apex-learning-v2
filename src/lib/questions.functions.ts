@@ -32,6 +32,8 @@ export const listNewQuestions = createServerFn({ method: "GET" }).handler(async 
 });
 
 export const listAllQuestions = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("./security.server");
+  await requireAdmin();
   const { sql } = await import("./db.server");
   const rows = (await sql()`
     SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
@@ -103,6 +105,8 @@ export const createQuestion = createServerFn({ method: "POST" })
 export const setQuestionHidden = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string; hidden: boolean }) => data)
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const { sql } = await import("./db.server");
     await sql()`UPDATE questions SET hidden = ${data.hidden} WHERE id = ${data.id}`;
     return { ok: true };
@@ -111,6 +115,8 @@ export const setQuestionHidden = createServerFn({ method: "POST" })
 export const deleteQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const { sql } = await import("./db.server");
     await sql()`DELETE FROM questions WHERE id = ${data.id}`;
     return { ok: true };
@@ -196,6 +202,8 @@ export const updateQuestion = createServerFn({ method: "POST" })
   });
 
 export const adminStats = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireAdmin } = await import("./security.server");
+  await requireAdmin();
   const { sql } = await import("./db.server");
   const [q] = (await sql()`SELECT count(*)::int AS c FROM questions`) as { c: number }[];
   const [qHidden] = (await sql()`SELECT count(*)::int AS c FROM questions WHERE hidden`) as { c: number }[];

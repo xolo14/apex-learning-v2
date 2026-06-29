@@ -7,19 +7,15 @@ import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { communities, posts } from "@/lib/feed-data";
 import { listEvents } from "@/lib/communities.functions";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/communities")({
-  head: () => ({
-    meta: [
-      { title: "Network & Events — Syncpedia" },
-      {
-        name: "description",
-        content:
-          "Browse Syncpedia communities and discover upcoming student & professional events.",
-      },
-      { property: "og:title", content: "Network & Events — Syncpedia" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Network & Events",
+      description: "Browse Syncpedia communities and discover upcoming student and professional events.",
+      path: "/communities",
+    }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "events" ? ("events" as const) : ("communities" as const),
   }),

@@ -158,6 +158,8 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const refreshHotNow = createServerFn({ method: "POST" }).handler(async () => {
+  const { requireAdmin } = await import("./security.server");
+  await requireAdmin();
   const { refreshHotCache } = await import("./hot-refresh.server");
   const { sql } = await import("./db.server");
   const r = await refreshHotCache();
@@ -198,6 +200,8 @@ export const addHotPin = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const { sql } = await import("./db.server");
     await sql()`INSERT INTO hot_pins (title, url, source, image_url, summary, category)
       VALUES (${data.title}, ${data.url}, ${data.source}, ${data.imageUrl}, ${data.summary}, ${data.category})`;
@@ -207,6 +211,8 @@ export const addHotPin = createServerFn({ method: "POST" })
 export const removeHotPin = createServerFn({ method: "POST" })
   .inputValidator((data: { id: number }) => data)
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const { sql } = await import("./db.server");
     await sql()`DELETE FROM hot_pins WHERE id = ${data.id}`;
     return { ok: true };
@@ -215,6 +221,8 @@ export const removeHotPin = createServerFn({ method: "POST" })
 export const updateHotPin = createServerFn({ method: "POST" })
   .inputValidator((data: { id: number; title?: string; url?: string | null; source?: string; imageUrl?: string | null; summary?: string | null; category?: string }) => data)
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const { sql } = await import("./db.server");
     const title = data.title?.trim().slice(0, 200) ?? null;
     const url = data.url === undefined ? null : data.url;

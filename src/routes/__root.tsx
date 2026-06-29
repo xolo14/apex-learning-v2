@@ -7,13 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { DensityProvider } from "@/lib/density";
 import { IdentityProvider } from "@/lib/identity";
 import { OnboardingGate } from "@/components/onboarding-gate";
+import { organizationJsonLd, pageHead } from "@/lib/seo";
+import { BRAND } from "@/lib/site";
 
 function NotFoundComponent() {
   return (
@@ -40,9 +41,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -76,54 +74,49 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Syncpedia — Learn, earn and connect with your community" },
-      {
-        name: "description",
-        content:
-          "Syncpedia is the all-in-one community network for students and professionals — discover events, internships, gigs, quizzes and earn Syncpedia coins.",
-      },
-      { name: "author", content: "Syncpedia" },
-      {
-        name: "keywords",
-        content:
-          "Syncpedia, students, internships, gigs, quizzes, events, learning, community, college network, earn coins",
-      },
-      { name: "theme-color", content: "#0a0a0a" },
-      { name: "robots", content: "index,follow" },
-      { property: "og:site_name", content: "Syncpedia" },
-      { property: "og:title", content: "Syncpedia — Learn, earn and connect" },
-      {
-        property: "og:description",
-        content:
-          "Discover events, internships, gigs, quizzes and earn Syncpedia coins.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@syncpedia" },
-      { name: "twitter:title", content: "Syncpedia" },
-      {
-        name: "twitter:description",
-        content:
-          "Discover events, internships, gigs, quizzes and earn Syncpedia coins.",
-      },
-    ],
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap",
-      },
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
-  }),
+  head: () => {
+    const seo = pageHead({
+      title: "Community — learn, earn and connect",
+      description:
+        "Syncpedia community for students and professionals — discover events, internships, gigs, quizzes and earn Syncpedia coins.",
+      path: "/",
+    });
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { name: "author", content: "Syncpedia Technologies Pvt Ltd" },
+        {
+          name: "keywords",
+          content:
+            "Syncpedia, students, internships, gigs, quizzes, events, learning, community, college network, earn coins, Hyderabad",
+        },
+        { name: "theme-color", content: BRAND.themeColor },
+        { name: "mobile-web-app-capable", content: "yes" },
+        { name: "apple-mobile-web-app-title", content: "Syncpedia" },
+        ...seo.meta,
+      ],
+      links: [
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap",
+        },
+        { rel: "stylesheet", href: appCss },
+        { rel: "manifest", href: "/manifest.webmanifest" },
+        { rel: "icon", href: BRAND.favicon, type: "image/png" },
+        { rel: "apple-touch-icon", href: BRAND.favicon },
+        ...seo.links,
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(organizationJsonLd),
+        },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

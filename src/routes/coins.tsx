@@ -5,9 +5,15 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { CoinsCard } from "@/components/coins-card";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled, useWithdrawEnabled } from "@/lib/use-feature-flags";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/coins")({
-  head: () => ({ meta: [{ title: "Coins — Syncpedia" }] }),
+  head: () =>
+    pageHead({
+      title: "Syncpedia Coins",
+      description: "Earn and track Syncpedia coins from quizzes, gigs, events, and your welcome bonus.",
+      path: "/coins",
+    }),
   component: CoinsRouteGate,
 });
 

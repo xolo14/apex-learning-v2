@@ -1,6 +1,15 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";
+import { applySecurityHeaders } from "./lib/security.server";
+
+const securityMiddleware = createMiddleware().server(async ({ next }) => {
+  const result = await next();
+  if (result instanceof Response) {
+    applySecurityHeaders(result.headers);
+  }
+  return result;
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -18,5 +27,5 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [securityMiddleware, errorMiddleware],
 }));

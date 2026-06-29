@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { createQuestion } from "@/lib/questions.functions";
 import { communities } from "@/lib/feed-data";
+import { pageHead } from "@/lib/seo";
 
 const DEVICE_KEY = "syncpedia_device_key";
 
@@ -15,7 +16,12 @@ function getDeviceKey(): string | null {
 }
 
 export const Route = createFileRoute("/ask")({
-  head: () => ({ meta: [{ title: "Ask — Syncpedia" }] }),
+  head: () =>
+    pageHead({
+      title: "Ask a question",
+      description: "Post questions to Syncpedia communities and get answers from students and professionals.",
+      path: "/ask",
+    }),
   component: AskPage,
 });
 

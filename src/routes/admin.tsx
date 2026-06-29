@@ -1,5 +1,6 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { createFileRoute, Link, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { ExternalLink, LogOut } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ChartBarIcon,
   NewspaperIcon,
@@ -15,10 +16,23 @@ import {
 } from "@heroicons/react/24/solid";
 import type { ComponentType, SVGProps } from "react";
 import syncpediaLogo from "@/assets/syncpedia-logo.jpg.asset.json";
+import { verifyAdminSession, adminLogout } from "@/lib/admin-auth.functions";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Admin — Syncpedia" }] }),
+  beforeLoad: async ({ location }) => {
+    if (location.pathname === "/admin/login") return;
+    const { authenticated } = await verifyAdminSession();
+    if (!authenticated) throw redirect({ to: "/admin/login" });
+  },
+  head: () =>
+    pageHead({
+      title: "Admin console",
+      description: "Syncpedia administration.",
+      path: "/admin",
+      noindex: true,
+    }),
   component: AdminLayout,
 });
 
@@ -41,6 +55,17 @@ const nav: { to: string; label: string; icon: IconType; exact?: boolean }[] = [
 
 function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const logout = useServerFn(adminLogout);
+
+  if (pathname === "/admin/login") {
+    return <Outlet />;
+  }
+
+  async function onLogout() {
+    await logout();
+    window.location.href = "/admin/login";
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex max-w-[1400px]">
@@ -74,7 +99,15 @@ function AdminLayout() {
               </Link>
             );
           })}
-          <div className="mt-auto px-3 pt-4">
+          <div className="mt-auto px-3 pt-4 space-y-2">
+            <button
+              type="button"
+              onClick={() => void onLogout()}
+              className="inline-flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] text-ink-muted hover:bg-surface hover:text-foreground"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
             <Link
               to="/"
               className="inline-flex items-center gap-1 text-[12px] text-ink-muted hover:text-foreground"

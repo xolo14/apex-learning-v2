@@ -302,6 +302,8 @@ export const createQuiz = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const s = await db();
     const id = rid("qz");
     await s`
@@ -327,6 +329,8 @@ export const createQuiz = createServerFn({ method: "POST" })
 export const deleteQuiz = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const s = await db();
     await s`DELETE FROM quizzes WHERE id = ${data.id}`;
     return { ok: true };

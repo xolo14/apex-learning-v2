@@ -45,6 +45,8 @@ export const awardCoin = createServerFn({ method: "POST" })
     return { uniqueId: uid, actionKey: key, amount: amt };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     if (data.amount === 0) return { credited: false, amount: 0 };
     const { sql } = await import("./db.server");
     const { ensureSchema } = await import("./db-ensure.server");

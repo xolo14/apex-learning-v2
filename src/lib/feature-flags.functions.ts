@@ -37,6 +37,8 @@ export const setFeatureFlag = createServerFn({ method: "POST" })
     return { key: d.key, enabled: !!d.enabled };
   })
   .handler(async ({ data }) => {
+    const { requireAdmin } = await import("./security.server");
+    await requireAdmin();
     const { sql } = await import("./db.server");
     const { ensureSchema } = await import("./db-ensure.server");
     await ensureSchema();

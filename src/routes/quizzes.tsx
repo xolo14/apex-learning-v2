@@ -17,19 +17,15 @@ import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/quizzes")({
-  head: () => ({
-    meta: [
-      { title: "Quizzes & Earnings — Syncpedia" },
-      {
-        name: "description",
-        content:
-          "Take quizzes, complete gigs and earn Syncpedia coins redeemable for ₹ INR.",
-      },
-      { property: "og:title", content: "Quizzes & Earnings — Syncpedia" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Quizzes & Earnings",
+      description: "Take quizzes, complete gigs, and earn Syncpedia coins in your community.",
+      path: "/quizzes",
+    }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "gigs" ? ("gigs" as const) : ("quizzes" as const),
   }),

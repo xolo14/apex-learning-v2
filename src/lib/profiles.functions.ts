@@ -1,4 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
+import {
+  isValidDeviceKey,
+  isValidEmail,
+  isValidMobile,
+  normalizeEmail,
+  normalizeMobile,
+  rateLimitAuth,
+  requireAdmin,
+} from "./security.server";
 
 export type DbProfile = {
   id: string;
@@ -27,8 +36,38 @@ function genUniqueId() {
   return `SP-${s}`;
 }
 
+export type CreateProfileResult =
+  | { status: "created"; profile: DbProfile }
+  | { status: "existing" };
+
+export const checkContactExists = createServerFn({ method: "POST" })
+  .inputValidator((d: { gmail?: string; mobile?: string }) => d)
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+    const emailNorm = data.gmail ? normalizeEmail(data.gmail) : "";
+    const mobileNorm = data.mobile ? normalizeMobile(data.mobile) : "";
+    if (emailNorm) {
+      const byEmail = (await sql()`
+        SELECT 1 FROM profiles WHERE lower(gmail) = ${emailNorm} LIMIT 1
+      `) as unknown[];
+      if (byEmail.length) return { exists: true as const };
+    }
+    if (mobileNorm) {
+      const byMobile = (await sql()`
+        SELECT 1 FROM profiles WHERE mobile = ${mobileNorm} LIMIT 1
+      `) as unknown[];
+      if (byMobile.length) return { exists: true as const };
+    }
+    return { exists: false as const };
+  });
+
 export const getProfileByDevice = createServerFn({ method: "GET" })
-  .inputValidator((d: { deviceKey: string }) => d)
+  .inputValidator((d: { deviceKey: string }) => {
+    if (!isValidDeviceKey(d.deviceKey)) throw new Error("Invalid device key");
+    return d;
+  })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
     const rows = (await sql()`
@@ -51,10 +90,10 @@ export const createProfile = createServerFn({ method: "POST" })
     branch?: string;
     department?: string;
   }) => {
-    if (!d.deviceKey) throw new Error("Device key required");
+    if (!d.deviceKey || !isValidDeviceKey(d.deviceKey)) throw new Error("Device key required");
     if (!d.name?.trim()) throw new Error("Name required");
-    if (!/^\d{7,15}$/.test(d.mobile.replace(/\D/g, ""))) throw new Error("Valid mobile required");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.gmail)) throw new Error("Valid email required");
+    if (!isValidMobile(d.mobile)) throw new Error("Valid mobile required");
+    if (!isValidEmail(d.gmail)) throw new Error("Valid email required");
     if (d.role !== "student" && d.role !== "professional") throw new Error("Invalid role");
     if (d.role === "student") {
       if (!d.year?.trim()) throw new Error("Year required");
@@ -64,13 +103,14 @@ export const createProfile = createServerFn({ method: "POST" })
     }
     return d;
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<CreateProfileResult | DbProfile> => {
+    rateLimitAuth("signup");
     const { sql } = await import("./db.server");
     const { ensureSchema } = await import("./db-ensure.server");
     await ensureSchema();
 
-    const emailNorm = data.gmail.trim().toLowerCase().slice(0, 120);
-    const mobileNorm = data.mobile.replace(/\D/g, "").slice(0, 20);
+    const emailNorm = normalizeEmail(data.gmail);
+    const mobileNorm = normalizeMobile(data.mobile);
 
     // If already onboarded on this device, return existing profile
     const existing = (await sql()`
@@ -79,22 +119,15 @@ export const createProfile = createServerFn({ method: "POST" })
     `) as DbProfile[];
     if (existing[0]) return existing[0];
 
-    // One account per email or mobile: if someone signs in from a new device
-    // with the same email/mobile, attach the existing account to this device
-    // instead of creating a duplicate.
-    const byContact = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
-      FROM profiles
-      WHERE lower(gmail) = ${emailNorm} OR mobile = ${mobileNorm}
-      LIMIT 1
-    `) as DbProfile[];
-    if (byContact[0]) {
-      await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${byContact[0].id}`;
-      const refreshed = (await sql()`
-        SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
-        FROM profiles WHERE id = ${byContact[0].id} LIMIT 1
-      `) as DbProfile[];
-      return refreshed[0]!;
+    // One account per email/mobile — don't create duplicates; client redirects to login.
+    const byEmail = (await sql()`
+      SELECT id FROM profiles WHERE lower(gmail) = ${emailNorm} LIMIT 1
+    `) as { id: string }[];
+    const byMobile = (await sql()`
+      SELECT id FROM profiles WHERE mobile = ${mobileNorm} LIMIT 1
+    `) as { id: string }[];
+    if (byEmail[0] || byMobile[0]) {
+      return { status: "existing" };
     }
 
     const id = rid("usr");
@@ -136,24 +169,57 @@ export const createProfile = createServerFn({ method: "POST" })
       )
     `;
 
-    // One-time signup bonus: 50 coins. ON CONFLICT keeps it idempotent.
-    try {
-      const { SIGNUP_BONUS_COINS } = await import("./coin-rewards");
-      await sql()`
-        INSERT INTO coin_ledger (user_unique_id, action_key, amount)
-        VALUES (${uniqueId}, 'signup', ${Math.max(0, Math.floor(SIGNUP_BONUS_COINS))})
-        ON CONFLICT (user_unique_id, action_key) DO NOTHING
-      `;
-    } catch {}
+    // One-time signup bonus: 50 coins per account (enforced by coin_ledger PK).
+    const { SIGNUP_BONUS_COINS } = await import("./coin-rewards");
+    await sql()`
+      INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+      VALUES (${uniqueId}, 'signup', ${Math.max(0, Math.floor(SIGNUP_BONUS_COINS))})
+      ON CONFLICT (user_unique_id, action_key) DO NOTHING
+    `;
 
     const rows = (await sql()`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
       FROM profiles WHERE id = ${id} LIMIT 1
     `) as DbProfile[];
-    return rows[0]!;
+    return { status: "created", profile: rows[0]! };
+  });
+
+export const loginProfile = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string; mobile: string; gmail: string }) => {
+    if (!isValidDeviceKey(d.deviceKey)) throw new Error("Device key required");
+    if (!isValidMobile(d.mobile)) throw new Error("Valid mobile required");
+    if (!isValidEmail(d.gmail)) throw new Error("Valid email required");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    rateLimitAuth("login");
+    const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+
+    const emailNorm = normalizeEmail(data.gmail);
+    const mobileNorm = normalizeMobile(data.mobile);
+
+    const rows = (await sql()`
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      FROM profiles
+      WHERE lower(gmail) = ${emailNorm} AND mobile = ${mobileNorm}
+      LIMIT 1
+    `) as DbProfile[];
+    if (!rows[0]) {
+      throw new Error("We couldn't find a matching account. Check your email and mobile, or create a new account.");
+    }
+
+    await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${rows[0].id}`;
+    const refreshed = (await sql()`
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      FROM profiles WHERE id = ${rows[0].id} LIMIT 1
+    `) as DbProfile[];
+    return refreshed[0]!;
   });
 
 export const listProfiles = createServerFn({ method: "GET" }).handler(async () => {
+  await requireAdmin();
   const { sql } = await import("./db.server");
   const rows = (await sql()`
     SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
@@ -183,6 +249,7 @@ export type AdminAnalytics = {
 
 export const adminAnalytics = createServerFn({ method: "GET" }).handler(
   async (): Promise<AdminAnalytics> => {
+    await requireAdmin();
     const { sql } = await import("./db.server");
     const [tot] = (await sql()`
       SELECT

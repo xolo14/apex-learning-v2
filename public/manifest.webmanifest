@@ -1,0 +1,19 @@
+{
+  "name": "Syncpedia",
+  "short_name": "Syncpedia",
+  "description": "Learn, earn and connect with your Syncpedia community.",
+  "start_url": "https://app.syncpedia.in/",
+  "scope": "https://app.syncpedia.in/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#1a3a34",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,5 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 
+async function adminOnly() {
+  const { requireAdmin } = await import("./security.server");
+  await requireAdmin();
+}
+
 export type DbCommunity = {
   id: string;
   slug: string;
@@ -116,6 +121,7 @@ export const createCommunity = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     const id = rid("com");
     const slug = slugify(data.name);
@@ -135,6 +141,7 @@ export const createCommunity = createServerFn({ method: "POST" })
 export const updateCommunityStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status: "approved" | "pending" }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     const approved = data.status === "approved" ? new Date().toISOString() : null;
     await s`UPDATE communities SET status = ${data.status}, approved_at = ${approved} WHERE id = ${data.id}`;
@@ -144,6 +151,7 @@ export const updateCommunityStatus = createServerFn({ method: "POST" })
 export const updateCommunity = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; name?: string; about?: string; iconKey?: string; imageUrl?: string }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`
       UPDATE communities SET
@@ -159,6 +167,7 @@ export const updateCommunity = createServerFn({ method: "POST" })
 export const deleteCommunity = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`DELETE FROM communities WHERE id = ${data.id}`;
     return { ok: true };
@@ -194,6 +203,7 @@ export const createCourse = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     const id = rid("crs");
     await s`
@@ -222,6 +232,7 @@ export const updateCourse = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`
       UPDATE courses SET
@@ -240,6 +251,7 @@ export const updateCourse = createServerFn({ method: "POST" })
 export const deleteCourse = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`DELETE FROM courses WHERE id = ${data.id}`;
     return { ok: true };
@@ -270,6 +282,7 @@ export const createInternship = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     const id = rid("int");
     await s`
@@ -284,6 +297,7 @@ export const createInternship = createServerFn({ method: "POST" })
 export const updateInternshipStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status: "pending" | "accepted" | "rejected" }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`UPDATE internship_applications SET status = ${data.status} WHERE id = ${data.id}`;
     return { ok: true };
@@ -292,6 +306,7 @@ export const updateInternshipStatus = createServerFn({ method: "POST" })
 export const deleteInternship = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`DELETE FROM internship_applications WHERE id = ${data.id}`;
     return { ok: true };
@@ -325,6 +340,7 @@ export const createEvent = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     const id = rid("evt");
     await s`
@@ -350,6 +366,7 @@ export const createEvent = createServerFn({ method: "POST" })
 export const deleteEvent = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`DELETE FROM events WHERE id = ${data.id}`;
     return { ok: true };
@@ -384,6 +401,7 @@ export const createGig = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     const id = rid("gig");
     await s`
@@ -409,6 +427,7 @@ export const createGig = createServerFn({ method: "POST" })
 export const deleteGig = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`DELETE FROM gigs WHERE id = ${data.id}`;
     return { ok: true };
@@ -444,6 +463,7 @@ export const createInternshipPosting = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     const id = rid("ipt");
     await s`
@@ -469,6 +489,7 @@ export const createInternshipPosting = createServerFn({ method: "POST" })
 export const deleteInternshipPosting = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
+    await adminOnly();
     const s = await db();
     await s`DELETE FROM internship_postings WHERE id = ${data.id}`;
     return { ok: true };

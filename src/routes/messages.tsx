@@ -5,15 +5,16 @@ import { listThreads, listIncomingRequests, respondFollowRequest } from "@/lib/s
 import { MobileShell } from "@/components/mobile-shell";
 import { Button } from "@/components/ui/button";
 import { ChatBubbleLeftRightIcon, UserPlusIcon } from "@heroicons/react/24/solid";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/messages")({
-  head: () => ({
-    meta: [
-      { title: "Messages — Syncpedia" },
-      { name: "description", content: "Chat with people who follow you back on Syncpedia." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Messages",
+      description: "Chat with people who follow you back on Syncpedia.",
+      path: "/messages",
+      noindex: true,
+    }),
   component: MessagesRoute,
 });
 

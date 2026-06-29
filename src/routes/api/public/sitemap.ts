@@ -7,6 +7,7 @@ const STATIC_PATHS = [
   "/quizzes",
   "/coins",
   "/profile",
+  "/ask",
   "/messages",
   "/settings",
 ];

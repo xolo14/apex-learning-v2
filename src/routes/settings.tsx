@@ -11,9 +11,16 @@ import {
   disablePushNotifications,
   isPushEnabled,
 } from "@/lib/push-client";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — Syncpedia" }] }),
+  head: () =>
+    pageHead({
+      title: "Settings",
+      description: "Manage your Syncpedia profile, notifications, and preferences.",
+      path: "/settings",
+      noindex: true,
+    }),
   component: SettingsPage,
 });
 

@@ -11,9 +11,15 @@ import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/profile")({
-  head: () => ({ meta: [{ title: "Profile — Syncpedia" }] }),
+  head: () =>
+    pageHead({
+      title: "Your profile",
+      description: "View your Syncpedia posts, coins, and community activity.",
+      path: "/profile",
+    }),
   component: ProfilePage,
 });
 
