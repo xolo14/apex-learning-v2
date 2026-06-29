@@ -7,6 +7,7 @@ import {
   CircleUserRound,
   Rows3,
   Rows2,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -72,6 +73,7 @@ type Tab = { to: string; label: string; icon: LucideIcon; profile?: boolean };
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: House },
   { to: "/communities", label: "Communities", icon: Compass },
+  { to: "/quizzes", label: "Gigs", icon: Wallet },
   { to: "/courses", label: "Intern", icon: GraduationCap },
   { to: "/profile", label: "You", icon: CircleUserRound, profile: true },
 ];
