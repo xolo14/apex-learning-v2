@@ -37,6 +37,7 @@ const sorts = [
 function Home() {
   const identity = useIdentity();
   const { balance: coinBalance } = useCoinBalance();
+  const earningsEnabled = useEarningsEnabled();
   const [sort, setSortState] = useState<HomeTab>("questions");
   const setSort = (v: HomeTab) => {
     setSortState(v);
@@ -72,14 +73,16 @@ function Home() {
             >
               <IdentityAvatar color={identity.color} icon={identity.icon} className="h-10 w-10" />
             </Link>
-            <Link
-              to="/coins"
-              aria-label="Open coins"
-              className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background active:scale-95"
-            >
-              <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-              {coinBalance.toLocaleString()}
-            </Link>
+            {earningsEnabled ? (
+              <Link
+                to="/coins"
+                aria-label="Open coins"
+                className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background active:scale-95"
+              >
+                <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
+                {coinBalance.toLocaleString()}
+              </Link>
+            ) : null}
           </div>
 
           <div className="flex items-center gap-1.5">
