@@ -16,3 +16,7 @@ export function useFeatureFlags(): FeatureFlags {
 export function useEarningsEnabled() {
   return useFeatureFlags().earnings;
 }
+
+export function useWithdrawEnabled() {
+  return useFeatureFlags().withdraw;
+}
