@@ -7,6 +7,8 @@ import {
   CircleUserRound,
   Rows3,
   Rows2,
+  Sparkles,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
