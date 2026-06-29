@@ -16,7 +16,17 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listGigs } from "@/lib/communities.functions";
 
 export const Route = createFileRoute("/quizzes")({
-  head: () => ({ meta: [{ title: "Earn — Quizzes & Earnings | Syncpedia" }] }),
+  head: () => ({
+    meta: [
+      { title: "Quizzes & Earnings — Syncpedia" },
+      {
+        name: "description",
+        content:
+          "Take quizzes, complete gigs and earn Syncpedia coins redeemable for ₹ INR.",
+      },
+      { property: "og:title", content: "Quizzes & Earnings — Syncpedia" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "gigs" ? ("gigs" as const) : ("quizzes" as const),
   }),
