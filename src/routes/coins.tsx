@@ -8,7 +8,7 @@ import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 export const Route = createFileRoute("/coins")({
   head: () => ({ meta: [{ title: "Coins — Syncpedia" }] }),
-  component: CoinsPage,
+  component: CoinsRouteGate,
 });
 
 const ACTION_LABELS: Record<string, string> = {
@@ -35,8 +35,6 @@ function timeAgoShort(iso: string) {
 }
 
 function CoinsPage() {
-  const earningsEnabled = useEarningsEnabled();
-  if (!earningsEnabled) return <Navigate to="/" />;
   const [name, setName] = useState("You");
   const { balance, entries } = useCoinBalance();
   const [showWithdraw, setShowWithdraw] = useState(false);
