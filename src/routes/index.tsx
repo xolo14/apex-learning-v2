@@ -193,7 +193,8 @@ function Home() {
             <span className="h-0.5 w-8 rounded-full bg-background/80" />
           </Link>
           <Link
-            to="/gigs"
+            to="/quizzes"
+            search={{ tab: "gigs" }}
             className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 active:bg-background/5"
           >
             <Wallet strokeWidth={1.75} className="h-7 w-7" />

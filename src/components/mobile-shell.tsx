@@ -3,11 +3,10 @@ import {
   House,
   Compass,
   Plus,
+  GraduationCap,
   CircleUserRound,
   Rows3,
   Rows2,
-  Sparkles,
-  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -72,9 +71,8 @@ type Tab = { to: string; label: string; icon: LucideIcon; profile?: boolean };
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: House },
-  { to: "/quizzes", label: "Quizzes", icon: Sparkles },
   { to: "/communities", label: "Communities", icon: Compass },
-  { to: "/gigs", label: "Gigs", icon: Wallet },
+  { to: "/courses", label: "Intern", icon: GraduationCap },
   { to: "/profile", label: "You", icon: CircleUserRound, profile: true },
 ];
 
