@@ -78,6 +78,16 @@ function AdminCoins() {
     }
   };
 
+  const toggleWithdraw = async (next: boolean) => {
+    setBusy(true);
+    try {
+      await setFlag({ data: { key: "withdraw", enabled: next } });
+      await qc.invalidateQueries({ queryKey: ["feature-flags"] });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   useEffect(() => {
     setValues(getCoinRewards());
   }, []);
@@ -142,6 +152,33 @@ function AdminCoins() {
             className={
               "inline-block h-5 w-5 transform rounded-full bg-background shadow transition-transform " +
               (flags.earnings ? "translate-x-6" : "translate-x-1")
+            }
+          />
+        </button>
+      </section>
+
+      <section className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-hairline bg-surface/40 p-5">
+        <div className="min-w-0">
+          <h2 className="font-serif text-[20px] leading-tight">Withdraw to UPI</h2>
+          <p className="mt-1 text-[12.5px] text-ink-muted">
+            When on, members see a “Withdraw to UPI” button under the Coins card to cash out their balance.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={flags.withdraw}
+          disabled={busy}
+          onClick={() => toggleWithdraw(!flags.withdraw)}
+          className={
+            "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors " +
+            (flags.withdraw ? "bg-foreground" : "bg-hairline")
+          }
+        >
+          <span
+            className={
+              "inline-block h-5 w-5 transform rounded-full bg-background shadow transition-transform " +
+              (flags.withdraw ? "translate-x-6" : "translate-x-1")
             }
           />
         </button>
