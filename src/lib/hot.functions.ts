@@ -157,6 +157,20 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
   return merged.slice(0, 300);
 });
 
+export const refreshHotNow = createServerFn({ method: "POST" }).handler(async () => {
+  const { refreshHotCache } = await import("./hot-refresh.server");
+  const { sql } = await import("./db.server");
+  const r = await refreshHotCache();
+  const rows = (await sql()`SELECT max(fetched_at) AS last FROM hot_cache`) as { last: string | null }[];
+  return { ...r, lastFetched: rows[0]?.last ?? null };
+});
+
+export const getHotStatus = createServerFn({ method: "GET" }).handler(async () => {
+  const { sql } = await import("./db.server");
+  const rows = (await sql()`SELECT max(fetched_at) AS last, count(*)::int AS total FROM hot_cache`) as { last: string | null; total: number }[];
+  return { lastFetched: rows[0]?.last ?? null, total: rows[0]?.total ?? 0 };
+});
+
 export const listHotPins = createServerFn({ method: "GET" }).handler(async () => {
   const { sql } = await import("./db.server");
   return (await sql()`SELECT id::int AS id, title, url, source, image_url, summary, category, pinned_at FROM hot_pins ORDER BY pinned_at DESC`) as {
