@@ -75,7 +75,7 @@ const tabs: Tab[] = [
   { to: "/communities", label: "Communities", icon: Compass },
   { to: "/quizzes", label: "Gigs", icon: Wallet },
   { to: "/courses", label: "Intern", icon: GraduationCap },
-  { to: "/profile", label: "You", icon: CircleUserRound, profile: true },
+  
 ];
 
 function BottomTabs() {
