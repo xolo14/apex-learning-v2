@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useDensity } from "@/lib/density";
-import { useIdentity, IdentityAvatar } from "@/lib/identity";
+
 
 export function MobileShell({ children }: { children: ReactNode }) {
   const { density } = useDensity();
