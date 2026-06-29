@@ -1,17 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { Plus, Rows3, Rows2 } from "lucide-react";
 import {
-  Home,
-  UsersRound,
-  Plus,
-  Briefcase,
-  CircleUserRound,
-  Rows3,
-  Rows2,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
-import type { ReactNode } from "react";
+  HomeIcon,
+  UserGroupIcon,
+  WalletIcon,
+  BriefcaseIcon,
+} from "@heroicons/react/24/solid";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useDensity } from "@/lib/density";
+
+type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
 
 export function MobileShell({ children }: { children: ReactNode }) {
@@ -68,13 +66,13 @@ export function DensityToggle() {
   );
 }
 
-type Tab = { to: string; label: string; icon: LucideIcon };
+type Tab = { to: string; label: string; icon: IconType };
 
 const tabs: Tab[] = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/communities", label: "Network", icon: UsersRound },
-  { to: "/quizzes", label: "Earnings", icon: Wallet },
-  { to: "/courses", label: "Internships", icon: Briefcase },
+  { to: "/", label: "Home", icon: HomeIcon },
+  { to: "/communities", label: "Network", icon: UserGroupIcon },
+  { to: "/quizzes", label: "Earnings", icon: WalletIcon },
+  { to: "/courses", label: "Internships", icon: BriefcaseIcon },
 ];
 
 function BottomTabs() {
@@ -94,10 +92,7 @@ function BottomTabs() {
               className={`flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors ${active ? "bg-foreground/[0.06]" : ""}`}
             >
               <Icon
-                strokeWidth={active ? 2.5 : 1.75}
-                fill={active ? "currentColor" : "none"}
-                fillOpacity={active ? 0.18 : 0}
-                className={`h-6 w-6 transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
+                className={`h-6 w-6 transition-colors ${active ? "text-foreground" : "text-ink-muted/70"}`}
               />
               <span
                 className={`text-[10px] tracking-tight transition-colors ${active ? "font-semibold text-foreground" : "text-ink-muted"}`}
