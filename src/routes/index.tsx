@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight, Coins } from "lucide-react";
+import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Coins, Bookmark } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,7 +8,7 @@ import { PostCard } from "@/components/post-card";
 import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 import { listHot, type HotItem } from "@/lib/hot.functions";
-import { listNewQuestions, type DbQuestion } from "@/lib/questions.functions";
+import { useSavedIds } from "@/lib/saved";
 import logoAsset from "@/assets/syncpedia-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -24,8 +24,9 @@ export const Route = createFileRoute("/")({
 const sorts = [
   { id: "questions", label: "Questions", icon: MessageCircleQuestion },
   { id: "hot", label: "Hot", icon: Flame },
-  { id: "new", label: "New", icon: Clock },
+  { id: "events", label: "Events", icon: Calendar },
   { id: "following", label: "Following", icon: null as never },
+  { id: "saved", label: "Saved", icon: Bookmark },
 ] as const;
 
 function Home() {
@@ -35,7 +36,6 @@ function Home() {
   const compact = density === "compact";
   const feed = balancedFeed(posts);
   const fHot = useServerFn(listHot);
-  const fNew = useServerFn(listNewQuestions);
   const hotQ = useQuery({
     queryKey: ["feed", "hot"],
     queryFn: () => fHot(),
@@ -44,14 +44,8 @@ function Home() {
     refetchInterval: sort === "hot" ? 30_000 : false,
     refetchOnWindowFocus: true,
   });
-  const newQ = useQuery({
-    queryKey: ["feed", "new"],
-    queryFn: () => fNew(),
-    enabled: sort === "new",
-    staleTime: 10_000,
-    refetchInterval: sort === "new" ? 10_000 : false,
-    refetchOnWindowFocus: true,
-  });
+  const savedIds = useSavedIds();
+  const savedPosts = feed.filter((p) => savedIds.includes(p.id));
   return (
     <MobileShell>
       {/* Status bar–style chrome */}
