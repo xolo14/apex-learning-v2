@@ -208,12 +208,15 @@ function Home() {
         ) : sort === "events" ? (
           <Empty compact={compact}>No upcoming events yet. Check back soon.</Empty>
         ) : sort === "saved" ? (
-          savedPosts.length === 0 ? (
+          savedPosts.length === 0 && savedHot.length === 0 ? (
             <Empty compact={compact}>
-              No saved posts yet. Tap the bookmark on any post to save it here.
+              No saved posts yet. Tap the bookmark on any post or trending story to save it here.
             </Empty>
           ) : (
-            savedPosts.map((p) => <PostCard key={p.id} post={p} />)
+            <>
+              {savedHot.length > 0 ? <SavedHotList items={savedHot} compact={compact} /> : null}
+              {savedPosts.map((p) => <PostCard key={p.id} post={p} />)}
+            </>
           )
         ) : (
           feed.map((p) => <PostCard key={p.id} post={p} />)
