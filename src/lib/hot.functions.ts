@@ -227,56 +227,89 @@ export const fetchHotArticle = createServerFn({ method: "GET" })
     return { url: data.url };
   })
   .handler(async ({ data }) => {
+    const UA =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+    // 1) Try direct fetch + HTML paragraph extraction.
+    const direct = await (async () => {
+      try {
+        const res = await fetch(data.url, {
+          headers: {
+            "User-Agent": UA,
+            Accept: "text/html,application/xhtml+xml",
+            "Accept-Language": "en-US,en;q=0.9",
+          },
+          redirect: "follow",
+        });
+        if (!res.ok) return { ok: false as const, error: `HTTP ${res.status}` };
+        const html = await res.text();
+        const pick = (re: RegExp) => {
+          const m = html.match(re);
+          return m ? m[1] : "";
+        };
+        let scope =
+          pick(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
+          pick(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
+          pick(/<body[^>]*>([\s\S]*?)<\/body>/i) ||
+          html;
+        scope = scope
+          .replace(/<script[\s\S]*?<\/script>/gi, "")
+          .replace(/<style[\s\S]*?<\/style>/gi, "")
+          .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
+          .replace(/<(nav|aside|header|footer|form|figure|figcaption)[\s\S]*?<\/\1>/gi, "");
+        const paragraphs: string[] = [];
+        const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+        let m: RegExpExecArray | null;
+        while ((m = pRe.exec(scope))) {
+          const text = m[1]
+            .replace(/<br\s*\/?>/gi, "\n")
+            .replace(/<[^>]+>/g, "")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&amp;/g, "&")
+            .replace(/&lt;/g, "<")
+            .replace(/&gt;/g, ">")
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (text.length > 40) paragraphs.push(text);
+        }
+        const content = paragraphs.join("\n\n").slice(0, 12000);
+        if (!content) return { ok: false as const, error: "No readable content" };
+        return { ok: true as const, content };
+      } catch (e) {
+        return { ok: false as const, error: e instanceof Error ? e.message : "Failed" };
+      }
+    })();
+    if (direct.ok) return direct;
+
+    // 2) Fallback: Jina Reader proxy (returns clean markdown for blocked sites).
     try {
-      const res = await fetch(data.url, {
+      const proxied = `https://r.jina.ai/${data.url}`;
+      const res = await fetch(proxied, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; SyncpediaBot/1.0; +https://syncpedia.app)",
-          Accept: "text/html,application/xhtml+xml",
+          "User-Agent": UA,
+          Accept: "text/plain",
+          "X-Return-Format": "text",
         },
         redirect: "follow",
       });
       if (!res.ok) return { ok: false as const, error: `HTTP ${res.status}` };
-      const html = await res.text();
-
-      // Try <article> first, fallback to <main>, then body
-      const pick = (re: RegExp) => {
-        const m = html.match(re);
-        return m ? m[1] : "";
-      };
-      let scope =
-        pick(/<article[^>]*>([\s\S]*?)<\/article>/i) ||
-        pick(/<main[^>]*>([\s\S]*?)<\/main>/i) ||
-        pick(/<body[^>]*>([\s\S]*?)<\/body>/i) ||
-        html;
-
-      // Strip scripts/styles/nav/aside/header/footer/forms
-      scope = scope
-        .replace(/<script[\s\S]*?<\/script>/gi, "")
-        .replace(/<style[\s\S]*?<\/style>/gi, "")
-        .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
-        .replace(/<(nav|aside|header|footer|form|figure|figcaption)[\s\S]*?<\/\1>/gi, "");
-
-      // Extract paragraph text
-      const paragraphs: string[] = [];
-      const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
-      let m: RegExpExecArray | null;
-      while ((m = pRe.exec(scope))) {
-        const text = m[1]
-          .replace(/<br\s*\/?>/gi, "\n")
-          .replace(/<[^>]+>/g, "")
-          .replace(/&nbsp;/g, " ")
-          .replace(/&amp;/g, "&")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'")
-          .replace(/\s+/g, " ")
-          .trim();
-        if (text.length > 40) paragraphs.push(text);
-      }
-
-      const content = paragraphs.join("\n\n").slice(0, 12000);
+      let text = await res.text();
+      // Strip Jina's header block: "Title: ...\nURL Source: ...\n\nMarkdown Content:\n"
+      text = text.replace(/^[\s\S]*?Markdown Content:\s*\n/i, "").trim();
+      // Strip markdown image syntax and links to plain text
+      text = text
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/[*_`>]+/g, "");
+      // Collapse blank lines, keep paragraphs
+      const paras = text
+        .split(/\n\s*\n+/)
+        .map((p) => p.replace(/\s+/g, " ").trim())
+        .filter((p) => p.length > 40);
+      const content = paras.join("\n\n").slice(0, 12000);
       if (!content) return { ok: false as const, error: "No readable content" };
       return { ok: true as const, content };
     } catch (e) {
