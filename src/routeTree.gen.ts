@@ -26,6 +26,7 @@ import { Route as PIdRouteImport } from './routes/p.$id'
 import { Route as MessagesThreadIdRouteImport } from './routes/messages.$threadId'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminQuizzesRouteImport } from './routes/admin.quizzes'
 import { Route as AdminPostsRouteImport } from './routes/admin.posts'
 import { Route as AdminInternshipsRouteImport } from './routes/admin.internships'
 import { Route as AdminInternshipPostingsRouteImport } from './routes/admin.internship-postings'
@@ -123,6 +124,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminQuizzesRoute = AdminQuizzesRouteImport.update({
+  id: '/quizzes',
+  path: '/quizzes',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPostsRoute = AdminPostsRouteImport.update({
   id: '/posts',
   path: '/posts',
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
   '/admin/posts': typeof AdminPostsRoute
+  '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
@@ -292,6 +301,7 @@ export interface FileRouteTypes {
     | '/admin/internship-postings'
     | '/admin/internships'
     | '/admin/posts'
+    | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
     | '/messages/$threadId'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin/internship-postings'
     | '/admin/internships'
     | '/admin/posts'
+    | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
     | '/messages/$threadId'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/internship-postings'
     | '/admin/internships'
     | '/admin/posts'
+    | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
     | '/messages/$threadId'
@@ -501,6 +513,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/quizzes': {
+      id: '/admin/quizzes'
+      path: '/quizzes'
+      fullPath: '/admin/quizzes'
+      preLoaderRoute: typeof AdminQuizzesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/posts': {
       id: '/admin/posts'
       path: '/posts'
@@ -591,6 +610,7 @@ interface AdminRouteChildren {
   AdminInternshipPostingsRoute: typeof AdminInternshipPostingsRoute
   AdminInternshipsRoute: typeof AdminInternshipsRoute
   AdminPostsRoute: typeof AdminPostsRoute
+  AdminQuizzesRoute: typeof AdminQuizzesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -605,6 +625,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminInternshipPostingsRoute: AdminInternshipPostingsRoute,
   AdminInternshipsRoute: AdminInternshipsRoute,
   AdminPostsRoute: AdminPostsRoute,
+  AdminQuizzesRoute: AdminQuizzesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
