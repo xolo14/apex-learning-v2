@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MessageSquare, Users, Flame, ExternalLink, Layers, BookOpen, Briefcase } from "lucide-react";
+import { BarChart3, Newspaper, UsersRound, TrendingUp, ExternalLink, Network, Library, Briefcase } from "lucide-react";
 import syncpediaLogo from "@/assets/syncpedia-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/admin")({
