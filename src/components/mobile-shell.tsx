@@ -88,20 +88,8 @@ function BottomTabs() {
       style={{ background: "linear-gradient(to top, rgba(255,255,255,0.96) 60%, rgba(255,255,255,0))" }}
     >
       <div className="flex items-center justify-between rounded-[28px] border border-hairline bg-background/95 px-2 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-        {tabs.map(({ to, label, icon: Icon, primary, profile }) => {
+        {tabs.map(({ to, label, icon: Icon, profile }) => {
           const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
-          if (primary) {
-            return (
-              <Link
-                key={to}
-                to={to}
-                aria-label={label}
-                className="grid h-12 w-12 place-items-center rounded-full bg-orange text-white shadow-[0_8px_20px_-8px_rgba(255,106,19,0.55)] transition-transform active:scale-95"
-              >
-                <Icon strokeWidth={2} className="h-5 w-5" />
-              </Link>
-            );
-          }
           return (
             <Link
               key={to}
