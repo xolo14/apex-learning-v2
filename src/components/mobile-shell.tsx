@@ -68,7 +68,7 @@ export function DensityToggle() {
   );
 }
 
-type Tab = { to: string; label: string; icon: LucideIcon; profile?: boolean };
+type Tab = { to: string; label: string; icon: LucideIcon };
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: House },
