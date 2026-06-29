@@ -30,10 +30,10 @@ type Internship = {
 };
 
 const internships: Internship[] = [
-  { role: "ML Research Intern", company: "Northwind Labs", community: "ai", location: "Remote · Global", mode: "Remote", duration: "12 weeks", stipend: "$2,400 / mo" },
-  { role: "Product Design Intern", company: "Forma Studio", community: "uiux", location: "Berlin, DE", mode: "Hybrid", duration: "16 weeks", stipend: "€1,800 / mo" },
-  { role: "Quant Analyst Intern", company: "Halden Capital", community: "finance", location: "London, UK", mode: "On-site", duration: "10 weeks", stipend: "£2,200 / mo" },
-  { role: "Security Engineering Intern", company: "Aegis Defense", community: "cybersec", location: "Remote · EU/US", mode: "Remote", duration: "12 weeks", stipend: "$2,600 / mo" },
+  { role: "ML Research Intern", company: "Northwind Labs", community: "ai", location: "Remote · Global", mode: "Remote", duration: "12 weeks", stipend: "₹2,00,000 / mo" },
+  { role: "Product Design Intern", company: "Forma Studio", community: "uiux", location: "Berlin, DE", mode: "Hybrid", duration: "16 weeks", stipend: "₹1,65,000 / mo" },
+  { role: "Quant Analyst Intern", company: "Halden Capital", community: "finance", location: "London, UK", mode: "On-site", duration: "10 weeks", stipend: "₹2,30,000 / mo" },
+  { role: "Security Engineering Intern", company: "Aegis Defense", community: "cybersec", location: "Remote · EU/US", mode: "Remote", duration: "12 weeks", stipend: "₹2,16,000 / mo" },
 ];
 
 function LearnPage() {
