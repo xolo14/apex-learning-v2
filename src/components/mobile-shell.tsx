@@ -92,10 +92,7 @@ function BottomTabs() {
               className={`flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors ${active ? "bg-foreground/[0.06]" : ""}`}
             >
               <Icon
-                strokeWidth={active ? 2.5 : 1.75}
-                fill={active ? "currentColor" : "none"}
-                fillOpacity={active ? 0.18 : 0}
-                className={`h-6 w-6 transition-colors ${active ? "text-foreground" : "text-ink-muted"}`}
+                className={`h-6 w-6 transition-colors ${active ? "text-foreground" : "text-ink-muted/70"}`}
               />
               <span
                 className={`text-[10px] tracking-tight transition-colors ${active ? "font-semibold text-foreground" : "text-ink-muted"}`}
