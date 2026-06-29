@@ -1,13 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home,
-  Globe,
+  UsersRound,
   Plus,
-  Award,
+  Briefcase,
   CircleUserRound,
   Rows3,
   Rows2,
-  Gem,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -72,9 +72,9 @@ type Tab = { to: string; label: string; icon: LucideIcon };
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/communities", label: "Network", icon: Globe },
-  { to: "/quizzes", label: "Earnings", icon: Gem },
-  { to: "/courses", label: "Internships", icon: Award },
+  { to: "/communities", label: "Network", icon: UsersRound },
+  { to: "/quizzes", label: "Earnings", icon: Wallet },
+  { to: "/courses", label: "Internships", icon: Briefcase },
 ];
 
 function BottomTabs() {
