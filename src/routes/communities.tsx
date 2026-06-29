@@ -9,7 +9,17 @@ import { communities, posts } from "@/lib/feed-data";
 import { listEvents } from "@/lib/communities.functions";
 
 export const Route = createFileRoute("/communities")({
-  head: () => ({ meta: [{ title: "Network — Syncpedia" }] }),
+  head: () => ({
+    meta: [
+      { title: "Network & Events — Syncpedia" },
+      {
+        name: "description",
+        content:
+          "Browse Syncpedia communities and discover upcoming student & professional events.",
+      },
+      { property: "og:title", content: "Network & Events — Syncpedia" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     tab: s.tab === "events" ? ("events" as const) : ("communities" as const),
   }),
