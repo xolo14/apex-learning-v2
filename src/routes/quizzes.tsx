@@ -28,10 +28,10 @@ const quizzes = [
 ];
 
 const gigs = [
-  { title: "Write 5 blog posts on RAG", poster: "Northwind Labs", community: "ai", location: "Remote", duration: "1 week", pay: "$320", coins: 120 },
-  { title: "Design a 12-screen onboarding", poster: "Forma Studio", community: "uiux", location: "Async", duration: "2 weeks", pay: "$560", coins: 180 },
-  { title: "Backtest a momentum strategy", poster: "Halden Capital", community: "finance", location: "Remote", duration: "5 days", pay: "£280", coins: 140 },
-  { title: "Audit a Next.js app for XSS", poster: "Aegis Defense", community: "cybersec", location: "Remote", duration: "3 days", pay: "$240", coins: 90 },
+  { title: "Write 5 blog posts on RAG", poster: "Northwind Labs", community: "ai", location: "Remote", duration: "1 week", pay: "₹27,000", coins: 120 },
+  { title: "Design a 12-screen onboarding", poster: "Forma Studio", community: "uiux", location: "Async", duration: "2 weeks", pay: "₹47,000", coins: 180 },
+  { title: "Backtest a momentum strategy", poster: "Halden Capital", community: "finance", location: "Remote", duration: "5 days", pay: "₹30,000", coins: 140 },
+  { title: "Audit a Next.js app for XSS", poster: "Aegis Defense", community: "cybersec", location: "Remote", duration: "3 days", pay: "₹20,000", coins: 90 },
 ];
 
 function EarnPage() {
