@@ -86,7 +86,7 @@ function GigsPage() {
         ))}
       </div>
 
-      <span className="sr-only"><Wallet /></span>
     </MobileShell>
+
   );
 }
