@@ -78,32 +78,35 @@ function LearnPage() {
         subtitle={tab === "courses" ? "Discovered inside your communities" : "Apply through your communities"}
       />
 
-      {/* Underline tabs — matches Network */}
-      <div className="sticky top-[60px] z-30 border-b border-hairline bg-background/90 backdrop-blur-xl">
-        <div className="flex items-center gap-1 px-3">
-          {(["courses", "internship"] as const).map((t) => {
-            const active = tab === t;
-            const Icon = t === "courses" ? GraduationCap : Briefcase;
-            return (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={
-                  "relative inline-flex shrink-0 items-center gap-1.5 px-3 py-3 text-[13px] capitalize tracking-tight transition-colors " +
-                  (active ? "text-foreground" : "text-ink-muted")
-                }
-              >
-                <Icon strokeWidth={1.75} className="h-[14px] w-[14px]" />
-                {t}
-                {active ? (
-                  <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-foreground" />
-                ) : null}
-              </button>
-            );
-          })}
+      {/* Segmented tabs — same dimensions as Earn page */}
+      <div className="px-5 pt-4">
+        <div className="relative grid grid-cols-2 rounded-full bg-surface p-1 text-[13px] font-medium">
+          <span
+            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-foreground transition-transform duration-300"
+            style={{ transform: tab === "internship" ? "translateX(100%)" : "translateX(0)" }}
+          />
+          <button
+            onClick={() => setTab("courses")}
+            className={
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (tab === "courses" ? "text-background" : "text-ink-muted")
+            }
+          >
+            <GraduationCap strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            Courses
+          </button>
+          <button
+            onClick={() => setTab("internship")}
+            className={
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (tab === "internship" ? "text-background" : "text-ink-muted")
+            }
+          >
+            <Briefcase strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            Internship
+          </button>
         </div>
       </div>
-
 
       {/* Swipeable pager */}
       <div
