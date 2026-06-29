@@ -234,42 +234,63 @@ function CommunitiesView({
 }
 
 function EventsView() {
+  const list = useServerFn(listEvents);
+  const q = useQuery({ queryKey: ["public", "events"], queryFn: () => list() });
+  const events = q.data ?? [];
+  if (events.length === 0) {
+    return (
+      <p className="px-5 py-10 text-center text-[13px] text-ink-muted">
+        {q.isLoading ? "Loading…" : "No events yet."}
+      </p>
+    );
+  }
   return (
     <ul>
-      {sampleEvents.map((e) => (
-        <li
-          key={e.id}
-          className="border-b border-hairline px-5 py-4 active:bg-surface/60"
-        >
+      {events.map((e) => (
+        <li key={e.id} className="border-b border-hairline px-5 py-4 active:bg-surface/60">
+          {e.image_url ? (
+            <img src={e.image_url} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
+          ) : null}
           <div className="flex items-center gap-2">
-            <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] ${e.accent}`}>
-              {e.community}
-            </span>
-            <span className="text-[11px] text-ink-muted">{e.attendees} going</span>
+            {e.community_slug ? (
+              <span className="rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-foreground">
+                c/{e.community_slug}
+              </span>
+            ) : null}
+            {e.coins > 0 ? (
+              <span className="inline-flex items-center gap-1 text-[11px] text-orange">
+                <img src={goldCoin} alt="" className="h-3 w-3 object-contain" />+{e.coins}
+              </span>
+            ) : null}
           </div>
           <h3 className="mt-2 text-[16px] font-semibold leading-snug tracking-tight text-foreground">
             {e.title}
           </h3>
+          {e.description ? (
+            <p className="mt-1 text-[12.5px] text-ink-muted">{e.description}</p>
+          ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-muted">
-            <span className="inline-flex items-center gap-1.5">
-              <Calendar strokeWidth={1.75} className="h-[14px] w-[14px]" />
-              {e.when}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <MapPin strokeWidth={1.75} className="h-[14px] w-[14px]" />
-              {e.where}
-            </span>
+            {e.starts_at ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                {e.starts_at}
+              </span>
+            ) : null}
+            {e.location ? (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                {e.location}
+              </span>
+            ) : null}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <button className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background">
+            <Link to="/coins" className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background">
               RSVP
-            </button>
-            <button className="rounded-full border border-hairline px-3.5 py-1.5 text-[12px] font-medium text-foreground">
-              Remind me
-            </button>
+            </Link>
           </div>
         </li>
       ))}
     </ul>
   );
 }
+
