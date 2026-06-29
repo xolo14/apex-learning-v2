@@ -81,7 +81,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
     { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: FileText, tint: "text-forest" },
     { label: "Events Attended", value: 0, icon: Calendar, tint: "text-orange" },
     { label: "Internships Applied", value: 0, icon: Briefcase, tint: "text-foreground" },
-    { label: "Gigs", value: 0, icon: Wallet, tint: "text-forest" },
+    { label: "Earnings", value: 0, icon: Wallet, tint: "text-forest" },
     { label: "Coins Earned", value: 1240, icon: Coins, tint: "text-orange" },
     { label: "Saved", value: savedIds.length, icon: BadgeCheck, tint: "text-foreground" },
   ];

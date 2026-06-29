@@ -59,7 +59,7 @@ function CoinsPage() {
             className="flex items-center justify-center gap-2 rounded-2xl bg-foreground py-3 text-[13px] font-medium text-background active:opacity-90"
           >
             <Wallet strokeWidth={1.75} className="h-4 w-4" />
-            Browse gigs
+            Browse earnings
           </Link>
         </div>
 
