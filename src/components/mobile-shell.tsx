@@ -72,7 +72,7 @@ type Tab = { to: string; label: string; icon: LucideIcon };
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: House },
-  { to: "/communities", label: "Communities", icon: Compass },
+  { to: "/communities", label: "Network", icon: Compass },
   { to: "/quizzes", label: "Gigs", icon: Wallet },
   { to: "/courses", label: "Intern", icon: GraduationCap },
   
