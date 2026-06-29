@@ -158,6 +158,11 @@ export function ensureSchema() {
     try {
       await s`CREATE UNIQUE INDEX IF NOT EXISTS profiles_mobile_uniq ON profiles (mobile) WHERE mobile IS NOT NULL AND mobile <> ''`;
     } catch {}
+
+    // -------- Communities image_url column (legacy tables) --------
+    try {
+      await s`ALTER TABLE communities ADD COLUMN IF NOT EXISTS image_url text DEFAULT ''`;
+    } catch {}
   })().catch((e) => {
     _ready = null;
     throw e;
