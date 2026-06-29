@@ -1,8 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, BadgeCheck, Calendar, MapPin, Users, CalendarDays } from "lucide-react";
 import { useRef, useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { communities, posts } from "@/lib/feed-data";
+import { listEvents } from "@/lib/communities.functions";
 
 export const Route = createFileRoute("/communities")({
   head: () => ({ meta: [{ title: "Network — Syncpedia" }] }),
@@ -12,44 +16,6 @@ export const Route = createFileRoute("/communities")({
   component: NetworkPage,
 });
 
-const sampleEvents = [
-  {
-    id: "e1",
-    title: "AI Builders Weekly — Live Demo Night",
-    community: "c/ai-builders",
-    when: "Tue · 7:00 PM",
-    where: "Online · Discord Stage",
-    attendees: 248,
-    accent: "bg-forest/10 text-forest",
-  },
-  {
-    id: "e2",
-    title: "Campus Placement Bootcamp",
-    community: "c/placements",
-    when: "Sat · 10:30 AM",
-    where: "Bengaluru · IISc Auditorium",
-    attendees: 412,
-    accent: "bg-orange/10 text-orange",
-  },
-  {
-    id: "e3",
-    title: "Design Critique Circle",
-    community: "c/design",
-    when: "Thu · 6:00 PM",
-    where: "Online · Zoom",
-    attendees: 86,
-    accent: "bg-foreground/[0.06] text-foreground",
-  },
-  {
-    id: "e4",
-    title: "Open Source Saturday",
-    community: "c/devs",
-    when: "Sat · 4:00 PM",
-    where: "Hybrid · HSR Layout",
-    attendees: 130,
-    accent: "bg-forest/10 text-forest",
-  },
-];
 
 function NetworkPage() {
   const { tab } = Route.useSearch();
