@@ -84,50 +84,50 @@ function Home() {
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Large editorial title — Apple Journal / Notion mobile */}
-        <div className={compact ? "px-5 pb-2 pt-1.5" : "px-5 pb-4 pt-3"}>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Sunday · June 28</p>
-          <h1
-            className={
-              "font-serif tracking-tight text-foreground " +
-              (compact
-                ? "mt-0.5 text-[22px] leading-[1.1]"
-                : "mt-1.5 text-[34px] leading-[1.05]")
-            }
-          >
-            Today on <span className="italic text-forest">Syncpedia</span>
-          </h1>
-        </div>
-
-        {/* Sort rail */}
-        <div
+      {/* Large editorial title — scrolls away with content */}
+      <div className={compact ? "px-5 pb-2 pt-1.5" : "px-5 pb-4 pt-3"}>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Sunday · June 28</p>
+        <h1
           className={
-            "flex items-center gap-1.5 overflow-x-auto border-b border-hairline px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
-            (compact ? "pb-1.5" : "pb-2.5")
+            "font-serif tracking-tight text-foreground " +
+            (compact
+              ? "mt-0.5 text-[22px] leading-[1.1]"
+              : "mt-1.5 text-[34px] leading-[1.05]")
           }
         >
-          {sorts.map(({ id, label, icon: Icon }) => {
-            const active = sort === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setSort(id)}
-                className={
-                  "inline-flex shrink-0 items-center gap-1.5 rounded-full tracking-tight transition-all " +
-                  (compact ? "px-2.5 py-1 text-[12px] " : "px-3.5 py-1.5 text-[13px] ") +
-                  (active
-                    ? "bg-foreground text-background"
-                    : "text-ink-muted active:bg-surface")
-                }
-              >
-                {Icon ? <Icon strokeWidth={2} className="h-[13px] w-[13px]" /> : null}
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </header>
+          Today on <span className="italic text-forest">Syncpedia</span>
+        </h1>
+      </div>
+
+      {/* Sort rail — scrolls away with content */}
+      <div
+        className={
+          "flex items-center gap-1.5 overflow-x-auto border-b border-hairline px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
+          (compact ? "pb-1.5" : "pb-2.5")
+        }
+      >
+        {sorts.map(({ id, label, icon: Icon }) => {
+          const active = sort === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setSort(id)}
+              className={
+                "inline-flex shrink-0 items-center gap-1.5 rounded-full tracking-tight transition-all " +
+                (compact ? "px-2.5 py-1 text-[12px] " : "px-3.5 py-1.5 text-[13px] ") +
+                (active
+                  ? "bg-foreground text-background"
+                  : "text-ink-muted active:bg-surface")
+              }
+            >
+              {Icon ? <Icon strokeWidth={2} className="h-[13px] w-[13px]" /> : null}
+              {label}
+            </button>
+          );
+        })}
+      </div>
 
       {/* Communities horizontal rail */}
       <section className={compact ? "mt-3" : "mt-5"}>
