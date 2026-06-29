@@ -315,6 +315,14 @@ function HotFeed({
 }
 
 function HotReader({ item, onClose }: { item: HotItem; onClose: () => void }) {
+  const fFetch = useServerFn(fetchHotArticle);
+  const canFetch = !!item.url && /^https?:\/\//i.test(item.url);
+  const articleQ = useQuery({
+    queryKey: ["hot-article", item.url],
+    queryFn: () => fFetch({ data: { url: item.url } }),
+    enabled: canFetch,
+    staleTime: 5 * 60_000,
+  });
   return (
     <div className="fixed inset-0 z-[100] bg-background">
       <div className="flex h-full flex-col">
@@ -350,11 +358,32 @@ function HotReader({ item, onClose }: { item: HotItem; onClose: () => void }) {
               {item.score > 0 ? ` · ▲ ${item.score.toLocaleString()}` : ""}
             </p>
             {item.summary ? (
-              <p className="mt-5 whitespace-pre-line text-[15px] leading-[1.6] text-foreground">
+              <p className="mt-4 text-[13px] leading-[1.55] text-ink-muted">
                 {item.summary}
               </p>
+            ) : null}
+
+            {canFetch ? (
+              articleQ.isLoading ? (
+                <p className="mt-6 text-[13px] text-ink-muted">Loading full article…</p>
+              ) : articleQ.data?.ok ? (
+                <div className="mt-5 space-y-4">
+                  {articleQ.data.content.split(/\n\n+/).map((para, i) => (
+                    <p
+                      key={i}
+                      className="text-[15px] leading-[1.65] text-foreground"
+                    >
+                      {para}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-6 text-[13px] leading-[1.6] text-ink-muted">
+                  Couldn't load full article{articleQ.data?.error ? ` (${articleQ.data.error})` : ""}.
+                </p>
+              )
             ) : (
-              <p className="mt-5 text-[14px] leading-[1.6] text-ink-muted">
+              <p className="mt-6 text-[13px] leading-[1.6] text-ink-muted">
                 Full story preview isn't available for this item.
               </p>
             )}
