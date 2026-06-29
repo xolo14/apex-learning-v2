@@ -71,11 +71,10 @@ export function DensityToggle() {
 type Tab = { to: string; label: string; icon: LucideIcon };
 
 const tabs: Tab[] = [
-  { to: "/", label: "Home", icon: House },
-  { to: "/communities", label: "Network", icon: Compass },
-  { to: "/quizzes", label: "Earnings", icon: Wallet },
-  { to: "/courses", label: "Internships", icon: GraduationCap },
-  
+  { to: "/", label: "Home", icon: Home },
+  { to: "/communities", label: "Network", icon: Globe },
+  { to: "/quizzes", label: "Earnings", icon: Gem },
+  { to: "/courses", label: "Internships", icon: Award },
 ];
 
 function BottomTabs() {
