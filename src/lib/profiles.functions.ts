@@ -66,6 +66,11 @@ export const createProfile = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+
+    const emailNorm = data.gmail.trim().toLowerCase().slice(0, 120);
+    const mobileNorm = data.mobile.replace(/\D/g, "").slice(0, 20);
 
     // If already onboarded on this device, return existing profile
     const existing = (await sql()`
@@ -73,6 +78,24 @@ export const createProfile = createServerFn({ method: "POST" })
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     if (existing[0]) return existing[0];
+
+    // One account per email or mobile: if someone signs in from a new device
+    // with the same email/mobile, attach the existing account to this device
+    // instead of creating a duplicate.
+    const byContact = (await sql()`
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      FROM profiles
+      WHERE lower(gmail) = ${emailNorm} OR mobile = ${mobileNorm}
+      LIMIT 1
+    `) as DbProfile[];
+    if (byContact[0]) {
+      await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${byContact[0].id}`;
+      const refreshed = (await sql()`
+        SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+        FROM profiles WHERE id = ${byContact[0].id} LIMIT 1
+      `) as DbProfile[];
+      return refreshed[0]!;
+    }
 
     const id = rid("usr");
     // Every profile gets a unique id, regardless of role
@@ -100,8 +123,8 @@ export const createProfile = createServerFn({ method: "POST" })
       VALUES (
         ${id}, ${data.deviceKey},
         ${data.name.trim().slice(0, 80)},
-        ${data.mobile.trim().slice(0, 20)},
-        ${data.gmail.trim().toLowerCase().slice(0, 120)},
+        ${mobileNorm},
+        ${emailNorm},
         ${year},
         ${college},
         ${data.role},
@@ -112,6 +135,16 @@ export const createProfile = createServerFn({ method: "POST" })
         ${department}
       )
     `;
+
+    // One-time signup bonus: 50 coins. ON CONFLICT keeps it idempotent.
+    try {
+      const { SIGNUP_BONUS_COINS } = await import("./coin-rewards");
+      await sql()`
+        INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+        VALUES (${uniqueId}, 'signup', ${Math.max(0, Math.floor(SIGNUP_BONUS_COINS))})
+        ON CONFLICT (user_unique_id, action_key) DO NOTHING
+      `;
+    } catch {}
 
     const rows = (await sql()`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at

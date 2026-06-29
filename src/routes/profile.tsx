@@ -9,6 +9,7 @@ import { PostCard } from "@/components/post-card";
 import type { Post, PostKind } from "@/lib/feed-data";
 import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
+import { useCoinBalance } from "@/lib/use-coin-balance";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — Syncpedia" }] }),
@@ -96,6 +97,7 @@ function ProfilePage() {
   });
 
   const mapped = useMemo(() => (myPosts.data ?? []).map(toPost), [myPosts.data]);
+  const { balance: coinBalance } = useCoinBalance();
 
   return (
     <MobileShell>
@@ -181,7 +183,7 @@ function ProfilePage() {
           )}
         </div>
         <Link to="/coins" className="mt-5 block active:scale-[0.99] transition-transform">
-          <CoinsCard name={profileName} balance={1240} />
+          <CoinsCard name={profileName} balance={coinBalance} />
         </Link>
       </section>
 

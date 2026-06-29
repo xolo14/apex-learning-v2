@@ -3,23 +3,39 @@ import { ChevronLeft, ArrowDownLeft, ArrowUpRight, Sparkles, Wallet, Banknote, X
 import { useEffect, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { CoinsCard } from "@/components/coins-card";
+import { useCoinBalance } from "@/lib/use-coin-balance";
 
 export const Route = createFileRoute("/coins")({
   head: () => ({ meta: [{ title: "Coins — Syncpedia" }] }),
   component: CoinsPage,
 });
 
-const activity = [
-  { kind: "earn", label: "Prompt Engineering 101 quiz", delta: 40, when: "2h" },
-  { kind: "earn", label: "Top answer · c/ai", delta: 25, when: "5h" },
-  { kind: "spend", label: "Boost question", delta: -50, when: "1d" },
-  { kind: "earn", label: "Color Theory Rapid Round", delta: 30, when: "2d" },
-  { kind: "earn", label: "Daily streak · day 7", delta: 15, when: "3d" },
-] as const;
+const ACTION_LABELS: Record<string, string> = {
+  signup: "Welcome bonus",
+  gigCompleted: "Gig completed",
+  quizCompleted: "Quiz completed",
+  quizPerfectBonus: "Perfect score bonus",
+  eventAttended: "Event attended",
+  eventHosted: "Event hosted",
+  coursePaidEnrolled: "Paid course enrolled",
+  courseFreeEnrolled: "Free course enrolled",
+  courseCompleted: "Course completed",
+  internshipApplied: "Internship applied",
+};
+
+function timeAgoShort(iso: string) {
+  const d = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(d / 60000);
+  if (m < 1) return "now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 function CoinsPage() {
   const [name, setName] = useState("You");
-  const [balance, setBalance] = useState(1240);
+  const { balance, entries } = useCoinBalance();
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [amount, setAmount] = useState("");
   const [upi, setUpi] = useState("");
@@ -45,7 +61,6 @@ function CoinsPage() {
 
   function handleWithdraw() {
     if (!canSubmit) return;
-    setBalance((b) => b - coinsToWithdraw);
     setSubmitted({ coins: coinsToWithdraw, rupees, upi: upi.trim() });
     setAmount("");
   }
@@ -115,42 +130,33 @@ function CoinsPage() {
         </div>
 
         <ul className="mt-2">
-          {activity.map((a, i) => (
-            <li
-              key={i}
-              className="flex items-center justify-between gap-3 border-b border-hairline py-3"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span
-                  className={
-                    "grid h-9 w-9 shrink-0 place-items-center rounded-full " +
-                    (a.kind === "earn" ? "bg-forest/10 text-forest" : "bg-orange/10 text-orange")
-                  }
-                >
-                  {a.kind === "earn" ? (
-                    <ArrowDownLeft strokeWidth={1.75} className="h-4 w-4" />
-                  ) : (
-                    <ArrowUpRight strokeWidth={1.75} className="h-4 w-4" />
-                  )}
-                </span>
-                <div className="min-w-0">
-                  <div className="truncate text-[13.5px] font-medium tracking-tight text-foreground">
-                    {a.label}
-                  </div>
-                  <div className="text-[11px] text-ink-muted">{a.when} ago</div>
-                </div>
-              </div>
-              <div
-                className={
-                  "shrink-0 text-[14px] font-semibold tabular-nums " +
-                  (a.delta >= 0 ? "text-forest" : "text-orange")
-                }
-              >
-                {a.delta >= 0 ? "+" : ""}
-                {a.delta}
-              </div>
+          {entries.length === 0 ? (
+            <li className="py-6 text-center text-[12.5px] text-ink-muted">
+              No coin activity yet. Your welcome bonus and any rewards will appear here.
             </li>
-          ))}
+          ) : (
+            entries.map((a) => (
+              <li
+                key={`${a.action_key}-${a.created_at}`}
+                className="flex items-center justify-between gap-3 border-b border-hairline py-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-forest/10 text-forest">
+                    <ArrowDownLeft strokeWidth={1.75} className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate text-[13.5px] font-medium tracking-tight text-foreground">
+                      {ACTION_LABELS[a.action_key] ?? a.action_key}
+                    </div>
+                    <div className="text-[11px] text-ink-muted">{timeAgoShort(a.created_at)} ago</div>
+                  </div>
+                </div>
+                <div className="shrink-0 text-[14px] font-semibold tabular-nums text-forest">
+                  +{a.amount}
+                </div>
+              </li>
+            ))
+          )}
         </ul>
       </div>
 

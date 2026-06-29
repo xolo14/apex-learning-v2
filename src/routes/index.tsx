@@ -12,6 +12,7 @@ import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
+import { useCoinBalance } from "@/lib/use-coin-balance";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,6 +34,7 @@ const sorts = [
 
 function Home() {
   const identity = useIdentity();
+  const { balance: coinBalance } = useCoinBalance();
   const [sort, setSort] = useState<(typeof sorts)[number]["id"]>("questions");
   const featured = communities.slice(0, 8);
   const { density } = useDensity();
@@ -70,7 +72,7 @@ function Home() {
               className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background active:scale-95"
             >
               <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-              1,240
+              {coinBalance.toLocaleString()}
             </Link>
           </div>
 

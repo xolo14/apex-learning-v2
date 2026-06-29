@@ -194,7 +194,7 @@ export const createCourse = createServerFn({ method: "POST" })
       INSERT INTO courses (id, community_slug, title, description, url, price, coins, image_url)
       VALUES (${id}, ${data.communitySlug}, ${data.title.slice(0, 200)},
         ${(data.description || "").slice(0, 2000)}, ${(data.url || "").slice(0, 500)},
-        ${Number(data.price) || 0}, ${Math.max(0, Math.floor(Number(data.coins) || 0))},
+        ${Math.max(0, Math.floor(Number(data.price) || 0))}, ${Math.max(0, Math.floor(Number(data.coins) || 0))},
         ${(data.imageUrl || "").slice(0, 800)})
     `;
     return { id };
@@ -210,7 +210,11 @@ export const updateCourse = createServerFn({ method: "POST" })
     price?: number;
     coins?: number;
     imageUrl?: string;
-  }) => d)
+  }) => {
+    if (d.price != null) d.price = Math.max(0, Math.floor(Number(d.price) || 0));
+    if (d.coins != null) d.coins = Math.max(0, Math.floor(Number(d.coins) || 0));
+    return d;
+  })
   .handler(async ({ data }) => {
     const s = await db();
     await s`
@@ -322,7 +326,7 @@ export const createEvent = createServerFn({ method: "POST" })
       VALUES (${id}, ${data.communitySlug || null}, ${data.title.slice(0, 200)},
         ${(data.description || "").slice(0, 2000)}, ${(data.imageUrl || "").slice(0, 800)},
         ${(data.location || "").slice(0, 200)}, ${(data.startsAt || "").slice(0, 100)},
-        ${Number(data.price) || 0},
+        ${Math.max(0, Math.floor(Number(data.price) || 0))},
         ${Math.max(0, Math.floor(Number(data.coins) || 0))})
     `;
     try {
@@ -382,7 +386,7 @@ export const createGig = createServerFn({ method: "POST" })
         ${(data.poster || "").slice(0, 120)}, ${(data.description || "").slice(0, 2000)},
         ${(data.imageUrl || "").slice(0, 800)}, ${(data.location || "").slice(0, 120)},
         ${(data.duration || "").slice(0, 80)},
-        ${Number(data.pay) || 0}, ${Math.max(0, Math.floor(Number(data.coins) || 0))})
+        ${Math.max(0, Math.floor(Number(data.pay) || 0))}, ${Math.max(0, Math.floor(Number(data.coins) || 0))})
     `;
     try {
       const { sendPushToAll } = await import("./push.server");
@@ -442,7 +446,7 @@ export const createInternshipPosting = createServerFn({ method: "POST" })
         ${(data.company || "").slice(0, 120)}, ${(data.description || "").slice(0, 2000)},
         ${(data.imageUrl || "").slice(0, 800)}, ${(data.location || "").slice(0, 120)},
         ${(data.mode || "Remote").slice(0, 30)}, ${(data.duration || "").slice(0, 80)},
-        ${Number(data.stipend) || 0}, ${Math.max(0, Math.floor(Number(data.coins) || 0))})
+        ${Math.max(0, Math.floor(Number(data.stipend) || 0))}, ${Math.max(0, Math.floor(Number(data.coins) || 0))})
     `;
     try {
       const { sendPushToAll } = await import("./push.server");
