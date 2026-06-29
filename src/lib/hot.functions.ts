@@ -154,7 +154,7 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
   pins.sort((a, b) => b.createdAt - a.createdAt);
   live.sort((a, b) => b.createdAt - a.createdAt);
   const merged = [...pins, ...live];
-  return merged.slice(0, 300);
+  return merged.slice(0, 800);
 });
 
 export const refreshHotNow = createServerFn({ method: "POST" }).handler(async () => {
