@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight, Sparkles, Wallet, Coins } from "lucide-react";
+import { Search, Bell, Flame, Clock, MessageCircleQuestion, ArrowUpRight, Coins } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -184,27 +184,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Quizzes & Gigs */}
-      <section className={compact ? "mt-3 px-4" : "mt-4 px-5"}>
-        <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-2xl bg-foreground p-2 text-background">
-          <Link
-            to="/quizzes"
-            className="flex flex-col items-center justify-center gap-1 rounded-xl py-3 active:bg-background/5"
-          >
-            <Sparkles strokeWidth={1.75} className="h-5 w-5" />
-            <span className="text-[13px] font-semibold tracking-tight">Quizzes</span>
-            <span className="h-0.5 w-6 rounded-full bg-background/80" />
-          </Link>
-          <Link
-            to="/quizzes"
-            search={{ tab: "gigs" }}
-            className="flex flex-col items-center justify-center gap-1 rounded-xl py-3 active:bg-background/5"
-          >
-            <Wallet strokeWidth={1.75} className="h-5 w-5" />
-            <span className="text-[13px] font-semibold tracking-tight">Gigs</span>
-          </Link>
-        </div>
-      </section>
 
       {/* Section divider */}
       <div className={"flex items-center gap-3 " + (compact ? "mt-4 px-4" : "mt-8 px-5")}>
