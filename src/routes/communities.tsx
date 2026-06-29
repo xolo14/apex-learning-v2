@@ -1,15 +1,55 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, BadgeCheck } from "lucide-react";
+import { Search, BadgeCheck, Calendar, MapPin } from "lucide-react";
 import { useState, useMemo } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { communities, posts } from "@/lib/feed-data";
 
 export const Route = createFileRoute("/communities")({
-  head: () => ({ meta: [{ title: "Communities — Syncpedia" }] }),
-  component: CommunitiesPage,
+  head: () => ({ meta: [{ title: "Network — Syncpedia" }] }),
+  component: NetworkPage,
 });
 
-function CommunitiesPage() {
+const sampleEvents = [
+  {
+    id: "e1",
+    title: "AI Builders Weekly — Live Demo Night",
+    community: "c/ai-builders",
+    when: "Tue · 7:00 PM",
+    where: "Online · Discord Stage",
+    attendees: 248,
+    accent: "bg-forest/10 text-forest",
+  },
+  {
+    id: "e2",
+    title: "Campus Placement Bootcamp",
+    community: "c/placements",
+    when: "Sat · 10:30 AM",
+    where: "Bengaluru · IISc Auditorium",
+    attendees: 412,
+    accent: "bg-orange/10 text-orange",
+  },
+  {
+    id: "e3",
+    title: "Design Critique Circle",
+    community: "c/design",
+    when: "Thu · 6:00 PM",
+    where: "Online · Zoom",
+    attendees: 86,
+    accent: "bg-foreground/[0.06] text-foreground",
+  },
+  {
+    id: "e4",
+    title: "Open Source Saturday",
+    community: "c/devs",
+    when: "Sat · 4:00 PM",
+    where: "Hybrid · HSR Layout",
+    attendees: 130,
+    accent: "bg-forest/10 text-forest",
+  },
+];
+
+function NetworkPage() {
+  const [tab, setTab] = useState<"communities" | "events">("communities");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "mentors">("all");
   const mentorSlugs = useMemo(
@@ -22,7 +62,71 @@ function CommunitiesPage() {
   );
   return (
     <MobileShell>
-      <MobileHeader title="Communities" subtitle="17 worlds, one network" />
+      <MobileHeader title="Network" subtitle="Communities & events" />
+
+      <div className="sticky top-[64px] z-30 border-b border-hairline bg-background/90 backdrop-blur-xl">
+        <div className="flex items-center gap-1 px-3">
+          {(["communities", "events"] as const).map((t) => {
+            const active = tab === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={
+                  "relative shrink-0 px-3 py-3 text-[13px] capitalize tracking-tight transition-colors " +
+                  (active ? "text-foreground" : "text-ink-muted")
+                }
+              >
+                {t}
+                {active ? (
+                  <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-foreground" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div
+        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+        style={{ scrollbarWidth: "none" }}
+      >
+        <section className="w-full shrink-0 snap-center">
+          {tab === "communities" ? (
+            <CommunitiesView
+              q={q}
+              setQ={setQ}
+              filter={filter}
+              setFilter={setFilter}
+              filtered={filtered}
+              mentorSlugs={mentorSlugs}
+            />
+          ) : (
+            <EventsView />
+          )}
+        </section>
+      </div>
+    </MobileShell>
+  );
+}
+
+function CommunitiesView({
+  q,
+  setQ,
+  filter,
+  setFilter,
+  filtered,
+  mentorSlugs,
+}: {
+  q: string;
+  setQ: (v: string) => void;
+  filter: "all" | "mentors";
+  setFilter: (v: "all" | "mentors") => void;
+  filtered: typeof communities;
+  mentorSlugs: Set<string>;
+}) {
+  return (
+    <>
       <div className="flex items-center gap-2 px-5 pt-4">
         <label className="flex h-11 flex-1 items-center gap-2 rounded-2xl bg-surface px-3.5">
           <Search strokeWidth={1.75} className="h-[16px] w-[16px] text-ink-muted" />
@@ -90,6 +194,47 @@ function CommunitiesPage() {
           </li>
         ))}
       </ul>
-    </MobileShell>
+    </>
+  );
+}
+
+function EventsView() {
+  return (
+    <ul className="pt-2">
+      {sampleEvents.map((e) => (
+        <li
+          key={e.id}
+          className="border-b border-hairline px-5 py-4 active:bg-surface/60"
+        >
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] ${e.accent}`}>
+              {e.community}
+            </span>
+            <span className="text-[11px] text-ink-muted">{e.attendees} going</span>
+          </div>
+          <h3 className="mt-2 text-[16px] font-semibold leading-snug tracking-tight text-foreground">
+            {e.title}
+          </h3>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar strokeWidth={1.75} className="h-[14px] w-[14px]" />
+              {e.when}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin strokeWidth={1.75} className="h-[14px] w-[14px]" />
+              {e.where}
+            </span>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <button className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background">
+              RSVP
+            </button>
+            <button className="rounded-full border border-hairline px-3.5 py-1.5 text-[12px] font-medium text-foreground">
+              Remind me
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
