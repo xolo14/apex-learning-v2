@@ -66,6 +66,10 @@ function Home() {
             />
           </Link>
           <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background">
+              <Coins strokeWidth={2} className="h-[14px] w-[14px] text-orange" />
+              1,240
+            </span>
             <DensityToggle />
             <button aria-label="Search" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
               <Search strokeWidth={1.75} className="h-[18px] w-[18px]" />
