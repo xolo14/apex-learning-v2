@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { CoinsCard } from "@/components/coins-card";
 import { useCoinBalance } from "@/lib/use-coin-balance";
-import { useEarningsEnabled } from "@/lib/use-feature-flags";
+import { useEarningsEnabled, useWithdrawEnabled } from "@/lib/use-feature-flags";
 
 export const Route = createFileRoute("/coins")({
   head: () => ({ meta: [{ title: "Coins — Syncpedia" }] }),
@@ -37,6 +37,7 @@ function timeAgoShort(iso: string) {
 function CoinsPage() {
   const [name, setName] = useState("You");
   const { balance, entries } = useCoinBalance();
+  const withdrawEnabled = useWithdrawEnabled();
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [amount, setAmount] = useState("");
   const [upi, setUpi] = useState("");
@@ -81,6 +82,7 @@ function CoinsPage() {
       <div className="px-5 pt-5">
         <CoinsCard name={name} balance={balance} />
 
+        {withdrawEnabled && (
         <button
           onClick={() => {
             setShowWithdraw(true);
@@ -103,6 +105,7 @@ function CoinsPage() {
           </div>
           <span className="text-[12px] font-medium text-ink-muted">Cash out →</span>
         </button>
+        )}
 
         <div className="mt-5 grid grid-cols-2 gap-3">
           <Link
