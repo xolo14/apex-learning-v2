@@ -262,6 +262,14 @@ function EventsView() {
                 <img src={goldCoin} alt="" className="h-3 w-3 object-contain" />+{e.coins}
               </span>
             ) : null}
+            <span className={
+              "rounded-full px-2 py-0.5 text-[11px] font-medium " +
+              (e.price > 0
+                ? "bg-foreground/[0.06] text-foreground"
+                : "bg-forest/10 text-forest")
+            }>
+              {e.price > 0 ? `₹${e.price}` : "Free"}
+            </span>
           </div>
           <h3 className="mt-2 text-[16px] font-semibold leading-snug tracking-tight text-foreground">
             {e.title}
