@@ -70,7 +70,7 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
                  extract(epoch from published_at)*1000 AS published
           FROM hot_cache
           ORDER BY published_at DESC
-          LIMIT 500
+          LIMIT 800
         `) as {
           id: string;
           title: string;
@@ -154,7 +154,7 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
   pins.sort((a, b) => b.createdAt - a.createdAt);
   live.sort((a, b) => b.createdAt - a.createdAt);
   const merged = [...pins, ...live];
-  return merged.slice(0, 300);
+  return merged.slice(0, 800);
 });
 
 export const refreshHotNow = createServerFn({ method: "POST" }).handler(async () => {

@@ -11,11 +11,27 @@ type GdeltArticle = {
 };
 
 const QUERIES: { q: string; category: string }[] = [
+  // tech
   { q: 'technology OR "artificial intelligence" OR AI sourcelang:eng', category: "tech" },
-  { q: '"student evaluation" OR "higher education" OR "edtech" sourcelang:eng', category: "education" },
-  { q: '("Donald Trump" technology) OR ("Trump AI") OR ("Trump tech") sourcelang:eng', category: "politics" },
-  { q: '("internship" OR "campus placement" OR "engineering students") sourcelang:eng', category: "education" },
   { q: '(startup OR "tech upgrade" OR "software update" OR chip) sourcelang:eng', category: "tech" },
+  { q: '("machine learning" OR "deep learning" OR "neural network" OR LLM) sourcelang:eng', category: "tech" },
+  { q: '(smartphone OR iPhone OR Android OR gadget OR "consumer tech") sourcelang:eng', category: "tech" },
+  { q: '(cybersecurity OR "data breach" OR hacking OR ransomware) sourcelang:eng', category: "tech" },
+  { q: '(SpaceX OR NASA OR "space mission" OR satellite OR rocket) sourcelang:eng', category: "tech" },
+  { q: '(Google OR Microsoft OR Apple OR Meta OR OpenAI OR Nvidia) sourcelang:eng', category: "tech" },
+  // education
+  { q: '"student evaluation" OR "higher education" OR "edtech" sourcelang:eng', category: "education" },
+  { q: '("internship" OR "campus placement" OR "engineering students") sourcelang:eng', category: "education" },
+  { q: '(university OR college OR "online learning" OR MOOC OR scholarship) sourcelang:eng', category: "education" },
+  { q: '("school education" OR curriculum OR exam OR "student loan") sourcelang:eng', category: "education" },
+  // politics
+  { q: '("Donald Trump" technology) OR ("Trump AI") OR ("Trump tech") sourcelang:eng', category: "politics" },
+  { q: '("White House" OR "US Congress" OR senate OR "Supreme Court") sourcelang:eng', category: "politics" },
+  { q: '(election OR "policy reform" OR legislation OR "prime minister") sourcelang:eng', category: "politics" },
+  { q: '("foreign policy" OR diplomacy OR "United Nations" OR sanctions) sourcelang:eng', category: "politics" },
+  // memes / culture
+  { q: '(viral OR trending OR meme OR "goes viral" OR TikTok) sourcelang:eng', category: "memes" },
+  { q: '("pop culture" OR celebrity OR Hollywood OR Bollywood OR entertainment) sourcelang:eng', category: "memes" },
 ];
 
 function parseSeenDate(s: string): Date {
@@ -41,7 +57,7 @@ async function fetchQuery(q: string, max = 25): Promise<GdeltArticle[]> {
 export async function refreshHotCache(): Promise<{ inserted: number; total: number }> {
   const results = await Promise.all(
     QUERIES.map(async ({ q, category }) => {
-      const arts = await fetchQuery(q, 25);
+      const arts = await fetchQuery(q, 75);
       return arts.map((a) => ({ a, category }));
     }),
   );
@@ -52,14 +68,10 @@ export async function refreshHotCache(): Promise<{ inserted: number; total: numb
     const ex = map.get(item.a.url);
     if (!ex || (!ex.a.socialimage && item.a.socialimage)) map.set(item.a.url, item);
   }
-  const items = [...map.values()].filter((x) => x.a.socialimage);
-  // Fallback: include some imageless ones to guarantee min volume.
-  if (items.length < 40) {
-    for (const item of map.values()) {
-      if (items.length >= 60) break;
-      if (!item.a.socialimage) items.push(item);
-    }
-  }
+  // Keep items with images first; then top up with imageless ones to guarantee a high daily volume (target 500+).
+  const withImg = [...map.values()].filter((x) => x.a.socialimage);
+  const withoutImg = [...map.values()].filter((x) => !x.a.socialimage);
+  const items = [...withImg, ...withoutImg].slice(0, 800);
 
   let inserted = 0;
   for (const { a, category } of items) {
