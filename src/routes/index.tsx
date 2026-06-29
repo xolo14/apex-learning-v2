@@ -3,7 +3,7 @@ import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Coi
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { MobileShell, DensityToggle } from "@/components/mobile-shell";
+import { MobileShell } from "@/components/mobile-shell";
 import { PostCard } from "@/components/post-card";
 import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
