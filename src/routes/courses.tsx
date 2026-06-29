@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Play, Clock, MapPin, Briefcase, GraduationCap, ArrowUpRight } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { communities } from "@/lib/feed-data";
 
 export const Route = createFileRoute("/courses")({
   head: () => ({ meta: [{ title: "Internship — Syncpedia" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: s.tab === "courses" ? ("courses" as const) : ("internship" as const),
+  }),
   component: LearnPage,
 });
 
@@ -34,7 +37,39 @@ const internships: Internship[] = [
 ];
 
 function LearnPage() {
-  const [tab, setTab] = useState<"courses" | "internship">("internship");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setTab = (t: "courses" | "internship") =>
+    navigate({ search: { tab: t }, replace: true });
+
+  const [drag, setDrag] = useState(0);
+  const startX = useRef<number | null>(null);
+  const width = useRef(0);
+  const paneRef = useRef<HTMLDivElement>(null);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    startX.current = e.clientX;
+    width.current = paneRef.current?.clientWidth ?? 1;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (startX.current == null) return;
+    const dx = e.clientX - startX.current;
+    const max = width.current;
+    const clamped = tab === "courses" ? Math.min(0, Math.max(-max, dx)) : Math.max(0, Math.min(max, dx));
+    setDrag(clamped);
+  };
+  const onPointerUp = () => {
+    if (startX.current == null) return;
+    const threshold = width.current * 0.18;
+    if (tab === "courses" && drag < -threshold) setTab("internship");
+    else if (tab === "internship" && drag > threshold) setTab("courses");
+    startX.current = null;
+    setDrag(0);
+  };
+
+  const basePct = tab === "internship" ? -50 : 0;
+  const dragPct = width.current ? (drag / width.current) * 50 : 0;
 
   return (
     <MobileShell>
@@ -43,16 +78,54 @@ function LearnPage() {
         subtitle={tab === "courses" ? "Discovered inside your communities" : "Apply through your communities"}
       />
 
-      <div className="sticky top-[58px] z-30 border-b border-hairline bg-background/85 px-5 py-3 backdrop-blur-xl">
-        <div className="inline-flex w-full rounded-full border border-hairline bg-surface p-1">
-          <SegBtn active={tab === "courses"} onClick={() => setTab("courses")} icon={GraduationCap} label="Courses" />
-          <SegBtn active={tab === "internship"} onClick={() => setTab("internship")} icon={Briefcase} label="Internship" />
+      {/* Segmented tabs — same dimensions as Earn page */}
+      <div className="px-5 pt-4">
+        <div className="relative grid grid-cols-2 rounded-full bg-surface p-1 text-[13px] font-medium">
+          <span
+            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-foreground transition-transform duration-300"
+            style={{ transform: tab === "internship" ? "translateX(100%)" : "translateX(0)" }}
+          />
+          <button
+            onClick={() => setTab("courses")}
+            className={
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (tab === "courses" ? "text-background" : "text-ink-muted")
+            }
+          >
+            <GraduationCap strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            Courses
+          </button>
+          <button
+            onClick={() => setTab("internship")}
+            className={
+              "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full py-2 transition-colors " +
+              (tab === "internship" ? "text-background" : "text-ink-muted")
+            }
+          >
+            <Briefcase strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            Internship
+          </button>
         </div>
       </div>
 
-      <div className="px-5 pt-5">
-        {tab === "courses"
-          ? courses.map((c) => {
+      {/* Swipeable pager */}
+      <div
+        ref={paneRef}
+        className="mt-4 overflow-hidden touch-pan-y"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        <div
+          className="flex w-[200%]"
+          style={{
+            transform: `translateX(${basePct + dragPct}%)`,
+            transition: drag === 0 ? "transform 300ms ease" : "none",
+          }}
+        >
+          <section className="w-1/2 shrink-0 px-5">
+            {courses.map((c) => {
               const community = communities.find((x) => x.slug === c.community);
               return (
                 <article key={c.title} className="mb-3 overflow-hidden rounded-[20px] border border-hairline bg-background">
@@ -77,11 +150,14 @@ function LearnPage() {
                   </div>
                 </article>
               );
-            })
-          : internships.map((i) => (
+            })}
+          </section>
+
+          <section className="w-1/2 shrink-0 px-5">
+            {internships.map((i) => (
               <article key={i.role + i.company} className="mb-3 rounded-[20px] border border-hairline bg-background p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
                       c/{i.community} · {i.mode}
                     </div>
@@ -115,34 +191,9 @@ function LearnPage() {
                 </div>
               </article>
             ))}
+          </section>
+        </div>
       </div>
     </MobileShell>
-  );
-}
-
-function SegBtn({
-  active,
-  onClick,
-  icon: Icon,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: typeof Briefcase;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={
-        "flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors " +
-        (active ? "bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "text-ink-muted")
-      }
-    >
-      <Icon strokeWidth={1.75} className="h-[14px] w-[14px]" />
-      {label}
-    </button>
   );
 }
