@@ -101,6 +101,8 @@ export const DEMO_EVENTS: DbEvent[] = [
     starts_at: "Sat, Jul 12 · 5:00 PM IST",
     price: 0,
     coins: 40,
+    hosted_by: "Syncpedia",
+    map_url: "",
     created_at: AT,
   },
   {
@@ -113,6 +115,8 @@ export const DEMO_EVENTS: DbEvent[] = [
     starts_at: "Wed, Jul 9 · 7:30 PM IST",
     price: 0,
     coins: 25,
+    hosted_by: "Syncpedia",
+    map_url: "",
     created_at: AT,
   },
   {
@@ -125,6 +129,8 @@ export const DEMO_EVENTS: DbEvent[] = [
     starts_at: "Sun, Jul 20 · 10:00 AM IST",
     price: 99,
     coins: 30,
+    hosted_by: "Syncpedia",
+    map_url: "",
     created_at: AT,
   },
 ];

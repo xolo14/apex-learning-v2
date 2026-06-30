@@ -26,6 +26,8 @@ export function ensureSchema() {
       )
     `;
     await s`ALTER TABLE events ADD COLUMN IF NOT EXISTS price numeric DEFAULT 0`;
+    await s`ALTER TABLE events ADD COLUMN IF NOT EXISTS hosted_by text DEFAULT ''`;
+    await s`ALTER TABLE events ADD COLUMN IF NOT EXISTS map_url text DEFAULT ''`;
 
     // Gigs
     await s`

@@ -59,6 +59,8 @@ export type DbEvent = {
   starts_at: string;
   price: number;
   coins: number;
+  hosted_by: string;
+  map_url: string;
   created_at: string;
 };
 
@@ -326,7 +328,10 @@ export const listEvents = createServerFn({ method: "GET" }).handler(async () => 
   const rows = (await s`
     SELECT id, community_slug, title, description, image_url, location, starts_at,
            COALESCE(price, 0)::float AS price,
-           COALESCE(coins, 0)::int AS coins, created_at
+           COALESCE(coins, 0)::int AS coins,
+           COALESCE(hosted_by, '') AS hosted_by,
+           COALESCE(map_url, '') AS map_url,
+           created_at
     FROM events ORDER BY created_at DESC
   `) as DbEvent[];
   return withDemoFallback(rows, DEMO_EVENTS);
@@ -340,6 +345,8 @@ export const createEvent = createServerFn({ method: "POST" })
     imageUrl?: string;
     location?: string;
     startsAt?: string;
+    hostedBy?: string;
+    mapUrl?: string;
     price?: number;
     coins?: number;
   }) => {
@@ -351,12 +358,13 @@ export const createEvent = createServerFn({ method: "POST" })
     const s = await db();
     const id = rid("evt");
     await s`
-      INSERT INTO events (id, community_slug, title, description, image_url, location, starts_at, price, coins)
+      INSERT INTO events (id, community_slug, title, description, image_url, location, starts_at, price, coins, hosted_by, map_url)
       VALUES (${id}, ${data.communitySlug || null}, ${data.title.slice(0, 200)},
-        ${(data.description || "").slice(0, 2000)}, ${(data.imageUrl || "").slice(0, 800)},
-        ${(data.location || "").slice(0, 200)}, ${(data.startsAt || "").slice(0, 100)},
+        ${(data.description || "").slice(0, 8000)}, ${(data.imageUrl || "").slice(0, 800)},
+        ${(data.location || "").slice(0, 300)}, ${(data.startsAt || "").slice(0, 120)},
         ${Math.max(0, Math.floor(Number(data.price) || 0))},
-        ${Math.max(0, Math.floor(Number(data.coins) || 0))})
+        ${Math.max(0, Math.floor(Number(data.coins) || 0))},
+        ${(data.hostedBy || "").slice(0, 120)}, ${(data.mapUrl || "").slice(0, 500)})
     `;
     try {
       const { sendPushToAll } = await import("./push.server");
@@ -389,7 +397,10 @@ export const getEvent = createServerFn({ method: "GET" })
     const rows = (await s`
       SELECT id, community_slug, title, description, image_url, location, starts_at,
              COALESCE(price, 0)::float AS price,
-             COALESCE(coins, 0)::int AS coins, created_at
+             COALESCE(coins, 0)::int AS coins,
+             COALESCE(hosted_by, '') AS hosted_by,
+             COALESCE(map_url, '') AS map_url,
+             created_at
       FROM events WHERE id = ${data.id} LIMIT 1
     `) as DbEvent[];
     if (rows[0]) return rows[0];
