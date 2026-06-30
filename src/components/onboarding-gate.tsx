@@ -75,6 +75,25 @@ export function OnboardingGate() {
     setMounted(true);
   }, []);
 
+  const gateOpen = mounted && !profile;
+
+  useEffect(() => {
+    if (!gateOpen) {
+      document.documentElement.removeAttribute("data-auth-gate");
+      return;
+    }
+
+    const scrollY = window.scrollY;
+    document.documentElement.setAttribute("data-auth-gate", "open");
+    document.body.style.top = `-${scrollY}px`;
+
+    return () => {
+      document.documentElement.removeAttribute("data-auth-gate");
+      document.body.style.top = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [gateOpen]);
+
   function saveProfile(p: DbProfile) {
     clearSignedOutFlag();
     localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
@@ -548,7 +567,7 @@ function WelcomeScreen({
   const googleEnabled = isGoogleAuthEnabled();
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0c2420] text-white">
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-20 -top-24 h-72 w-72 rounded-full bg-[#1a5c4a]/30 blur-3xl" />
         <div className="absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-[#f97316]/10 blur-3xl" />
@@ -635,7 +654,7 @@ function OnboardingShell({
   total?: number;
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0c2420] text-white">
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-[#1a5c4a]/25 blur-3xl" />
         <div className="absolute bottom-1/4 -left-16 h-56 w-56 rounded-full bg-[#f97316]/8 blur-3xl" />

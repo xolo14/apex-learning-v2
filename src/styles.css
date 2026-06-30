@@ -191,4 +191,22 @@
     overflow: hidden !important;
     opacity: 0 !important;
   }
+
+  /* Login / sign-up overlay: lock page behind it (fixes scroll bleed on mobile) */
+  html[data-auth-gate="open"] {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  html[data-auth-gate="open"] body {
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+    width: 100%;
+  }
+
+  html[data-auth-gate="open"] .app-bottom-nav,
+  html[data-auth-gate="open"] .app-mobile-chrome {
+    display: none !important;
+  }
 }
