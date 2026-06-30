@@ -111,46 +111,58 @@ export function OnboardingGate() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (isSignedOut()) {
       setProfile(null);
       setReady(true);
       return;
     }
-    if (profile) {
-      setUniqueId(profile.unique_id);
-      const prefs = avatarPrefsFromProfile(profile);
-      applyAvatar(prefs.icon, prefs.color);
-      setReady(true);
-      return;
-    }
+
     const cached = localStorage.getItem(PROFILE_CACHE);
     if (cached) {
       try {
         const p = JSON.parse(cached) as DbProfile;
-        setUniqueId(p.unique_id);
-        setProfile(p);
-        setReady(true);
+        if (!cancelled) {
+          const prefs = avatarPrefsFromProfile(p);
+          setUniqueId(p.unique_id);
+          applyAvatar(prefs.icon, prefs.color);
+          setProfile(p);
+          setReady(true);
+        }
         return;
       } catch {
-        /* ignore */
+        /* fall through to server lookup */
       }
     }
+
     const key = getOrCreateDeviceKey();
     fetchProfile({ data: { deviceKey: key } })
       .then((p) => {
+        if (cancelled) return;
         if (p) {
           localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
           setUniqueId(p.unique_id);
+          const prefs = avatarPrefsFromProfile(p);
+          applyAvatar(prefs.icon, prefs.color);
           setProfile(p);
         }
       })
       .catch(() => {})
-      .finally(() => setReady(true));
-  }, [fetchProfile, setUniqueId, applyAvatar, profile]);
+      .finally(() => {
+        if (!cancelled) setReady(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // Run once on mount — identity helpers change every render and must not retrigger this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchProfile]);
 
   if (profile) return null;
 
-  if (!ready) {
+  if (!ready && !isSignedOut()) {
     return (
       <div
         className="fixed inset-0 z-[100] grid place-items-center bg-[#0c2420] text-white/70"
