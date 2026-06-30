@@ -1,8 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Loader2, Play, Share2 } from "lucide-react";
+import { ArrowLeft, Loader2, Share2 } from "lucide-react";
 import { useState } from "react";
+import { CertificationClassroomView } from "@/components/certification-classroom";
 import { CertificationDetailView } from "@/components/certification-detail-view";
 import { MobileShell } from "@/components/mobile-shell";
 import {
@@ -100,16 +101,55 @@ function CertificationDetailPage() {
   const isConfirmed = enrollment?.status === "confirmed";
   const isPending = enrollment?.status === "pending_payment";
   const classLinks = certificationMeta(course).classLinks;
-  const hasClasses = isConfirmed && classLinks.length > 0;
+  const inClassroom = isConfirmed && classLinks.length > 0;
 
   const openPreview = () => {
     const url = course.video_url || course.image_url;
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const scrollToClasses = () => {
-    document.getElementById("cert-class-links")?.scrollIntoView({ behavior: "smooth" });
-  };
+  if (inClassroom) {
+    return (
+      <MobileShell immersive>
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-[#070f0d]/95 backdrop-blur">
+          <div className="flex items-center gap-2 px-3 py-2.5 pt-[max(env(safe-area-inset-top),10px)]">
+            <Link
+              to="/courses"
+              search={{ tab: "certifications" }}
+              className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
+              aria-label="Back"
+            >
+              <ArrowLeft strokeWidth={1.75} className="h-[18px] w-[18px]" />
+            </Link>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-semibold text-white">{course.title}</p>
+              <p className="truncate text-[11px] text-[#d4a853]">Classroom unlocked</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard?.writeText(window.location.href);
+                setToast("Link copied");
+              }}
+              className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
+              aria-label="Share"
+            >
+              <Share2 strokeWidth={1.75} className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
+
+        <CertificationClassroomView
+          course={course}
+          coinsCredited={enrollment?.coins_credited ?? 0}
+        />
+
+        {toast ? (
+          <p className="fixed inset-x-0 bottom-6 z-40 text-center text-[12px] text-white/70">{toast}</p>
+        ) : null}
+      </MobileShell>
+    );
+  }
 
   return (
     <MobileShell immersive>
@@ -143,16 +183,14 @@ function CertificationDetailPage() {
         </div>
       </header>
 
-      <div id="cert-class-links">
-        <CertificationDetailView
-          course={course}
-          enrollment={enrollment}
-          isFree={isFree}
-          isConfirmed={isConfirmed}
-          isPending={isPending}
-          onPreviewPlay={openPreview}
-        />
-      </div>
+      <CertificationDetailView
+        course={course}
+        enrollment={enrollment}
+        isFree={isFree}
+        isConfirmed={isConfirmed}
+        isPending={isPending}
+        onPreviewPlay={openPreview}
+      />
 
       {toast ? (
         <p className="fixed inset-x-0 bottom-28 z-40 text-center text-[12px] text-ink-muted">{toast}</p>
@@ -172,21 +210,8 @@ function CertificationDetailPage() {
             </p>
           </div>
 
-          {hasClasses ? (
-            <button
-              type="button"
-              onClick={scrollToClasses}
-              className="inline-flex items-center gap-2 rounded-full bg-orange px-6 py-3 text-[14px] font-semibold text-white"
-            >
-              <Play className="h-4 w-4" />
-              View classes
-            </button>
-          ) : isConfirmed ? (
-            <button
-              type="button"
-              disabled
-              className="rounded-full bg-surface px-6 py-3 text-[14px] font-semibold text-ink-muted"
-            >
+          {isConfirmed ? (
+            <button type="button" disabled className="rounded-full bg-surface px-6 py-3 text-[14px] font-semibold text-ink-muted">
               Enrolled
             </button>
           ) : isPending ? (

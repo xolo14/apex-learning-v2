@@ -58,6 +58,43 @@ export function serializeClassLinks(links: ClassLink[]): string {
   return JSON.stringify(links.slice(0, 50));
 }
 
+/** YouTube / Vimeo / direct video file → embeddable URL, else null. */
+export function videoEmbedUrl(raw: string): string | null {
+  const url = raw.trim();
+  if (!url) return null;
+
+  if (/\.(mp4|webm|ogg|m3u8)(\?|#|$)/i.test(url)) return url;
+
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const id = u.pathname.slice(1).split("/")[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      const id = u.searchParams.get("v") || u.pathname.match(/^\/embed\/([^/?]+)/)?.[1];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (host === "vimeo.com") {
+      const id = u.pathname.match(/^\/(\d+)/)?.[1];
+      return id ? `https://player.vimeo.com/video/${id}` : null;
+    }
+    if (host === "player.vimeo.com") {
+      const id = u.pathname.match(/\/video\/(\d+)/)?.[1];
+      return id ? `https://player.vimeo.com/video/${id}` : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function isDirectVideo(url: string): boolean {
+  return /\.(mp4|webm|ogg)(\?|#|$)/i.test(url.trim());
+}
+
 /** Only show what admin configured — no fake defaults. */
 export function certificationMeta(course: DbCourse) {
   return {

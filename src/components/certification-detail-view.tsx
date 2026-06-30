@@ -3,14 +3,13 @@ import {
   BookOpen,
   Briefcase,
   Clock,
-  ExternalLink,
   Globe,
   GraduationCap,
   Layers,
   Play,
 } from "lucide-react";
 import type { DbCourse, CourseEnrollment } from "@/lib/communities.functions";
-import { certificationMeta, type ClassLink } from "@/lib/certification-meta";
+import { certificationMeta } from "@/lib/certification-meta";
 
 type Props = {
   course: DbCourse;
@@ -113,16 +112,6 @@ export function CertificationDetailView({
         </div>
       </section>
 
-      {isConfirmed ? (
-        <section className="mx-5 mt-6 rounded-[20px] border border-forest/30 bg-forest/5 p-4">
-          <p className="text-[14px] font-semibold text-forest">You have access to all classes</p>
-          {enrollment && enrollment.coins_credited > 0 ? (
-            <p className="mt-1 text-[13px] text-ink-muted">+{enrollment.coins_credited} coins credited.</p>
-          ) : null}
-          <ClassLinksList links={meta.classLinks} />
-        </section>
-      ) : null}
-
       {isPending && enrollment ? (
         <section className="mx-5 mt-6 rounded-[20px] border border-orange/30 bg-orange/5 p-4">
           <p className="text-[14px] font-semibold">Payment pending</p>
@@ -132,37 +121,6 @@ export function CertificationDetailView({
         </section>
       ) : null}
     </div>
-  );
-}
-
-function ClassLinksList({ links }: { links: ClassLink[] }) {
-  if (links.length === 0) {
-    return (
-      <p className="mt-2 text-[12px] text-ink-muted">Class links will appear here once added by admin.</p>
-    );
-  }
-  return (
-    <ul className="mt-4 space-y-2">
-      {links.map((link, i) => (
-        <li key={`${link.url}-${i}`}>
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 rounded-[14px] border border-hairline bg-background px-3 py-3 active:scale-[0.99]"
-          >
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-forest text-white">
-              <Play className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-semibold">{link.title}</p>
-              <p className="truncate text-[11px] text-ink-muted">{link.url}</p>
-            </span>
-            <ExternalLink className="h-4 w-4 shrink-0 text-ink-muted" />
-          </a>
-        </li>
-      ))}
-    </ul>
   );
 }
 

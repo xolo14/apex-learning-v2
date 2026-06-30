@@ -5,7 +5,7 @@ import {
   HomeIcon,
   UserGroupIcon,
   WalletIcon,
-  AcademicCapIcon,
+  BriefcaseIcon,
 } from "@heroicons/react/24/solid";
 import { useDensity } from "@/lib/density";
 import { useHomeTab } from "@/lib/home-tab";
@@ -164,7 +164,7 @@ type Tab = { to: string; label: string; icon: IconType; search?: Record<string, 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: HomeIcon },
   { to: "/communities", label: "Network", icon: UserGroupIcon },
-  { to: "/courses", label: "Certifications", icon: AcademicCapIcon, search: { tab: "certifications" } },
+  { to: "/courses", label: "Internship", icon: BriefcaseIcon, search: { tab: "certifications" } },
   { to: "/quizzes", label: "Earnings", icon: WalletIcon },
 ];
 
