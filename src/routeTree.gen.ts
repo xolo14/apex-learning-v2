@@ -15,12 +15,13 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as GigsRouteImport } from './routes/gigs'
-import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as CommunitiesRouteImport } from './routes/communities'
 import { Route as CoinsRouteImport } from './routes/coins'
 import { Route as AskRouteImport } from './routes/ask'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as QuizzesIndexRouteImport } from './routes/quizzes.index'
+import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UIdRouteImport } from './routes/u.$id'
 import { Route as QuizzesIdRouteImport } from './routes/quizzes.$id'
@@ -35,6 +36,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminQuizzesRouteImport } from './routes/admin.quizzes'
 import { Route as AdminPostsRouteImport } from './routes/admin.posts'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
 import { Route as AdminInternshipsRouteImport } from './routes/admin.internships'
 import { Route as AdminInternshipPostingsRouteImport } from './routes/admin.internship-postings'
 import { Route as AdminHotRouteImport } from './routes/admin.hot'
@@ -76,11 +78,6 @@ const GigsRoute = GigsRouteImport.update({
   path: '/gigs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CoursesRoute = CoursesRouteImport.update({
-  id: '/courses',
-  path: '/courses',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CommunitiesRoute = CommunitiesRouteImport.update({
   id: '/communities',
   path: '/communities',
@@ -104,6 +101,16 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizzesIndexRoute = QuizzesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => QuizzesRoute,
+} as any)
+const CoursesIndexRoute = CoursesIndexRouteImport.update({
+  id: '/courses/',
+  path: '/courses/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -147,9 +154,9 @@ const EventsIdRoute = EventsIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesIdRoute = CoursesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => CoursesRoute,
+  id: '/courses/$id',
+  path: '/courses/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
@@ -174,6 +181,11 @@ const AdminPostsRoute = AdminPostsRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeadsRoute = AdminLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminInternshipsRoute = AdminInternshipsRouteImport.update({
@@ -233,7 +245,6 @@ export interface FileRoutesByFullPath {
   '/ask': typeof AskRoute
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
-  '/courses': typeof CoursesRouteWithChildren
   '/gigs': typeof GigsRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -248,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/admin/hot': typeof AdminHotRoute
   '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
+  '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
@@ -262,6 +274,8 @@ export interface FileRoutesByFullPath {
   '/quizzes/$id': typeof QuizzesIdRoute
   '/u/$id': typeof UIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/courses/': typeof CoursesIndexRoute
+  '/quizzes/': typeof QuizzesIndexRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -270,12 +284,10 @@ export interface FileRoutesByTo {
   '/ask': typeof AskRoute
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
-  '/courses': typeof CoursesRouteWithChildren
   '/gigs': typeof GigsRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
-  '/quizzes': typeof QuizzesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
@@ -285,6 +297,7 @@ export interface FileRoutesByTo {
   '/admin/hot': typeof AdminHotRoute
   '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
+  '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
@@ -299,6 +312,8 @@ export interface FileRoutesByTo {
   '/quizzes/$id': typeof QuizzesIdRoute
   '/u/$id': typeof UIdRoute
   '/admin': typeof AdminIndexRoute
+  '/courses': typeof CoursesIndexRoute
+  '/quizzes': typeof QuizzesIndexRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -309,7 +324,6 @@ export interface FileRoutesById {
   '/ask': typeof AskRoute
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
-  '/courses': typeof CoursesRouteWithChildren
   '/gigs': typeof GigsRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
@@ -324,6 +338,7 @@ export interface FileRoutesById {
   '/admin/hot': typeof AdminHotRoute
   '/admin/internship-postings': typeof AdminInternshipPostingsRoute
   '/admin/internships': typeof AdminInternshipsRoute
+  '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/posts': typeof AdminPostsRoute
   '/admin/quizzes': typeof AdminQuizzesRoute
@@ -338,6 +353,8 @@ export interface FileRoutesById {
   '/quizzes/$id': typeof QuizzesIdRoute
   '/u/$id': typeof UIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/courses/': typeof CoursesIndexRoute
+  '/quizzes/': typeof QuizzesIndexRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -349,7 +366,6 @@ export interface FileRouteTypes {
     | '/ask'
     | '/coins'
     | '/communities'
-    | '/courses'
     | '/gigs'
     | '/messages'
     | '/privacy'
@@ -364,6 +380,7 @@ export interface FileRouteTypes {
     | '/admin/hot'
     | '/admin/internship-postings'
     | '/admin/internships'
+    | '/admin/leads'
     | '/admin/login'
     | '/admin/posts'
     | '/admin/quizzes'
@@ -378,6 +395,8 @@ export interface FileRouteTypes {
     | '/quizzes/$id'
     | '/u/$id'
     | '/admin/'
+    | '/courses/'
+    | '/quizzes/'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesByTo: FileRoutesByTo
@@ -386,12 +405,10 @@ export interface FileRouteTypes {
     | '/ask'
     | '/coins'
     | '/communities'
-    | '/courses'
     | '/gigs'
     | '/messages'
     | '/privacy'
     | '/profile'
-    | '/quizzes'
     | '/settings'
     | '/admin/coins'
     | '/admin/communities'
@@ -401,6 +418,7 @@ export interface FileRouteTypes {
     | '/admin/hot'
     | '/admin/internship-postings'
     | '/admin/internships'
+    | '/admin/leads'
     | '/admin/login'
     | '/admin/posts'
     | '/admin/quizzes'
@@ -415,6 +433,8 @@ export interface FileRouteTypes {
     | '/quizzes/$id'
     | '/u/$id'
     | '/admin'
+    | '/courses'
+    | '/quizzes'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   id:
@@ -424,7 +444,6 @@ export interface FileRouteTypes {
     | '/ask'
     | '/coins'
     | '/communities'
-    | '/courses'
     | '/gigs'
     | '/messages'
     | '/privacy'
@@ -439,6 +458,7 @@ export interface FileRouteTypes {
     | '/admin/hot'
     | '/admin/internship-postings'
     | '/admin/internships'
+    | '/admin/leads'
     | '/admin/login'
     | '/admin/posts'
     | '/admin/quizzes'
@@ -453,6 +473,8 @@ export interface FileRouteTypes {
     | '/quizzes/$id'
     | '/u/$id'
     | '/admin/'
+    | '/courses/'
+    | '/quizzes/'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesById: FileRoutesById
@@ -463,7 +485,6 @@ export interface RootRouteChildren {
   AskRoute: typeof AskRoute
   CoinsRoute: typeof CoinsRoute
   CommunitiesRoute: typeof CommunitiesRoute
-  CoursesRoute: typeof CoursesRouteWithChildren
   GigsRoute: typeof GigsRouteWithChildren
   MessagesRoute: typeof MessagesRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
@@ -471,10 +492,12 @@ export interface RootRouteChildren {
   QuizzesRoute: typeof QuizzesRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   CSlugRoute: typeof CSlugRoute
+  CoursesIdRoute: typeof CoursesIdRoute
   EventsIdRoute: typeof EventsIdRoute
   InternshipsIdRoute: typeof InternshipsIdRoute
   PIdRoute: typeof PIdRoute
   UIdRoute: typeof UIdRoute
+  CoursesIndexRoute: typeof CoursesIndexRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
   ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
 }
@@ -523,13 +546,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GigsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/courses': {
-      id: '/courses'
-      path: '/courses'
-      fullPath: '/courses'
-      preLoaderRoute: typeof CoursesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/communities': {
       id: '/communities'
       path: '/communities'
@@ -563,6 +579,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quizzes/': {
+      id: '/quizzes/'
+      path: '/'
+      fullPath: '/quizzes/'
+      preLoaderRoute: typeof QuizzesIndexRouteImport
+      parentRoute: typeof QuizzesRoute
+    }
+    '/courses/': {
+      id: '/courses/'
+      path: '/courses'
+      fullPath: '/courses/'
+      preLoaderRoute: typeof CoursesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -623,10 +653,10 @@ declare module '@tanstack/react-router' {
     }
     '/courses/$id': {
       id: '/courses/$id'
-      path: '/$id'
+      path: '/courses/$id'
       fullPath: '/courses/$id'
       preLoaderRoute: typeof CoursesIdRouteImport
-      parentRoute: typeof CoursesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/c/$slug': {
       id: '/c/$slug'
@@ -661,6 +691,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leads': {
+      id: '/admin/leads'
+      path: '/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AdminLeadsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/internships': {
@@ -745,6 +782,7 @@ interface AdminRouteChildren {
   AdminHotRoute: typeof AdminHotRoute
   AdminInternshipPostingsRoute: typeof AdminInternshipPostingsRoute
   AdminInternshipsRoute: typeof AdminInternshipsRoute
+  AdminLeadsRoute: typeof AdminLeadsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminPostsRoute: typeof AdminPostsRoute
   AdminQuizzesRoute: typeof AdminQuizzesRoute
@@ -761,6 +799,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminHotRoute: AdminHotRoute,
   AdminInternshipPostingsRoute: AdminInternshipPostingsRoute,
   AdminInternshipsRoute: AdminInternshipsRoute,
+  AdminLeadsRoute: AdminLeadsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminPostsRoute: AdminPostsRoute,
   AdminQuizzesRoute: AdminQuizzesRoute,
@@ -769,17 +808,6 @@ const AdminRouteChildren: AdminRouteChildren = {
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
-interface CoursesRouteChildren {
-  CoursesIdRoute: typeof CoursesIdRoute
-}
-
-const CoursesRouteChildren: CoursesRouteChildren = {
-  CoursesIdRoute: CoursesIdRoute,
-}
-
-const CoursesRouteWithChildren =
-  CoursesRoute._addFileChildren(CoursesRouteChildren)
 
 interface GigsRouteChildren {
   GigsIdRoute: typeof GigsIdRoute
@@ -805,10 +833,12 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
 
 interface QuizzesRouteChildren {
   QuizzesIdRoute: typeof QuizzesIdRoute
+  QuizzesIndexRoute: typeof QuizzesIndexRoute
 }
 
 const QuizzesRouteChildren: QuizzesRouteChildren = {
   QuizzesIdRoute: QuizzesIdRoute,
+  QuizzesIndexRoute: QuizzesIndexRoute,
 }
 
 const QuizzesRouteWithChildren =
@@ -820,7 +850,6 @@ const rootRouteChildren: RootRouteChildren = {
   AskRoute: AskRoute,
   CoinsRoute: CoinsRoute,
   CommunitiesRoute: CommunitiesRoute,
-  CoursesRoute: CoursesRouteWithChildren,
   GigsRoute: GigsRouteWithChildren,
   MessagesRoute: MessagesRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
@@ -828,10 +857,12 @@ const rootRouteChildren: RootRouteChildren = {
   QuizzesRoute: QuizzesRouteWithChildren,
   SettingsRoute: SettingsRoute,
   CSlugRoute: CSlugRoute,
+  CoursesIdRoute: CoursesIdRoute,
   EventsIdRoute: EventsIdRoute,
   InternshipsIdRoute: InternshipsIdRoute,
   PIdRoute: PIdRoute,
   UIdRoute: UIdRoute,
+  CoursesIndexRoute: CoursesIndexRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,
   ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,
 }

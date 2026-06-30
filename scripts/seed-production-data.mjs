@@ -319,12 +319,22 @@ const COURSES = [
   {
     id: "seed_crs_03",
     community_slug: "marketing",
-    title: "LinkedIn Personal Branding for Students",
-    description: "Profile optimization, certificate posts, and networking scripts tailored for Indian campuses.",
-    url: "https://app.syncpedia.in/courses",
-    price: 299,
+    title: "Digital Marketing",
+    subtitle: "Professional Certification",
+    category: "MARKETING",
+    program_duration: "3 Months Program",
+    description:
+      "Master SEO, social media marketing, and performance ads with expert mentorship and real-world projects. Earn an industry-recognized certificate.",
+    url: "https://app.syncpedia.in/courses/seed_crs_03",
+    price: 4999,
     coins: 80,
-    image_url: "https://images.unsplash.com/photo-1611946873355-22e9c0d0e4b0?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+    video_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+    lectures_count: 24,
+    hours_label: "30+ Hours",
+    language: "English",
+    level: "Beginner",
+    projects_label: "2 Real Projects",
   },
   {
     id: "seed_crs_04",
@@ -387,6 +397,15 @@ async function ensureSchema() {
   await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS price numeric DEFAULT 0`;
   await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS coins integer DEFAULT 0`;
   await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS image_url text DEFAULT ''`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS category text DEFAULT ''`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS program_duration text DEFAULT ''`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS subtitle text DEFAULT ''`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS lectures_count integer DEFAULT 0`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS hours_label text DEFAULT ''`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS language text DEFAULT 'English'`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS level text DEFAULT 'Beginner'`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS projects_label text DEFAULT ''`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS video_url text DEFAULT ''`;
   await sql`
     CREATE TABLE IF NOT EXISTS events (
       id text PRIMARY KEY,
@@ -596,13 +615,34 @@ async function seedInternships() {
 async function seedCourses() {
   for (const c of COURSES) {
     await sql`
-      INSERT INTO courses (id, community_slug, title, description, url, price, coins, image_url, created_at)
-      VALUES (${c.id}, ${c.community_slug}, ${c.title}, ${c.description}, ${c.url}, ${c.price}, ${c.coins}, ${c.image_url}, ${NOW})
+      INSERT INTO courses (
+        id, community_slug, title, description, url, price, coins, image_url,
+        category, program_duration, subtitle, lectures_count, hours_label,
+        language, level, projects_label, video_url, created_at
+      )
+      VALUES (
+        ${c.id}, ${c.community_slug}, ${c.title}, ${c.description}, ${c.url},
+        ${c.price ?? 0}, ${c.coins ?? 0}, ${c.image_url ?? ""},
+        ${c.category ?? ""}, ${c.program_duration ?? ""}, ${c.subtitle ?? ""},
+        ${c.lectures_count ?? 0}, ${c.hours_label ?? ""},
+        ${c.language ?? "English"}, ${c.level ?? "Beginner"},
+        ${c.projects_label ?? ""}, ${c.video_url ?? ""}, ${NOW}
+      )
       ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
         description = EXCLUDED.description,
         price = EXCLUDED.price,
-        coins = EXCLUDED.coins
+        coins = EXCLUDED.coins,
+        image_url = EXCLUDED.image_url,
+        category = EXCLUDED.category,
+        program_duration = EXCLUDED.program_duration,
+        subtitle = EXCLUDED.subtitle,
+        lectures_count = EXCLUDED.lectures_count,
+        hours_label = EXCLUDED.hours_label,
+        language = EXCLUDED.language,
+        level = EXCLUDED.level,
+        projects_label = EXCLUDED.projects_label,
+        video_url = EXCLUDED.video_url
     `;
   }
   return COURSES.length;

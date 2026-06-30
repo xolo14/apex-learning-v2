@@ -5,7 +5,7 @@ import {
   HomeIcon,
   UserGroupIcon,
   WalletIcon,
-  BriefcaseIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/solid";
 import { useDensity } from "@/lib/density";
 import { useHomeTab } from "@/lib/home-tab";
@@ -159,12 +159,12 @@ export function DensityToggle() {
   );
 }
 
-type Tab = { to: string; label: string; icon: IconType };
+type Tab = { to: string; label: string; icon: IconType; search?: Record<string, string> };
 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: HomeIcon },
   { to: "/communities", label: "Network", icon: UserGroupIcon },
-  { to: "/courses", label: "Internships", icon: BriefcaseIcon },
+  { to: "/courses", label: "Certifications", icon: AcademicCapIcon, search: { tab: "certifications" } },
   { to: "/quizzes", label: "Earnings", icon: WalletIcon },
 ];
 
@@ -181,12 +181,13 @@ function BottomTabs() {
       aria-label="Main navigation"
     >
       <div className="flex items-center justify-between rounded-[28px] border border-hairline bg-background/95 px-2 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-        {visible.map(({ to, label, icon: Icon }) => {
+        {visible.map(({ to, label, icon: Icon, search }) => {
           const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
           return (
             <Link
               key={to}
               to={to}
+              search={search}
               className={`flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors ${active ? "bg-foreground/[0.06]" : ""}`}
             >
               <Icon

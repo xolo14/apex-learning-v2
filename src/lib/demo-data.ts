@@ -9,40 +9,78 @@ export function withDemoFallback<T>(rows: T[], demo: readonly T[]): T[] {
 
 const AT = "2026-06-15T10:00:00.000Z";
 
+const cert = (
+  partial: Omit<DbCourse, "created_at"> & { created_at?: string },
+): DbCourse => ({
+  category: "",
+  program_duration: "",
+  subtitle: "",
+  lectures_count: 0,
+  hours_label: "",
+  language: "English",
+  level: "Beginner",
+  projects_label: "",
+  video_url: "",
+  created_at: AT,
+  ...partial,
+});
+
 export const DEMO_COURSES: DbCourse[] = [
-  {
+  cert({
     id: "demo-crs-1",
-    community_slug: "ai",
-    title: "LLM Agents in Production",
-    description: "Tracing, evals, and guardrails for shipping agents beyond a notebook.",
+    community_slug: "marketing",
+    title: "Digital Marketing",
+    subtitle: "Professional Certification",
+    category: "MARKETING",
+    program_duration: "3 Months Program",
+    description:
+      "Master SEO, social media marketing, and performance ads with expert mentorship and real-world projects. Earn an industry-recognized certificate.",
     url: "https://app.syncpedia.in",
-    price: 0,
+    price: 4999,
     coins: 120,
-    image_url: "https://images.unsplash.com/photo-1677440866019-21743ecad50a?w=800&q=80",
-    created_at: AT,
-  },
-  {
+    image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+    video_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+    lectures_count: 24,
+    hours_label: "30+ Hours",
+    language: "English",
+    level: "Beginner",
+    projects_label: "2 Real Projects",
+  }),
+  cert({
     id: "demo-crs-2",
     community_slug: "programming",
-    title: "Full-Stack TypeScript Bootcamp",
-    description: "React, TanStack, Postgres, and deploy — project-first curriculum.",
+    title: "Full-Stack TypeScript",
+    subtitle: "Professional Certification",
+    category: "TECHNOLOGY",
+    program_duration: "4 Months Program",
+    description:
+      "React, TanStack, Postgres, and deploy — project-first curriculum with mentor reviews and a portfolio-ready capstone.",
     url: "https://app.syncpedia.in",
     price: 499,
     coins: 80,
     image_url: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&q=80",
-    created_at: AT,
-  },
-  {
+    lectures_count: 32,
+    hours_label: "40+ Hours",
+    level: "Intermediate",
+    projects_label: "3 Real Projects",
+  }),
+  cert({
     id: "demo-crs-3",
     community_slug: "uiux",
     title: "Design Systems for Startups",
-    description: "Tokens, components, and handoff that engineers actually use.",
+    subtitle: "Professional Certification",
+    category: "DESIGN",
+    program_duration: "2 Months Program",
+    description:
+      "Tokens, components, and handoff workflows that engineers actually use — ship a full design system as your capstone.",
     url: "https://app.syncpedia.in",
     price: 0,
     coins: 60,
     image_url: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80",
-    created_at: AT,
-  },
+    lectures_count: 18,
+    hours_label: "24+ Hours",
+    projects_label: "2 Real Projects",
+  }),
 ];
 
 export const DEMO_INTERNSHIP_POSTINGS: DbInternshipPosting[] = [

@@ -35,6 +35,15 @@ export type DbCourse = {
   price: number;
   coins: number;
   image_url: string;
+  category: string;
+  program_duration: string;
+  subtitle: string;
+  lectures_count: number;
+  hours_label: string;
+  language: string;
+  level: string;
+  projects_label: string;
+  video_url: string;
   created_at: string;
 };
 
@@ -191,7 +200,7 @@ export const deleteCommunity = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ---------------- Courses ----------------
+// ---------------- Courses (Certifications) ----------------
 
 export const listCourses = createServerFn({ method: "GET" }).handler(async () => {
   const s = await db();
@@ -200,6 +209,15 @@ export const listCourses = createServerFn({ method: "GET" }).handler(async () =>
            COALESCE(price, 0)::float AS price,
            COALESCE(coins, 0)::int AS coins,
            COALESCE(image_url, '') AS image_url,
+           COALESCE(category, '') AS category,
+           COALESCE(program_duration, '') AS program_duration,
+           COALESCE(subtitle, '') AS subtitle,
+           COALESCE(lectures_count, 0)::int AS lectures_count,
+           COALESCE(hours_label, '') AS hours_label,
+           COALESCE(language, 'English') AS language,
+           COALESCE(level, 'Beginner') AS level,
+           COALESCE(projects_label, '') AS projects_label,
+           COALESCE(video_url, '') AS video_url,
            created_at
     FROM courses ORDER BY created_at DESC
   `) as DbCourse[];
@@ -218,6 +236,15 @@ export const getCourse = createServerFn({ method: "GET" })
              COALESCE(price, 0)::float AS price,
              COALESCE(coins, 0)::int AS coins,
              COALESCE(image_url, '') AS image_url,
+             COALESCE(category, '') AS category,
+             COALESCE(program_duration, '') AS program_duration,
+             COALESCE(subtitle, '') AS subtitle,
+             COALESCE(lectures_count, 0)::int AS lectures_count,
+             COALESCE(hours_label, '') AS hours_label,
+             COALESCE(language, 'English') AS language,
+             COALESCE(level, 'Beginner') AS level,
+             COALESCE(projects_label, '') AS projects_label,
+             COALESCE(video_url, '') AS video_url,
              created_at
       FROM courses WHERE id = ${data.id} LIMIT 1
     `) as DbCourse[];
@@ -241,6 +268,15 @@ async function resolveCourse(s: Awaited<ReturnType<typeof db>>, courseId: string
            COALESCE(price, 0)::float AS price,
            COALESCE(coins, 0)::int AS coins,
            COALESCE(image_url, '') AS image_url,
+           COALESCE(category, '') AS category,
+           COALESCE(program_duration, '') AS program_duration,
+           COALESCE(subtitle, '') AS subtitle,
+           COALESCE(lectures_count, 0)::int AS lectures_count,
+           COALESCE(hours_label, '') AS hours_label,
+           COALESCE(language, 'English') AS language,
+           COALESCE(level, 'Beginner') AS level,
+           COALESCE(projects_label, '') AS projects_label,
+           COALESCE(video_url, '') AS video_url,
            created_at
     FROM courses WHERE id = ${courseId} LIMIT 1
   `) as DbCourse[];
@@ -502,6 +538,7 @@ export const deleteCourse = createServerFn({ method: "POST" })
 // ---------------- Internship Applications ----------------
 
 export const listInternships = createServerFn({ method: "GET" }).handler(async () => {
+  await adminOnly();
   const s = await db();
   const rows = (await s`
     SELECT id, posting_id, applicant_name, email,
@@ -516,6 +553,94 @@ export const listInternships = createServerFn({ method: "GET" }).handler(async (
            user_unique_id, status, created_at
     FROM internship_applications ORDER BY created_at DESC
   `) as DbInternship[];
+  return rows;
+});
+
+export type AdminCourseEnrollmentLead = {
+  id: string;
+  course_id: string;
+  course_title: string;
+  community_slug: string | null;
+  user_unique_id: string;
+  user_name: string;
+  email: string;
+  mobile: string;
+  college: string;
+  year: string;
+  branch: string;
+  status: string;
+  price_snapshot: number;
+  coins_credited: number;
+  created_at: string;
+};
+
+export type AdminEventRegistrationLead = {
+  id: string;
+  event_id: string;
+  event_title: string;
+  community_slug: string | null;
+  user_unique_id: string;
+  user_name: string;
+  email: string;
+  mobile: string;
+  college: string;
+  year: string;
+  branch: string;
+  status: string;
+  price_snapshot: number;
+  coins_credited: number;
+  created_at: string;
+};
+
+export const listAdminCourseEnrollments = createServerFn({ method: "GET" }).handler(async () => {
+  await adminOnly();
+  const s = await db();
+  const rows = (await s`
+    SELECT ce.id, ce.course_id,
+           COALESCE(c.title, ce.course_id) AS course_title,
+           c.community_slug,
+           ce.user_unique_id,
+           COALESCE(p.name, '') AS user_name,
+           COALESCE(p.gmail, '') AS email,
+           COALESCE(p.mobile, '') AS mobile,
+           COALESCE(p.college, '') AS college,
+           COALESCE(p.year, '') AS year,
+           COALESCE(p.branch, '') AS branch,
+           ce.status,
+           COALESCE(ce.price_snapshot, 0)::float AS price_snapshot,
+           COALESCE(ce.coins_credited, 0)::int AS coins_credited,
+           ce.created_at
+    FROM course_enrollments ce
+    LEFT JOIN courses c ON c.id = ce.course_id
+    LEFT JOIN profiles p ON p.unique_id = ce.user_unique_id
+    ORDER BY ce.created_at DESC
+  `) as AdminCourseEnrollmentLead[];
+  return rows;
+});
+
+export const listAdminEventRegistrations = createServerFn({ method: "GET" }).handler(async () => {
+  await adminOnly();
+  const s = await db();
+  const rows = (await s`
+    SELECT er.id, er.event_id,
+           COALESCE(e.title, er.event_id) AS event_title,
+           e.community_slug,
+           er.user_unique_id,
+           COALESCE(p.name, '') AS user_name,
+           COALESCE(p.gmail, '') AS email,
+           COALESCE(p.mobile, '') AS mobile,
+           COALESCE(p.college, '') AS college,
+           COALESCE(p.year, '') AS year,
+           COALESCE(p.branch, '') AS branch,
+           er.status,
+           COALESCE(er.price_snapshot, 0)::float AS price_snapshot,
+           COALESCE(er.coins_credited, 0)::int AS coins_credited,
+           er.created_at
+    FROM event_registrations er
+    LEFT JOIN events e ON e.id = er.event_id
+    LEFT JOIN profiles p ON p.unique_id = er.user_unique_id
+    ORDER BY er.created_at DESC
+  `) as AdminEventRegistrationLead[];
   return rows;
 });
 
@@ -1047,7 +1172,7 @@ export const createInternshipPosting = createServerFn({ method: "POST" })
       await sendPushToAll({
         title: "New internship posted",
         body: `${data.role}${data.company ? " · " + data.company : ""}`.slice(0, 120),
-        url: "/courses?tab=internships",
+        url: "/courses?tab=internship",
         tag: `ipt-${id}`,
       });
     } catch {}

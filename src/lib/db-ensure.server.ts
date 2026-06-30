@@ -10,6 +10,15 @@ export function ensureSchema() {
     await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS price numeric DEFAULT 0`;
     await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS coins integer DEFAULT 0`;
     await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS image_url text DEFAULT ''`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS category text DEFAULT ''`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS program_duration text DEFAULT ''`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS subtitle text DEFAULT ''`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS lectures_count integer DEFAULT 0`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS hours_label text DEFAULT ''`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS language text DEFAULT 'English'`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS level text DEFAULT 'Beginner'`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS projects_label text DEFAULT ''`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS video_url text DEFAULT ''`;
 
     // Events
     await s`

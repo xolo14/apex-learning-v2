@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -58,7 +58,7 @@ const tabs = [
   { id: "feed", label: "Feed" },
   { id: "pinned", label: "Pinned" },
   { id: "events", label: "Events" },
-  { id: "learn", label: "Courses" },
+  { id: "learn", label: "Certifications" },
   { id: "about", label: "About" },
 ] as const;
 
@@ -102,6 +102,7 @@ function questionToPost(q: DbQuestion): Post {
 
 function CommunityPage() {
   const { slug } = Route.useParams();
+  const navigate = useNavigate();
   const { community: staticCommunity } = Route.useLoaderData();
   const [joined, setJoined] = useState(false);
   const [tab, setTab] = useState<TabId>("feed");
@@ -358,19 +359,19 @@ function CommunityPage() {
       {tab === "learn" && (
         <div className="px-5 py-4">
           {!joined ? (
-            <LockedPanel slug={slug} onJoin={handleJoin} label="courses & internships" />
+            <LockedPanel slug={slug} onJoin={handleJoin} label="certifications & internships" />
           ) : communityCourses.length === 0 && communityInternships.length === 0 ? (
             <p className="py-12 text-center text-[13px] text-ink-muted">
-              No courses or internships in this community yet.
+              No certifications or internships in this community yet.
             </p>
           ) : (
             <div className="space-y-3">
               {communityCourses.map((c) => (
-                <Link
+                <button
                   key={c.id}
-                  to="/courses/$id"
-                  params={{ id: c.id }}
-                  className="flex gap-3 overflow-hidden rounded-[20px] border border-hairline bg-background p-3"
+                  type="button"
+                  onClick={() => navigate({ to: "/courses/$id", params: { id: c.id } })}
+                  className="flex w-full gap-3 overflow-hidden rounded-[20px] border border-hairline bg-background p-3 text-left touch-manipulation active:scale-[0.99]"
                 >
                   <div className="grid h-16 w-16 shrink-0 place-items-center rounded-[14px] bg-forest/10 text-forest">
                     {c.image_url ? (
@@ -380,13 +381,16 @@ function CommunityPage() {
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-ink-muted">Course</p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-ink-muted">Certification</p>
                     <p className="truncate text-[15px] font-semibold">{c.title}</p>
+                    <p className="truncate text-[11px] italic text-[#b8860b]">
+                      {c.subtitle || "Professional Certification"}
+                    </p>
                     <div className="mt-1">
                       <PriceCoinBadges kind="course" amount={c.price} coins={c.coins} />
                     </div>
                   </div>
-                </Link>
+                </button>
               ))}
               {communityInternships.map((i) => (
                 <Link

@@ -13,6 +13,7 @@ import {
   CalendarDaysIcon,
   WalletIcon,
   AcademicCapIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/solid";
 import type { ComponentType, SVGProps } from "react";
 import syncpediaLogo from "@/assets/syncpedia-logo.jpg.asset.json";
@@ -45,7 +46,7 @@ const nav: { to: string; label: string; icon: IconType; exact?: boolean }[] = [
   { to: "/admin/communities", label: "Communities", icon: GlobeAltIcon },
   { to: "/admin/courses", label: "Courses", icon: BookOpenIcon },
   { to: "/admin/internship-postings", label: "Internship postings", icon: BriefcaseIcon },
-  { to: "/admin/internships", label: "Internship applications", icon: BriefcaseIcon },
+  { to: "/admin/leads", label: "Applied leads", icon: ClipboardDocumentListIcon },
   { to: "/admin/events", label: "Events", icon: CalendarDaysIcon },
   { to: "/admin/gigs", label: "Gigs", icon: WalletIcon },
   { to: "/admin/quizzes", label: "Quizzes", icon: AcademicCapIcon },
