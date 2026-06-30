@@ -314,9 +314,9 @@ export function OnboardingGate() {
   if (screen === "login") {
     return (
       <OnboardingShell onBack={() => setScreen("welcome")}>
-        <form onSubmit={onLogin} className="w-full max-w-md">
+        <form onSubmit={onLogin} className="onboard-form">
           <SyncpediaLogo size={64} className="mx-auto mb-5" rounded="xl" />
-          <h2 className="font-serif text-[28px] tracking-tight text-white">Welcome back</h2>
+          <h2 className="font-serif text-[26px] leading-tight tracking-tight text-white sm:text-[28px]">Welcome back</h2>
           <p className="mt-2 text-[14px] text-white/70">
             Log in with the email and mobile you used when you signed up.
           </p>
@@ -374,12 +374,12 @@ export function OnboardingGate() {
       progress={step + 1}
       total={3}
     >
-      <form onSubmit={step === 2 ? onSubmit : goNext} className="w-full max-w-md">
+      <form onSubmit={step === 2 ? onSubmit : goNext} className="onboard-form">
         <SyncpediaLogo size={56} className="mx-auto mb-4" rounded="xl" />
-        <h2 className="font-serif text-[28px] tracking-tight text-white">
+        <h2 className="font-serif text-[26px] leading-tight tracking-tight text-white sm:text-[28px]">
           {step === 0 ? "What interests you?" : step === 1 ? "About you" : "Almost there"}
         </h2>
-        <p className="mt-2 text-[14px] text-white/70">
+        <p className="mt-2 text-[14px] leading-relaxed text-white/70">
           {step === 0
             ? "Pick a few topics — we'll tailor your feed."
             : step === 1
@@ -444,7 +444,7 @@ export function OnboardingGate() {
                 readOnly={googleVerified}
                 value={form.gmail}
                 onChange={(e) => update("gmail", e.target.value)}
-                className={`onboard-input ${googleVerified ? "opacity-80" : ""}`}
+                className={`onboard-input ${googleVerified ? "truncate opacity-80" : ""}`}
               />
             </Field>
             {googleVerified && (
@@ -476,7 +476,7 @@ export function OnboardingGate() {
             </Field>
             {form.role === "student" ? (
               <>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="onboard-grid-2">
                   <Field label="Year">
                     <select
                       value={form.year}
@@ -499,7 +499,7 @@ export function OnboardingGate() {
                     />
                   </Field>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="onboard-grid-2">
                   <Field label="Branch">
                     <select
                       value={form.branch}
@@ -567,7 +567,7 @@ function WelcomeScreen({
   const googleEnabled = Boolean(useGoogleAuth().clientId);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-20 -top-24 h-72 w-72 rounded-full bg-[#1a5c4a]/30 blur-3xl" />
         <div className="absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-[#f97316]/10 blur-3xl" />
@@ -654,25 +654,25 @@ function OnboardingShell({
   total?: number;
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-[#1a5c4a]/25 blur-3xl" />
         <div className="absolute bottom-1/4 -left-16 h-56 w-56 rounded-full bg-[#f97316]/8 blur-3xl" />
       </div>
 
-      <header className="relative flex items-center gap-3 px-5 pb-2 pt-5">
+      <header className="relative flex min-w-0 items-center gap-3 px-4 pb-2 pt-[max(1.25rem,env(safe-area-inset-top))]">
         {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-lg text-white/90"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg text-white/90"
             aria-label="Back"
           >
             ←
           </button>
         )}
         {progress != null && total != null && (
-          <div className="flex flex-1 gap-1.5">
+          <div className="flex min-w-0 flex-1 gap-1.5 pr-1">
             {Array.from({ length: total }, (_, i) => (
               <div
                 key={i}
@@ -683,27 +683,54 @@ function OnboardingShell({
         )}
       </header>
 
-      <div className="relative flex flex-1 flex-col items-center px-5 pb-10 pt-4">{children}</div>
+      <div className="relative mx-auto flex w-full min-w-0 max-w-md flex-1 flex-col px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-2">
+        {children}
+      </div>
       <style>{onboardStyles}</style>
     </div>
   );
 }
 
 const onboardStyles = `
-  .onboard-input {
+  .onboard-form {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .onboard-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  @media (min-width: 400px) {
+    .onboard-grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .onboard-input {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     border-radius: 0.75rem;
     border: 1px solid rgba(255,255,255,0.18);
     background: rgba(255,255,255,0.08);
     padding: 0.65rem 0.85rem;
-    font-size: 0.875rem;
+    font-size: 16px;
     color: white;
     outline: none;
+    -webkit-appearance: none;
+    appearance: none;
   }
   .onboard-input::placeholder { color: rgba(255,255,255,0.35); }
   .onboard-input:focus { border-color: rgba(249,115,22,0.7); background: rgba(255,255,255,0.12); }
   .onboard-input option { color: #111; background: #fff; }
   .onboard-primary {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
     border-radius: 9999px;
     background: #f97316;
     padding: 0.85rem 1rem;
@@ -718,7 +745,7 @@ const onboardStyles = `
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="mb-1.5 block text-[12px] font-medium text-white/60">{label}</span>
       {children}
     </label>
