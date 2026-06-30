@@ -26,13 +26,14 @@ import {
 } from "@/lib/identity";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { checkUniqueIdAvailable, updateAvatarPreferences, updateUniqueId } from "@/lib/profiles.functions";
+import { checkUniqueIdAvailable, logoutDevice, updateAvatarPreferences, updateUniqueId } from "@/lib/profiles.functions";
 import {
   enablePushNotifications,
   disablePushNotifications,
   isPushEnabled,
 } from "@/lib/push-client";
 import { pageHead } from "@/lib/seo";
+import { DEVICE_KEY, signOutLocally } from "@/lib/session";
 
 const BLOCKED_KEY = "syncpedia_blocked";
 const LANGUAGE_KEY = "syncpedia_language";
@@ -72,6 +73,7 @@ function SettingsPage() {
   const check = useServerFn(checkUniqueIdAvailable);
   const saveIdFn = useServerFn(updateUniqueId);
   const saveAvatarFn = useServerFn(updateAvatarPreferences);
+  const logoutDeviceFn = useServerFn(logoutDevice);
 
   const [suffix, setSuffix] = useState(() =>
     identity.uniqueId?.startsWith("SP-26") ? identity.uniqueId.slice(5) : "",
@@ -85,6 +87,7 @@ function SettingsPage() {
   const [draftColor, setDraftColor] = useState(identity.color);
   const [avatarDirty, setAvatarDirty] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [avatarSaved, setAvatarSaved] = useState(false);
 
   useEffect(() => {
@@ -203,11 +206,19 @@ function SettingsPage() {
     });
   }
 
-  function signOut() {
-    localStorage.removeItem("syncpedia_profile");
-    localStorage.removeItem("syncpedia:identity");
+  async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    const deviceKey = localStorage.getItem(DEVICE_KEY) ?? "";
+
+    signOutLocally();
+    identity.clearIdentity();
     navigate({ to: "/" });
-    window.location.reload();
+
+    if (deviceKey) {
+      logoutDeviceFn({ data: { deviceKey } }).catch(() => {});
+    }
+    setSigningOut(false);
   }
 
   function pickLanguage(code: string) {
@@ -464,10 +475,17 @@ function SettingsPage() {
             <RowButton icon={Eye} label="Blocked accounts" hint="Manage your block list" onClick={() => setPanel("blocked")} />
             <RowButton icon={Globe} label="Language" hint={language === "hi" ? "Hindi" : "English (US)"} onClick={() => setPanel("language")} />
             <RowButton icon={HelpCircle} label="Help center" hint="Guides and FAQs" onClick={() => setPanel("help")} />
-            <RowButton icon={LogOut} label="Sign out" hint="End this session" danger onClick={signOut} />
+            <RowButton
+              icon={LogOut}
+              label={signingOut ? "Signing out…" : "Sign out"}
+              hint="End this session"
+              danger
+              disabled={signingOut}
+              onClick={() => void signOut()}
+            />
           </div>
 
-          <p className="mt-6 pb-8 text-center text-[11px] text-ink-muted">Syncpedia · v0.1</p>
+          <p className="mt-6 pb-32 text-center text-[11px] text-ink-muted">Syncpedia · v0.1</p>
         </section>
       ) : null}
 
@@ -568,19 +586,22 @@ function RowButton({
   label,
   hint,
   danger,
+  disabled,
   onClick,
 }: {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   label: string;
   hint?: string;
   danger?: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-b border-hairline px-4 py-3 text-left last:border-b-0 active:bg-surface/60"
+      className="flex w-full items-center gap-3 border-b border-hairline px-4 py-3 text-left last:border-b-0 active:bg-surface/60 disabled:opacity-60"
     >
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface">
         <Icon strokeWidth={1.75} className={"h-[18px] w-[18px] " + (danger ? "text-orange" : "text-foreground")} />

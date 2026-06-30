@@ -52,6 +52,49 @@ export type CreateProfileResult =
   | { status: "created"; profile: DbProfile }
   | { status: "existing" };
 
+export type GoogleAuthResult =
+  | { status: "logged_in"; profile: DbProfile }
+  | { status: "needs_onboarding"; gmail: string; name: string };
+
+export const authWithGoogle = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string; credential: string }) => {
+    if (!isValidDeviceKey(d.deviceKey)) throw new Error("Device key required");
+    if (!d.credential?.trim()) throw new Error("Google credential required");
+    return d;
+  })
+  .handler(async ({ data }): Promise<GoogleAuthResult> => {
+    rateLimitAuth("google");
+    const { verifyGoogleIdToken } = await import("./google-auth.server");
+    const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+
+    const claims = await verifyGoogleIdToken(data.credential);
+    const emailNorm = normalizeEmail(claims.email);
+
+    const rows = (await sql()`
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
+      FROM profiles WHERE lower(gmail) = ${emailNorm} LIMIT 1
+    `) as DbProfile[];
+
+    if (rows[0]) {
+      await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${rows[0].id}`;
+      if (!rows[0].name?.trim() && claims.name) {
+        await sql()`UPDATE profiles SET name = ${claims.name} WHERE id = ${rows[0].id}`;
+      }
+      await ensureSignupBonus(sql, rows[0].unique_id);
+      const refreshed = (await sql()`
+        SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+               COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
+        FROM profiles WHERE id = ${rows[0].id} LIMIT 1
+      `) as DbProfile[];
+      return { status: "logged_in", profile: refreshed[0]! };
+    }
+
+    return { status: "needs_onboarding", gmail: emailNorm, name: claims.name };
+  });
+
 export const checkContactExists = createServerFn({ method: "POST" })
   .inputValidator((d: { gmail?: string; mobile?: string }) => d)
   .handler(async ({ data }) => {
@@ -232,6 +275,24 @@ export const loginProfile = createServerFn({ method: "POST" })
       FROM profiles WHERE id = ${rows[0].id} LIMIT 1
     `) as DbProfile[];
     return refreshed[0]!;
+  });
+
+/** Sign out on this device — unlinks device_key so auto-login cannot restore the session. */
+export const logoutDevice = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string }) => {
+    if (!isValidDeviceKey(d.deviceKey)) throw new Error("Device key required");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+    const unlinked = `unlinked_${rid("dev")}`;
+    await sql()`
+      UPDATE profiles SET device_key = ${unlinked}
+      WHERE device_key = ${data.deviceKey}
+    `;
+    return { ok: true as const };
   });
 
 export const listProfiles = createServerFn({ method: "GET" }).handler(async () => {

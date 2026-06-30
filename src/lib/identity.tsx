@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { DbProfile } from "./profiles.functions";
+import { isSignedOut } from "./session";
 
 export const AVATAR_COLORS = [
   "#1f6f54",
@@ -82,6 +83,7 @@ type Ctx = Identity & {
   setIcon: (i: AvatarIcon) => void;
   setUniqueId: (id: string) => void;
   applyAvatar: (icon: AvatarIcon, color: string) => void;
+  clearIdentity: () => void;
   regenerateId: () => string;
 };
 
@@ -113,21 +115,23 @@ export function avatarPrefsFromProfile(
   return { icon, color };
 }
 
+const defaultIdentity = (): Identity => ({
+  color: AVATAR_COLORS[0]!,
+  icon: "bot-1",
+  uniqueId: null,
+});
+
 export function IdentityProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Identity>({
-    color: AVATAR_COLORS[0]!,
-    icon: "bot-1",
-    uniqueId: null,
-  });
+  const [state, setState] = useState<Identity>(defaultIdentity);
 
   useEffect(() => {
     try {
+      if (isSignedOut()) {
+        setState(defaultIdentity());
+        return;
+      }
       const raw = localStorage.getItem(STORAGE_KEY);
-      let base: Identity = {
-        color: AVATAR_COLORS[0]!,
-        icon: "bot-1",
-        uniqueId: null,
-      };
+      let base: Identity = defaultIdentity();
       if (raw) base = { ...base, ...JSON.parse(raw) };
       const profileRaw = localStorage.getItem("syncpedia_profile");
       if (profileRaw) {
@@ -145,7 +149,15 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         }
       }
       setState(base);
-    } catch {}
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const onSignedOut = () => setState(defaultIdentity());
+    window.addEventListener("syncpedia:signed-out", onSignedOut);
+    return () => window.removeEventListener("syncpedia:signed-out", onSignedOut);
   }, []);
 
   return (
@@ -189,6 +201,12 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
             return next;
           });
         },
+        clearIdentity: () => {
+          setState(defaultIdentity());
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+          } catch {}
+        },
         regenerateId: () => {
           const id = genId();
           setState((s) => {
@@ -218,6 +236,7 @@ export function useIdentity(): Ctx {
       setIcon: () => {},
       setUniqueId: () => {},
       applyAvatar: () => {},
+      clearIdentity: () => {},
       regenerateId: () => "SP-XXXXXX",
     };
   }

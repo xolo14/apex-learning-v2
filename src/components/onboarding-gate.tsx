@@ -1,13 +1,26 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { createProfile, getProfileByDevice, loginProfile, type DbProfile } from "@/lib/profiles.functions";
+import {
+  authWithGoogle,
+  createProfile,
+  getProfileByDevice,
+  loginProfile,
+  type DbProfile,
+} from "@/lib/profiles.functions";
 import { useIdentity, avatarPrefsFromProfile } from "@/lib/identity";
+import { GoogleContinueButton, isGoogleAuthEnabled } from "@/components/google-auth";
+import {
+  DEVICE_KEY,
+  PROFILE_CACHE,
+  INTERESTS_KEY,
+  SIGNED_OUT_EVENT,
+  getOrCreateDeviceKey,
+  isSignedOut,
+  clearSignedOutFlag,
+  readCachedProfile,
+} from "@/lib/session";
 
-const DEVICE_KEY = "syncpedia_device_key";
-const PROFILE_CACHE = "syncpedia_profile";
-const INTERESTS_KEY = "syncpedia_interests";
-
-type Interest = { id: string; label: string; emoji: string; gradient: string };
 const INTERESTS: Interest[] = [
   { id: "tech", label: "Technology", emoji: "💻", gradient: "from-sky-400 to-indigo-500" },
   { id: "career", label: "Career", emoji: "💼", gradient: "from-amber-400 to-orange-500" },
@@ -23,25 +36,23 @@ const INTERESTS: Interest[] = [
   { id: "music", label: "Music", emoji: "🎧", gradient: "from-pink-400 to-fuchsia-500" },
 ];
 
-function getDeviceKey(): string {
-  let k = localStorage.getItem(DEVICE_KEY);
-  if (!k) {
-    k = "dev_" + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-    localStorage.setItem(DEVICE_KEY, k);
-  }
-  return k;
-}
+type Screen = "welcome" | "login" | "signup";
+type Step = 0 | 1 | 2;
+type Interest = { id: string; label: string; emoji: string; gradient: string };
 
 export function OnboardingGate() {
-  const [ready, setReady] = useState(false);
-  const [profile, setProfile] = useState<DbProfile | null>(null);
+  const [ready, setReady] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (isSignedOut()) return true;
+    return readCachedProfile() != null;
+  });
+  const [profile, setProfile] = useState<DbProfile | null>(() => readCachedProfile());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [issued, setIssued] = useState<DbProfile | null>(null);
-  const [mode, setMode] = useState<"signup" | "login">("signup");
-  const [loginHint, setLoginHint] = useState<string | null>(null);
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [screen, setScreen] = useState<Screen>("welcome");
+  const [step, setStep] = useState<Step>(0);
   const [interests, setInterests] = useState<string[]>([]);
+  const [googleVerified, setGoogleVerified] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -58,9 +69,11 @@ export function OnboardingGate() {
   const fetchProfile = useServerFn(getProfileByDevice);
   const submitProfile = useServerFn(createProfile);
   const submitLogin = useServerFn(loginProfile);
+  const submitGoogle = useServerFn(authWithGoogle);
   const { setUniqueId, applyAvatar } = useIdentity();
 
   function saveProfile(p: DbProfile) {
+    clearSignedOutFlag();
     localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
     setUniqueId(p.unique_id);
     const prefs = avatarPrefsFromProfile(p);
@@ -68,17 +81,48 @@ export function OnboardingGate() {
     setProfile(p);
   }
 
-  function goToLogin(hint?: string) {
-    setLoginHint(hint ?? "We found your account — log in with your email and mobile to continue.");
-    setMode("login");
-    setError(null);
-  }
-
   function isProfile(p: unknown): p is DbProfile {
     return !!p && typeof p === "object" && "unique_id" in p && "device_key" in p;
   }
 
   useEffect(() => {
+    const onSignedOut = () => {
+      setProfile(null);
+      setScreen("welcome");
+      setStep(0);
+      setInterests([]);
+      setGoogleVerified(false);
+      setError(null);
+      setForm({
+        name: "",
+        mobile: "",
+        gmail: "",
+        year: "1st year",
+        college: "",
+        role: "student",
+        company: "",
+        branch: "B.Tech",
+        department: "",
+      });
+      setReady(true);
+    };
+    window.addEventListener(SIGNED_OUT_EVENT, onSignedOut);
+    return () => window.removeEventListener(SIGNED_OUT_EVENT, onSignedOut);
+  }, []);
+
+  useEffect(() => {
+    if (isSignedOut()) {
+      setProfile(null);
+      setReady(true);
+      return;
+    }
+    if (profile) {
+      setUniqueId(profile.unique_id);
+      const prefs = avatarPrefsFromProfile(profile);
+      applyAvatar(prefs.icon, prefs.color);
+      setReady(true);
+      return;
+    }
     const cached = localStorage.getItem(PROFILE_CACHE);
     if (cached) {
       try {
@@ -87,9 +131,11 @@ export function OnboardingGate() {
         setProfile(p);
         setReady(true);
         return;
-      } catch {}
+      } catch {
+        /* ignore */
+      }
     }
-    const key = getDeviceKey();
+    const key = getOrCreateDeviceKey();
     fetchProfile({ data: { deviceKey: key } })
       .then((p) => {
         if (p) {
@@ -100,11 +146,43 @@ export function OnboardingGate() {
       })
       .catch(() => {})
       .finally(() => setReady(true));
-  }, [fetchProfile]);
+  }, [fetchProfile, setUniqueId, applyAvatar, profile]);
 
-  if (!ready || profile || issued) return null;
+  if (profile) return null;
+
+  if (!ready) {
+    return (
+      <div
+        className="fixed inset-0 z-[100] grid place-items-center bg-[#0c2420] text-white/70"
+        aria-busy
+        aria-label="Loading"
+      >
+        <p className="text-sm">Loading…</p>
+      </div>
+    );
+  }
 
   const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v as never }));
+
+  async function handleGoogleCredential(credential: string) {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const result = await submitGoogle({ data: { deviceKey: getOrCreateDeviceKey(), credential } });
+      if (result.status === "logged_in") {
+        saveProfile(result.profile);
+        return;
+      }
+      setGoogleVerified(true);
+      setForm((f) => ({ ...f, gmail: result.gmail, name: result.name }));
+      setScreen("signup");
+      setStep(0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-in failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   function goNext(e: React.FormEvent) {
     e.preventDefault();
@@ -114,9 +192,11 @@ export function OnboardingGate() {
       setStep(1);
       return;
     }
-    if (!form.name.trim()) return setError("Please enter your name");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.gmail)) return setError("Please enter a valid email");
-    setStep(2);
+    if (step === 1) {
+      if (!form.name.trim()) return setError("Please enter your name");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.gmail)) return setError("Please enter a valid email");
+      setStep(2);
+    }
   }
 
   async function onLogin(e: React.FormEvent) {
@@ -130,9 +210,8 @@ export function OnboardingGate() {
     }
     setSubmitting(true);
     try {
-      const key = getDeviceKey();
       const p = await submitLogin({
-        data: { deviceKey: key, mobile: form.mobile, gmail: form.gmail },
+        data: { deviceKey: getOrCreateDeviceKey(), mobile: form.mobile, gmail: form.gmail },
       });
       saveProfile(p);
     } catch (err) {
@@ -147,7 +226,7 @@ export function OnboardingGate() {
     setError(null);
     setSubmitting(true);
     try {
-      const key = getDeviceKey();
+      const key = getOrCreateDeviceKey();
       const payload =
         form.role === "professional"
           ? {
@@ -171,16 +250,25 @@ export function OnboardingGate() {
             };
       const result = await submitProfile({ data: payload });
       if (result.status === "existing") {
-        goToLogin();
+        setError("An account with this email or mobile already exists. Try logging in.");
+        setScreen("login");
         return;
       }
       if (result.status === "created") {
-        try { localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests)); } catch {}
+        try {
+          localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests));
+        } catch {
+          /* ignore */
+        }
         saveProfile(result.profile);
         return;
       }
       if (isProfile(result)) {
-        try { localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests)); } catch {}
+        try {
+          localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests));
+        } catch {
+          /* ignore */
+        }
         saveProfile(result);
         return;
       }
@@ -192,18 +280,36 @@ export function OnboardingGate() {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-4">
-      {mode === "login" ? (
-        <form
-          onSubmit={onLogin}
-          className="w-full max-w-md rounded-t-2xl bg-background p-5 shadow-xl sm:rounded-2xl"
-        >
-          <h2 className="mt-4 text-lg font-semibold">Welcome back</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {loginHint ?? "Log in with the email and mobile you used when you signed up."}
+  if (screen === "welcome") {
+    return (
+      <WelcomeScreen
+        error={error}
+        submitting={submitting}
+        onGoogle={handleGoogleCredential}
+        onGoogleError={() => setError("Google sign-in was cancelled or failed.")}
+        onLogin={() => {
+          setError(null);
+          setScreen("login");
+        }}
+        onEmailSignup={() => {
+          setError(null);
+          setGoogleVerified(false);
+          setScreen("signup");
+          setStep(0);
+        }}
+      />
+    );
+  }
+
+  if (screen === "login") {
+    return (
+      <OnboardingShell onBack={() => setScreen("welcome")}>
+        <form onSubmit={onLogin} className="w-full max-w-md">
+          <h2 className="font-serif text-[28px] tracking-tight text-white">Welcome back</h2>
+          <p className="mt-2 text-[14px] text-white/70">
+            Log in with the email and mobile you used when you signed up.
           </p>
-          <div className="mt-4 space-y-3">
+          <div className="mt-6 space-y-3">
             <Field label="Email">
               <input
                 autoFocus
@@ -211,7 +317,7 @@ export function OnboardingGate() {
                 type="email"
                 value={form.gmail}
                 onChange={(e) => update("gmail", e.target.value)}
-                className="input"
+                className="onboard-input"
               />
             </Field>
             <Field label="Mobile number">
@@ -220,57 +326,60 @@ export function OnboardingGate() {
                 inputMode="tel"
                 value={form.mobile}
                 onChange={(e) => update("mobile", e.target.value)}
-                className="input"
+                className="onboard-input"
               />
             </Field>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm text-rose-300">{error}</p>}
           </div>
-          <div className="mt-5 flex gap-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {submitting ? "Logging in…" : "Log in"}
-            </button>
-          </div>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <button type="submit" disabled={submitting} className="onboard-primary mt-6 w-full">
+            {submitting ? "Logging in…" : "Log in"}
+          </button>
+          <p className="mt-5 text-center text-[13px] text-white/60">
             New here?{" "}
             <button
               type="button"
               onClick={() => {
-                setMode("signup");
-                setLoginHint(null);
                 setError(null);
+                setGoogleVerified(false);
+                setScreen("signup");
                 setStep(0);
               }}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-white underline"
             >
               Create an account
             </button>
           </p>
-          <style>{inputStyles}</style>
         </form>
-      ) : (
-      <form
-        onSubmit={step === 2 ? onSubmit : goNext}
-        className="w-full max-w-md rounded-t-2xl bg-background p-5 shadow-xl sm:rounded-2xl"
-      >
-        <h2 className="mt-4 text-lg font-semibold">
+      </OnboardingShell>
+    );
+  }
 
-          {step === 0 ? "Choose your interests" : step === 1 ? "Welcome to Syncpedia" : "A few more details"}
+  return (
+    <OnboardingShell
+      onBack={() => {
+        if (step === 0) setScreen("welcome");
+        else setStep((s) => (s === 2 ? 1 : 0) as Step);
+      }}
+      progress={step + 1}
+      total={3}
+    >
+      <form onSubmit={step === 2 ? onSubmit : goNext} className="w-full max-w-md">
+        <h2 className="font-serif text-[28px] tracking-tight text-white">
+          {step === 0 ? "What interests you?" : step === 1 ? "About you" : "Almost there"}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-2 text-[14px] text-white/70">
           {step === 0
             ? "Pick a few topics — we'll tailor your feed."
             : step === 1
-              ? "Let's start with the basics."
-              : "Almost there."}
+              ? googleVerified
+                ? "Confirm your name and email from Google."
+                : "Let's start with the basics."
+              : "Add your mobile and profile details."}
         </p>
 
         {step === 0 ? (
-          <div className="mt-4">
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          <div className="mt-6">
+            <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
               {INTERESTS.map((it) => {
                 const active = interests.includes(it.id);
                 return (
@@ -279,23 +388,23 @@ export function OnboardingGate() {
                     type="button"
                     onClick={() =>
                       setInterests((cur) =>
-                        cur.includes(it.id) ? cur.filter((x) => x !== it.id) : [...cur, it.id]
+                        cur.includes(it.id) ? cur.filter((x) => x !== it.id) : [...cur, it.id],
                       )
                     }
-                    className={`group relative flex flex-col items-center gap-1.5 rounded-2xl border p-2.5 transition ${
+                    className={`relative flex flex-col items-center gap-1 rounded-2xl border p-2 transition ${
                       active
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border/60 hover:border-foreground/30"
+                        ? "border-white/50 bg-white/15"
+                        : "border-white/15 bg-white/5 hover:bg-white/10"
                     }`}
                   >
                     <span
-                      className={`grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br ${it.gradient} text-2xl shadow-md ring-1 ring-black/5 transition group-active:scale-95`}
+                      className={`grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br ${it.gradient} text-xl`}
                     >
-                      <span className="drop-shadow-sm">{it.emoji}</span>
+                      {it.emoji}
                     </span>
-                    <span className="text-[11px] font-medium leading-tight">{it.label}</span>
+                    <span className="text-[10px] font-medium leading-tight text-white">{it.label}</span>
                     {active && (
-                      <span className="absolute right-1.5 top-1.5 grid h-4 w-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                      <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-white text-[10px] font-bold text-forest">
                         ✓
                       </span>
                     )}
@@ -303,50 +412,51 @@ export function OnboardingGate() {
                 );
               })}
             </div>
-            <p className="mt-3 text-center text-[11px] text-muted-foreground">
-              {interests.length}/3 selected (min)
-            </p>
-            {error && <p className="mt-2 text-center text-sm text-destructive">{error}</p>}
+            <p className="mt-3 text-center text-[11px] text-white/50">{interests.length}/3 selected (min)</p>
           </div>
         ) : step === 1 ? (
-          <div className="mt-4 space-y-3">
+          <div className="mt-6 space-y-3">
             <Field label="Full name">
               <input
                 autoFocus
                 required
                 value={form.name}
                 onChange={(e) => update("name", e.target.value)}
-                className="input"
+                className="onboard-input"
               />
             </Field>
             <Field label="Email">
               <input
                 required
                 type="email"
+                readOnly={googleVerified}
                 value={form.gmail}
                 onChange={(e) => update("gmail", e.target.value)}
-                className="input"
+                className={`onboard-input ${googleVerified ? "opacity-80" : ""}`}
               />
             </Field>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {googleVerified && (
+              <p className="text-[12px] text-emerald-200/90">✓ Verified with Google</p>
+            )}
           </div>
         ) : (
-          <div className="mt-4 space-y-3">
+          <div className="mt-6 space-y-3">
             <Field label="Mobile number">
               <input
                 autoFocus
                 required
                 inputMode="tel"
+                placeholder="+91 98765 43210"
                 value={form.mobile}
                 onChange={(e) => update("mobile", e.target.value)}
-                className="input"
+                className="onboard-input"
               />
             </Field>
             <Field label="I am a">
               <select
                 value={form.role}
                 onChange={(e) => update("role", e.target.value)}
-                className="input"
+                className="onboard-input"
               >
                 <option value="student">Student</option>
                 <option value="professional">Working professional</option>
@@ -354,61 +464,55 @@ export function OnboardingGate() {
             </Field>
             {form.role === "student" ? (
               <>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Year">
-                  <select
-                    value={form.year}
-                    onChange={(e) => update("year", e.target.value)}
-                    className="input"
-                  >
-                    <option>1st year</option>
-                    <option>2nd year</option>
-                    <option>3rd year</option>
-                    <option>4th year</option>
-                    <option>Passed out</option>
-                  </select>
-                </Field>
-                <Field label="College">
-                  <input
-                    required
-                    value={form.college}
-                    onChange={(e) => update("college", e.target.value)}
-                className="input"
-              />
-                </Field>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Branch">
-                  <select
-                    value={form.branch}
-                    onChange={(e) => update("branch", e.target.value)}
-                    className="input"
-                  >
-                    <option>B.Tech</option>
-                    <option>M.Tech</option>
-                    <option>BBA</option>
-                    <option>MBA</option>
-                    <option>B.Com</option>
-                    <option>M.Com</option>
-                    <option>BCA</option>
-                    <option>MCA</option>
-                    <option>B.Sc</option>
-                    <option>M.Sc</option>
-                    <option>Arts</option>
-                    <option>Diploma</option>
-                    <option>PhD</option>
-                    <option>Other</option>
-                  </select>
-                </Field>
-                <Field label="Department">
-                  <input
-                    placeholder="e.g. CSE, ECE, Marketing"
-                    value={form.department}
-                    onChange={(e) => update("department", e.target.value)}
-                    className="input"
-                  />
-                </Field>
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Year">
+                    <select
+                      value={form.year}
+                      onChange={(e) => update("year", e.target.value)}
+                      className="onboard-input"
+                    >
+                      <option>1st year</option>
+                      <option>2nd year</option>
+                      <option>3rd year</option>
+                      <option>4th year</option>
+                      <option>Passed out</option>
+                    </select>
+                  </Field>
+                  <Field label="College">
+                    <input
+                      required
+                      value={form.college}
+                      onChange={(e) => update("college", e.target.value)}
+                      className="onboard-input"
+                    />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Branch">
+                    <select
+                      value={form.branch}
+                      onChange={(e) => update("branch", e.target.value)}
+                      className="onboard-input"
+                    >
+                      <option>B.Tech</option>
+                      <option>M.Tech</option>
+                      <option>BBA</option>
+                      <option>MBA</option>
+                      <option>BCA</option>
+                      <option>MCA</option>
+                      <option>B.Sc</option>
+                      <option>Other</option>
+                    </select>
+                  </Field>
+                  <Field label="Department">
+                    <input
+                      placeholder="e.g. CSE"
+                      value={form.department}
+                      onChange={(e) => update("department", e.target.value)}
+                      className="onboard-input"
+                    />
+                  </Field>
+                </div>
               </>
             ) : (
               <Field label="Company">
@@ -416,76 +520,235 @@ export function OnboardingGate() {
                   required
                   value={form.company}
                   onChange={(e) => update("company", e.target.value)}
-                className="input"
-              />
+                  className="onboard-input"
+                />
               </Field>
             )}
-            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
         )}
 
-        <div className="mt-5 flex gap-2">
-          {step !== 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setStep((s) => (s === 2 ? 1 : 0) as 0 | 1 | 2);
-              }}
-              className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-accent"
-            >
-              Back
-            </button>
-          )}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {step === 0 ? "Continue" : step === 1 ? "Next" : submitting ? "Setting up…" : "Enter Syncpedia"}
-          </button>
-        </div>
+        {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
 
-        {step === 0 && (
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setLoginHint(null);
-                goToLogin();
-              }}
-              className="font-medium text-primary hover:underline"
-            >
-              Log in
-            </button>
-          </p>
-        )}
-
-        <style>{inputStyles}</style>
+        <button type="submit" disabled={submitting} className="onboard-primary mt-6 w-full">
+          {step === 0 ? "Continue" : step === 1 ? "Next" : submitting ? "Setting up…" : "Enter Syncpedia"}
+        </button>
       </form>
-      )}
+    </OnboardingShell>
+  );
+}
+
+function WelcomeScreen({
+  error,
+  submitting,
+  onGoogle,
+  onGoogleError,
+  onLogin,
+  onEmailSignup,
+}: {
+  error: string | null;
+  submitting: boolean;
+  onGoogle: (credential: string) => void;
+  onGoogleError: () => void;
+  onLogin: () => void;
+  onEmailSignup: () => void;
+}) {
+  const googleEnabled = isGoogleAuthEnabled();
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0c2420] text-white">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-20 -top-24 h-72 w-72 rounded-full bg-[#1a5c4a]/30 blur-3xl" />
+        <div className="absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-[#f97316]/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 h-80 w-80 rounded-full bg-[#1a3a34]/50 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: "28px 28px",
+          }}
+        />
+      </div>
+
+      <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[22px] bg-[#1a3a34] shadow-lg ring-1 ring-white/10">
+            <span className="font-serif text-3xl tracking-tight">
+              <span className="text-white">S</span>
+              <span className="text-[#f97316]">S</span>
+            </span>
+          </div>
+
+          <h1 className="font-serif text-[42px] leading-none tracking-tight">
+            <span className="text-white">SYNC</span>
+            <span className="text-[#f97316]">Pedia</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-[280px] text-[15px] leading-relaxed text-white/75">
+            A place to learn, earn, and connect with your community.
+          </p>
+
+          <div className="mt-10 space-y-3">
+            {googleEnabled ? (
+              <div className="flex justify-center overflow-hidden rounded-xl bg-white shadow-md [&>div]:w-full [&_iframe]:!w-full">
+                <GoogleContinueButton
+                  disabled={submitting}
+                  onSuccess={onGoogle}
+                  onError={onGoogleError}
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="flex w-full items-center justify-center gap-3 rounded-xl bg-white/95 px-4 py-3.5 text-[15px] font-medium text-gray-800 opacity-60"
+              >
+                <GoogleIcon />
+                Continue with Google
+              </button>
+            )}
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={onLogin}
+                className="flex-1 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-[14px] font-medium text-white backdrop-blur-sm transition hover:bg-white/15"
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={onEmailSignup}
+                className="flex-1 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-[14px] font-medium text-white backdrop-blur-sm transition hover:bg-white/15"
+              >
+                Sign up with email
+              </button>
+            </div>
+          </div>
+
+          {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
+          {!googleEnabled && (
+            <p className="mt-3 text-[11px] text-white/45">
+              Google sign-in: set VITE_GOOGLE_CLIENT_ID in your environment.
+            </p>
+          )}
+
+          <p className="mt-8 text-[11px] leading-relaxed text-white/50">
+            By continuing you agree to Syncpedia&apos;s{" "}
+            <Link to="/privacy" className="text-white/80 underline">
+              Terms &amp; Privacy Policy
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+
+      <footer className="relative pb-8 text-center text-[11px] text-white/40">
+        © Syncpedia Technologies Pvt Ltd {new Date().getFullYear()}
+      </footer>
     </div>
   );
 }
 
-const inputStyles = `
-          .input {
-            width: 100%;
-            border-radius: 0.5rem;
-            border: 1px solid color-mix(in oklch, var(--foreground) 22%, var(--background));
-            background: var(--background);
-            padding: 0.55rem 0.75rem;
-            font-size: 0.875rem;
-            outline: none;
-          }
-          .input:focus { border-color: var(--primary); }
-        `;
+function OnboardingShell({
+  children,
+  onBack,
+  progress,
+  total,
+}: {
+  children: React.ReactNode;
+  onBack?: () => void;
+  progress?: number;
+  total?: number;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto bg-[#0c2420] text-white">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-[#1a5c4a]/25 blur-3xl" />
+        <div className="absolute bottom-1/4 -left-16 h-56 w-56 rounded-full bg-[#f97316]/8 blur-3xl" />
+      </div>
+
+      <header className="relative flex items-center gap-3 px-5 pb-2 pt-5">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-lg text-white/90"
+            aria-label="Back"
+          >
+            ←
+          </button>
+        )}
+        {progress != null && total != null && (
+          <div className="flex flex-1 gap-1.5">
+            {Array.from({ length: total }, (_, i) => (
+              <div
+                key={i}
+                className={`h-1 flex-1 rounded-full ${i < progress ? "bg-[#f97316]" : "bg-white/15"}`}
+              />
+            ))}
+          </div>
+        )}
+      </header>
+
+      <div className="relative flex flex-1 flex-col items-center px-5 pb-10 pt-4">{children}</div>
+      <style>{onboardStyles}</style>
+    </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+      />
+    </svg>
+  );
+}
+
+const onboardStyles = `
+  .onboard-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.08);
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    color: white;
+    outline: none;
+  }
+  .onboard-input::placeholder { color: rgba(255,255,255,0.35); }
+  .onboard-input:focus { border-color: rgba(249,115,22,0.7); background: rgba(255,255,255,0.12); }
+  .onboard-input option { color: #111; background: #fff; }
+  .onboard-primary {
+    border-radius: 9999px;
+    background: #f97316;
+    padding: 0.85rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: white;
+    transition: opacity 0.15s;
+  }
+  .onboard-primary:hover:not(:disabled) { background: #ea580c; }
+  .onboard-primary:disabled { opacity: 0.55; }
+`;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
+      <span className="mb-1.5 block text-[12px] font-medium text-white/60">{label}</span>
       {children}
     </label>
   );
