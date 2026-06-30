@@ -8,7 +8,7 @@ export const APP_SITE_URL =
   (typeof import.meta !== "undefined" && import.meta.env?.VITE_SITE_URL) ||
   "https://app.syncpedia.in";
 
-export const SUPPORT_EMAIL = "support@app.syncpedia.in";
+export const SUPPORT_EMAIL = "support@syncpedia.in";
 export const NOTIFY_EMAIL = "notify@app.syncpedia.in";
 
 export function appOrigin(): string {
@@ -18,7 +18,7 @@ export function appOrigin(): string {
 export const BRAND = {
   themeColor: "#1a3a34",
   ogImage: `${appOrigin()}/og-image.png`,
-  logo: `${appOrigin()}/syncpedia-logo.svg`,
+  logo: `${appOrigin()}/syncpedia-logo.png`,
   favicon: `${appOrigin()}/favicon.png`,
   twitter: "@Syncpedia",
   tagline: "Learn, earn and connect with your community",

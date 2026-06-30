@@ -16,7 +16,7 @@ import {
   ClipboardDocumentListIcon,
 } from "@heroicons/react/24/solid";
 import type { ComponentType, SVGProps } from "react";
-import syncpediaLogo from "@/assets/syncpedia-logo.jpg.asset.json";
+import { SyncpediaLogo } from "@/components/syncpedia-logo";
 import { verifyAdminSession, adminLogout } from "@/lib/admin-auth.functions";
 import { pageHead } from "@/lib/seo";
 
@@ -72,11 +72,7 @@ function AdminLayout() {
       <div className="mx-auto flex max-w-[1400px]">
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col gap-1 border-r border-hairline px-3 py-6 md:flex">
           <div className="flex items-center gap-2 px-3 pb-5">
-            <img
-              src={syncpediaLogo.url}
-              alt="Syncpedia"
-              className="h-9 w-9 rounded-[10px] object-cover ring-1 ring-hairline"
-            />
+            <SyncpediaLogo size={36} rounded="lg" className="ring-hairline" />
             <div className="flex flex-col leading-tight">
               <span className="text-[14px] font-semibold tracking-tight">Syncpedia</span>
               <span className="text-[11px] text-ink-muted">Admin console</span>

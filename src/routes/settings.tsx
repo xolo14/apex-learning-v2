@@ -4,6 +4,7 @@ import {
   Bell,
   Lock,
   Eye,
+  FileText,
   HelpCircle,
   LogOut,
   Palette,
@@ -460,6 +461,18 @@ function SettingsPage() {
                 {pushBusy ? "…" : pushOn ? "On" : "Enable"}
               </button>
             </Row>
+            <Link
+              to="/terms"
+              className="flex w-full items-center gap-3 border-b border-hairline px-4 py-3 text-left active:bg-surface/60"
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface">
+                <FileText strokeWidth={1.75} className="h-[18px] w-[18px] text-foreground" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-medium text-foreground">Terms of service</span>
+                <span className="block truncate text-[12px] text-ink-muted">Rules for using Syncpedia</span>
+              </span>
+            </Link>
             <Link
               to="/privacy"
               className="flex w-full items-center gap-3 border-b border-hairline px-4 py-3 text-left active:bg-surface/60"
