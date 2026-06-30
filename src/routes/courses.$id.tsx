@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ExternalLink, Loader2, MessageCircle, Phone, Share2 } from "lucide-react";
+import { ArrowLeft, Loader2, Play, Share2 } from "lucide-react";
 import { useState } from "react";
 import { CertificationDetailView } from "@/components/certification-detail-view";
 import { MobileShell } from "@/components/mobile-shell";
@@ -11,12 +11,12 @@ import {
   getCourse,
   getMyCourseEnrollment,
 } from "@/lib/communities.functions";
+import { certificationMeta } from "@/lib/certification-meta";
 import { useIdentity } from "@/lib/identity";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { pageHead } from "@/lib/seo";
 
 const DEVICE_KEY = "syncpedia_device_key";
-const ADVISOR_URL = "https://syncpedia.in/contact";
 
 export const Route = createFileRoute("/courses/$id")({
   head: ({ params }) =>
@@ -99,12 +99,16 @@ function CertificationDetailPage() {
   const isFree = course.price <= 0;
   const isConfirmed = enrollment?.status === "confirmed";
   const isPending = enrollment?.status === "pending_payment";
-  const hasPlaylist = isConfirmed && !!course.url?.trim();
+  const classLinks = certificationMeta(course).classLinks;
+  const hasClasses = isConfirmed && classLinks.length > 0;
 
   const openPreview = () => {
-    const url = course.video_url || course.url;
+    const url = course.video_url || course.image_url;
     if (url) window.open(url, "_blank", "noopener,noreferrer");
-    else setToast("Preview coming soon.");
+  };
+
+  const scrollToClasses = () => {
+    document.getElementById("cert-class-links")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -121,7 +125,9 @@ function CertificationDetailPage() {
           </Link>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] font-semibold text-white">{course.title}</p>
-            <p className="truncate text-[11px] text-white/55">Certification · c/{course.community_slug}</p>
+            <p className="truncate text-[11px] text-white/55">
+              {course.program_duration || "Certification"} · c/{course.community_slug}
+            </p>
           </div>
           <button
             type="button"
@@ -137,15 +143,16 @@ function CertificationDetailPage() {
         </div>
       </header>
 
-      <CertificationDetailView
-        course={course}
-        enrollment={enrollment}
-        isFree={isFree}
-        isConfirmed={isConfirmed}
-        isPending={isPending}
-        hasPlaylist={hasPlaylist}
-        onPreviewPlay={openPreview}
-      />
+      <div id="cert-class-links">
+        <CertificationDetailView
+          course={course}
+          enrollment={enrollment}
+          isFree={isFree}
+          isConfirmed={isConfirmed}
+          isPending={isPending}
+          onPreviewPlay={openPreview}
+        />
+      </div>
 
       {toast ? (
         <p className="fixed inset-x-0 bottom-28 z-40 text-center text-[12px] text-ink-muted">{toast}</p>
@@ -153,56 +160,56 @@ function CertificationDetailPage() {
 
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] border-t border-hairline bg-background/95 px-5 py-4 backdrop-blur pb-[max(1rem,env(safe-area-inset-bottom))]">
         {!identity.uniqueId ? (
-          <p className="mb-2 text-center text-[11px] text-ink-muted">Sign in to book your slot</p>
+          <p className="mb-2 text-center text-[11px] text-ink-muted">Sign in to get class access</p>
         ) : null}
-        <div className="flex items-center gap-2">
-          <a
-            href={ADVISOR_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-hairline px-4 py-3 text-[13px] font-semibold"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Talk to advisor
-          </a>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-ink-muted">
+              {isConfirmed ? "Enrolled" : isFree ? "Free" : "Price"}
+            </p>
+            <p className="text-[20px] font-semibold">
+              {isFree ? "₹0" : `₹${course.price.toLocaleString("en-IN")}`}
+            </p>
+          </div>
 
-          {isConfirmed && hasPlaylist ? (
-            <a
-              href={course.url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex flex-[1.2] items-center justify-center gap-2 rounded-full bg-orange px-4 py-3 text-[13px] font-semibold text-white"
+          {hasClasses ? (
+            <button
+              type="button"
+              onClick={scrollToClasses}
+              className="inline-flex items-center gap-2 rounded-full bg-orange px-6 py-3 text-[14px] font-semibold text-white"
             >
-              Open playlist
-              <ExternalLink className="h-4 w-4" />
-            </a>
+              <Play className="h-4 w-4" />
+              View classes
+            </button>
           ) : isConfirmed ? (
             <button
               type="button"
               disabled
-              className="flex-[1.2] rounded-full bg-surface px-4 py-3 text-[13px] font-semibold text-ink-muted"
+              className="rounded-full bg-surface px-6 py-3 text-[14px] font-semibold text-ink-muted"
             >
-              Slot booked
+              Enrolled
             </button>
           ) : isPending ? (
             <button
               type="button"
               disabled={!deviceKey || payM.isPending}
               onClick={() => payM.mutate()}
-              className="inline-flex flex-[1.2] items-center justify-center gap-2 rounded-full bg-orange px-4 py-3 text-[13px] font-semibold text-white disabled:opacity-40"
+              className="rounded-full bg-orange px-6 py-3 text-[14px] font-semibold text-white disabled:opacity-40"
             >
-              <Phone className="h-4 w-4" />
-              {payM.isPending ? "…" : "I paid — unlock"}
+              {payM.isPending ? "…" : "I paid — unlock classes"}
             </button>
           ) : (
             <button
               type="button"
               disabled={!deviceKey || !identity.uniqueId || enrollM.isPending}
               onClick={() => enrollM.mutate()}
-              className="inline-flex flex-[1.2] items-center justify-center gap-2 rounded-full bg-orange px-4 py-3 text-[13px] font-semibold text-white disabled:opacity-40"
+              className="rounded-full bg-orange px-6 py-3 text-[14px] font-semibold text-white disabled:opacity-40"
             >
-              <Phone className="h-4 w-4" />
-              {enrollM.isPending ? "…" : isFree ? "Book your slot" : `Book · ₹${course.price.toLocaleString("en-IN")}`}
+              {enrollM.isPending
+                ? "…"
+                : isFree
+                  ? "Get free access"
+                  : `Pay ₹${course.price.toLocaleString("en-IN")}`}
             </button>
           )}
         </div>

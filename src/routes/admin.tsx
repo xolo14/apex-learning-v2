@@ -44,7 +44,7 @@ const nav: { to: string; label: string; icon: IconType; exact?: boolean }[] = [
   { to: "/admin/posts", label: "Posts & comments", icon: NewspaperIcon },
   { to: "/admin/users", label: "Members directory", icon: UserGroupIcon },
   { to: "/admin/communities", label: "Communities", icon: GlobeAltIcon },
-  { to: "/admin/courses", label: "Courses", icon: BookOpenIcon },
+  { to: "/admin/courses", label: "Certifications", icon: BookOpenIcon },
   { to: "/admin/internship-postings", label: "Internship postings", icon: BriefcaseIcon },
   { to: "/admin/leads", label: "Applied leads", icon: ClipboardDocumentListIcon },
   { to: "/admin/events", label: "Events", icon: CalendarDaysIcon },

@@ -44,6 +44,7 @@ export type DbCourse = {
   level: string;
   projects_label: string;
   video_url: string;
+  class_links: string;
   created_at: string;
 };
 
@@ -218,6 +219,7 @@ export const listCourses = createServerFn({ method: "GET" }).handler(async () =>
            COALESCE(level, 'Beginner') AS level,
            COALESCE(projects_label, '') AS projects_label,
            COALESCE(video_url, '') AS video_url,
+           COALESCE(class_links, '') AS class_links,
            created_at
     FROM courses ORDER BY created_at DESC
   `) as DbCourse[];
@@ -245,6 +247,7 @@ export const getCourse = createServerFn({ method: "GET" })
              COALESCE(level, 'Beginner') AS level,
              COALESCE(projects_label, '') AS projects_label,
              COALESCE(video_url, '') AS video_url,
+             COALESCE(class_links, '') AS class_links,
              created_at
       FROM courses WHERE id = ${data.id} LIMIT 1
     `) as DbCourse[];
@@ -277,6 +280,7 @@ async function resolveCourse(s: Awaited<ReturnType<typeof db>>, courseId: string
            COALESCE(level, 'Beginner') AS level,
            COALESCE(projects_label, '') AS projects_label,
            COALESCE(video_url, '') AS video_url,
+           COALESCE(class_links, '') AS class_links,
            created_at
     FROM courses WHERE id = ${courseId} LIMIT 1
   `) as DbCourse[];
@@ -358,7 +362,7 @@ export const enrollInCourse = createServerFn({ method: "POST" })
           coins_credited: 0,
           created_at: new Date().toISOString(),
         },
-        message: `Pay ₹${price.toLocaleString("en-IN")} to unlock the full playlist.`,
+        message: `Pay ₹${price.toLocaleString("en-IN")} to unlock all classes.`,
         coinsPending: coinReward > 0,
         coinReward,
       };
@@ -394,8 +398,8 @@ export const enrollInCourse = createServerFn({ method: "POST" })
       },
       message:
         coinsCredited > 0
-          ? `You're in! +${coinsCredited} coins added. Open your playlist below.`
-          : "You're enrolled! Open your playlist below.",
+          ? `You're in! +${coinsCredited} coins added. Your class links are below.`
+          : "You're enrolled! Your class links are below.",
       coinsPending: false,
       coinReward: coinsCredited,
     };
@@ -457,7 +461,7 @@ export const confirmCoursePayment = createServerFn({ method: "POST" })
       message:
         coinsCredited > 0
           ? `Payment recorded. Playlist unlocked! +${coinsCredited} coins added.`
-          : "Payment recorded. Your playlist is now unlocked.",
+          : "Payment confirmed. All class links are now unlocked.",
       enrollment: {
         ...enrollment,
         status: "confirmed" as const,
@@ -475,6 +479,16 @@ export const createCourse = createServerFn({ method: "POST" })
     price?: number;
     coins?: number;
     imageUrl?: string;
+    category?: string;
+    programDuration?: string;
+    subtitle?: string;
+    lecturesCount?: number;
+    hoursLabel?: string;
+    language?: string;
+    level?: string;
+    projectsLabel?: string;
+    videoUrl?: string;
+    classLinks?: string;
   }) => {
     if (!d.title?.trim()) throw new Error("Title required");
     if (!d.communitySlug?.trim()) throw new Error("Community required");
@@ -485,11 +499,28 @@ export const createCourse = createServerFn({ method: "POST" })
     const s = await db();
     const id = rid("crs");
     await s`
-      INSERT INTO courses (id, community_slug, title, description, url, price, coins, image_url)
-      VALUES (${id}, ${data.communitySlug}, ${data.title.slice(0, 200)},
+      INSERT INTO courses (
+        id, community_slug, title, description, url, price, coins, image_url,
+        category, program_duration, subtitle, lectures_count, hours_label,
+        language, level, projects_label, video_url, class_links
+      )
+      VALUES (
+        ${id}, ${data.communitySlug}, ${data.title.slice(0, 200)},
         ${(data.description || "").slice(0, 2000)}, ${(data.url || "").slice(0, 500)},
-        ${Math.max(0, Math.floor(Number(data.price) || 0))}, ${Math.max(0, Math.floor(Number(data.coins) || 0))},
-        ${(data.imageUrl || "").slice(0, 800)})
+        ${Math.max(0, Math.floor(Number(data.price) || 0))},
+        ${Math.max(0, Math.floor(Number(data.coins) || 0))},
+        ${(data.imageUrl || "").slice(0, 800)},
+        ${(data.category || "").slice(0, 80)},
+        ${(data.programDuration || "").slice(0, 80)},
+        ${(data.subtitle || "").slice(0, 120)},
+        ${Math.max(0, Math.floor(Number(data.lecturesCount) || 0))},
+        ${(data.hoursLabel || "").slice(0, 80)},
+        ${(data.language || "English").slice(0, 40)},
+        ${(data.level || "").slice(0, 40)},
+        ${(data.projectsLabel || "").slice(0, 80)},
+        ${(data.videoUrl || "").slice(0, 800)},
+        ${(data.classLinks || "").slice(0, 12_000)}
+      )
     `;
     return { id };
   });
@@ -504,9 +535,20 @@ export const updateCourse = createServerFn({ method: "POST" })
     price?: number;
     coins?: number;
     imageUrl?: string;
+    category?: string;
+    programDuration?: string;
+    subtitle?: string;
+    lecturesCount?: number;
+    hoursLabel?: string;
+    language?: string;
+    level?: string;
+    projectsLabel?: string;
+    videoUrl?: string;
+    classLinks?: string;
   }) => {
     if (d.price != null) d.price = Math.max(0, Math.floor(Number(d.price) || 0));
     if (d.coins != null) d.coins = Math.max(0, Math.floor(Number(d.coins) || 0));
+    if (d.lecturesCount != null) d.lecturesCount = Math.max(0, Math.floor(Number(d.lecturesCount) || 0));
     return d;
   })
   .handler(async ({ data }) => {
@@ -520,7 +562,17 @@ export const updateCourse = createServerFn({ method: "POST" })
         community_slug = COALESCE(${data.communitySlug ?? null}, community_slug),
         price = COALESCE(${data.price ?? null}, price),
         coins = COALESCE(${data.coins ?? null}, coins),
-        image_url = COALESCE(${data.imageUrl ?? null}, image_url)
+        image_url = COALESCE(${data.imageUrl ?? null}, image_url),
+        category = COALESCE(${data.category ?? null}, category),
+        program_duration = COALESCE(${data.programDuration ?? null}, program_duration),
+        subtitle = COALESCE(${data.subtitle ?? null}, subtitle),
+        lectures_count = COALESCE(${data.lecturesCount ?? null}, lectures_count),
+        hours_label = COALESCE(${data.hoursLabel ?? null}, hours_label),
+        language = COALESCE(${data.language ?? null}, language),
+        level = COALESCE(${data.level ?? null}, level),
+        projects_label = COALESCE(${data.projectsLabel ?? null}, projects_label),
+        video_url = COALESCE(${data.videoUrl ?? null}, video_url),
+        class_links = COALESCE(${data.classLinks ?? null}, class_links)
       WHERE id = ${data.id}
     `;
     return { ok: true };

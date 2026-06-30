@@ -19,6 +19,7 @@ export function ensureSchema() {
     await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS level text DEFAULT 'Beginner'`;
     await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS projects_label text DEFAULT ''`;
     await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS video_url text DEFAULT ''`;
+    await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS class_links text DEFAULT ''`;
 
     // Events
     await s`

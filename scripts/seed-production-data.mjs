@@ -406,6 +406,7 @@ async function ensureSchema() {
   await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS level text DEFAULT 'Beginner'`;
   await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS projects_label text DEFAULT ''`;
   await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS video_url text DEFAULT ''`;
+  await sql`ALTER TABLE courses ADD COLUMN IF NOT EXISTS class_links text DEFAULT ''`;
   await sql`
     CREATE TABLE IF NOT EXISTS events (
       id text PRIMARY KEY,
@@ -618,7 +619,7 @@ async function seedCourses() {
       INSERT INTO courses (
         id, community_slug, title, description, url, price, coins, image_url,
         category, program_duration, subtitle, lectures_count, hours_label,
-        language, level, projects_label, video_url, created_at
+        language, level, projects_label, video_url, class_links, created_at
       )
       VALUES (
         ${c.id}, ${c.community_slug}, ${c.title}, ${c.description}, ${c.url},
@@ -626,7 +627,8 @@ async function seedCourses() {
         ${c.category ?? ""}, ${c.program_duration ?? ""}, ${c.subtitle ?? ""},
         ${c.lectures_count ?? 0}, ${c.hours_label ?? ""},
         ${c.language ?? "English"}, ${c.level ?? "Beginner"},
-        ${c.projects_label ?? ""}, ${c.video_url ?? ""}, ${NOW}
+        ${c.projects_label ?? ""}, ${c.video_url ?? ""},
+        ${c.class_links ?? ""}, ${NOW}
       )
       ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
@@ -642,7 +644,8 @@ async function seedCourses() {
         language = EXCLUDED.language,
         level = EXCLUDED.level,
         projects_label = EXCLUDED.projects_label,
-        video_url = EXCLUDED.video_url
+        video_url = EXCLUDED.video_url,
+        class_links = EXCLUDED.class_links
     `;
   }
   return COURSES.length;

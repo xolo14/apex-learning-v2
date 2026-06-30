@@ -21,6 +21,7 @@ const cert = (
   level: "Beginner",
   projects_label: "",
   video_url: "",
+  class_links: "",
   created_at: AT,
   ...partial,
 });
@@ -32,7 +33,7 @@ export const DEMO_COURSES: DbCourse[] = [
     title: "Digital Marketing",
     subtitle: "Professional Certification",
     category: "MARKETING",
-    program_duration: "3 Months Program",
+    program_duration: "2 Months Program",
     description:
       "Master SEO, social media marketing, and performance ads with expert mentorship and real-world projects. Earn an industry-recognized certificate.",
     url: "https://app.syncpedia.in",
@@ -44,17 +45,21 @@ export const DEMO_COURSES: DbCourse[] = [
     hours_label: "30+ Hours",
     language: "English",
     level: "Beginner",
+    class_links: JSON.stringify([
+      { title: "Introduction", url: "https://app.syncpedia.in" },
+      { title: "Module 1 — SEO Basics", url: "https://app.syncpedia.in" },
+    ]),
     projects_label: "2 Real Projects",
   }),
   cert({
     id: "demo-crs-2",
     community_slug: "programming",
     title: "Full-Stack TypeScript",
-    subtitle: "Professional Certification",
+    subtitle: "Certification",
     category: "TECHNOLOGY",
-    program_duration: "4 Months Program",
+    program_duration: "2 Months Program",
     description:
-      "React, TanStack, Postgres, and deploy — project-first curriculum with mentor reviews and a portfolio-ready capstone.",
+      "React, TanStack, Postgres, and deploy — project-first curriculum with a portfolio-ready capstone.",
     url: "https://app.syncpedia.in",
     price: 499,
     coins: 80,
