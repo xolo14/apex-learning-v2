@@ -40,6 +40,7 @@ function CertificationDetailPage() {
   const identity = useIdentity();
   const { refetch: refetchCoins } = useCoinBalance();
   const [toast, setToast] = useState<string | null>(null);
+  const [inClassroom, setInClassroom] = useState(false);
 
   const fetchCourse = useServerFn(getCourse);
   const fetchEnroll = useServerFn(getMyCourseEnrollment);
@@ -102,26 +103,26 @@ function CertificationDetailPage() {
   const isPending = enrollment?.status === "pending_payment";
   const classLinks = certificationMeta(course).classLinks;
   const hasClasses = classLinks.length > 0;
-  const inClassroom = isConfirmed && hasClasses;
+  const canOpenClassroom = isConfirmed && hasClasses;
 
   const openPreview = () => {
     const url = course.video_url || course.image_url;
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  if (inClassroom) {
+  if (inClassroom && canOpenClassroom) {
     return (
       <MobileShell immersive>
         <header className="sticky top-0 z-30 border-b border-white/10 bg-[#070f0d]/95 backdrop-blur">
           <div className="flex items-center gap-2 px-3 py-2.5 pt-[max(env(safe-area-inset-top),10px)]">
-            <Link
-              to="/courses"
-              search={{ tab: "certifications" }}
+            <button
+              type="button"
+              onClick={() => setInClassroom(false)}
               className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white"
-              aria-label="Back"
+              aria-label="Back to course overview"
             >
               <ArrowLeft strokeWidth={1.75} className="h-[18px] w-[18px]" />
-            </Link>
+            </button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[14px] font-semibold text-white">{course.title}</p>
               <p className="truncate text-[11px] text-white/50">Your classroom</p>
@@ -204,16 +205,35 @@ function CertificationDetailPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-[10px] uppercase tracking-wider text-ink-muted">
-              {isConfirmed ? "Enrolled" : isFree ? "Free" : "Price"}
+              {enrollQ.isLoading
+                ? "Checking…"
+                : isConfirmed
+                  ? "Enrolled"
+                  : isFree
+                    ? "Free"
+                    : "Price"}
             </p>
             <p className="text-[20px] font-semibold">
               {isFree ? "₹0" : `₹${course.price.toLocaleString("en-IN")}`}
             </p>
           </div>
 
-          {isConfirmed ? (
-            <button type="button" disabled className="rounded-full bg-forest/10 px-6 py-3 text-[14px] font-semibold text-forest">
-              {hasClasses ? "Opening classes…" : "Enrolled — videos soon"}
+          {enrollQ.isLoading ? (
+            <button
+              type="button"
+              disabled
+              className="rounded-full bg-orange/40 px-6 py-3 text-[14px] font-semibold text-white"
+            >
+              …
+            </button>
+          ) : isConfirmed ? (
+            <button
+              type="button"
+              disabled={!canOpenClassroom}
+              onClick={() => canOpenClassroom && setInClassroom(true)}
+              className="rounded-full bg-orange px-6 py-3 text-[14px] font-semibold text-white disabled:bg-forest/10 disabled:text-forest"
+            >
+              {canOpenClassroom ? "Open course" : "Enrolled — videos soon"}
             </button>
           ) : isPending ? (
             <button

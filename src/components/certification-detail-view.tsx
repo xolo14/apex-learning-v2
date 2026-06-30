@@ -4,9 +4,7 @@ import {
   Briefcase,
   Clock,
   Globe,
-  GraduationCap,
   Layers,
-  Play,
 } from "lucide-react";
 import type { DbCourse, CourseEnrollment } from "@/lib/communities.functions";
 import { certificationMeta } from "@/lib/certification-meta";
@@ -73,7 +71,11 @@ export function CertificationDetailView({
         </div>
 
         <p className="relative mt-5 text-[13px] font-medium text-white/80">
-          {isFree ? "Free program — enroll to access all classes" : `₹${course.price.toLocaleString("en-IN")} — pay to unlock all classes`}
+          {isConfirmed
+            ? "You're enrolled — open the course to start learning"
+            : isFree
+              ? "Free program — enroll to access all classes"
+              : `₹${course.price.toLocaleString("en-IN")} — pay to unlock all classes`}
         </p>
       </section>
 
@@ -85,12 +87,12 @@ export function CertificationDetailView({
                 type="button"
                 onClick={onPreviewPlay}
                 className="relative block w-full overflow-hidden"
-                aria-label="Preview"
+                aria-label="Course preview"
               >
                 <img src={meta.previewUrl} alt="" className="h-44 w-full object-cover" />
                 <span className="absolute inset-0 grid place-items-center bg-black/25">
-                  <span className="grid h-14 w-14 place-items-center rounded-full bg-white/95 text-[#0c1f1a] shadow-lg">
-                    <Play className="ml-0.5 h-6 w-6" fill="currentColor" />
+                  <span className="rounded-full bg-white/95 px-4 py-2 text-[13px] font-semibold text-[#0c1f1a]">
+                    Enrolled · tap Open course below
                   </span>
                 </span>
               </button>
