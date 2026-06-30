@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { DEMO_HOT } from "./demo-data";
 
 export type HotItem = {
   id: string;
@@ -154,6 +155,7 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
   pins.sort((a, b) => b.createdAt - a.createdAt);
   live.sort((a, b) => b.createdAt - a.createdAt);
   const merged = [...pins, ...live];
+  if (merged.length === 0) return DEMO_HOT;
   return merged.slice(0, 800);
 });
 

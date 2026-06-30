@@ -1,4 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
+import {
+  DEMO_COURSES,
+  DEMO_EVENTS,
+  DEMO_GIGS,
+  DEMO_INTERNSHIP_POSTINGS,
+  withDemoFallback,
+} from "./demo-data";
 
 async function adminOnly() {
   const { requireAdmin } = await import("./security.server");
@@ -185,7 +192,7 @@ export const listCourses = createServerFn({ method: "GET" }).handler(async () =>
            created_at
     FROM courses ORDER BY created_at DESC
   `) as DbCourse[];
-  return rows;
+  return withDemoFallback(rows, DEMO_COURSES);
 });
 
 export const createCourse = createServerFn({ method: "POST" })
@@ -322,7 +329,7 @@ export const listEvents = createServerFn({ method: "GET" }).handler(async () => 
            COALESCE(coins, 0)::int AS coins, created_at
     FROM events ORDER BY created_at DESC
   `) as DbEvent[];
-  return rows;
+  return withDemoFallback(rows, DEMO_EVENTS);
 });
 
 export const createEvent = createServerFn({ method: "POST" })
@@ -382,7 +389,7 @@ export const listGigs = createServerFn({ method: "GET" }).handler(async () => {
            COALESCE(coins, 0)::int AS coins, created_at
     FROM gigs ORDER BY created_at DESC
   `) as DbGig[];
-  return rows;
+  return withDemoFallback(rows, DEMO_GIGS);
 });
 
 export const createGig = createServerFn({ method: "POST" })
@@ -443,7 +450,7 @@ export const listInternshipPostings = createServerFn({ method: "GET" }).handler(
            COALESCE(coins, 0)::int AS coins, created_at
     FROM internship_postings ORDER BY created_at DESC
   `) as DbInternshipPosting[];
-  return rows;
+  return withDemoFallback(rows, DEMO_INTERNSHIP_POSTINGS);
 });
 
 export const createInternshipPosting = createServerFn({ method: "POST" })

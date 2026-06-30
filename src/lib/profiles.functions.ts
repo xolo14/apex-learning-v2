@@ -36,6 +36,16 @@ function genUniqueId() {
   return `SP-${s}`;
 }
 
+/** One-time 50-coin signup bonus; safe to call on every login/load. */
+async function ensureSignupBonus(sql: ReturnType<typeof import("./db.server").sql>, uniqueId: string) {
+  const { SIGNUP_BONUS_COINS } = await import("./coin-rewards");
+  await sql()`
+    INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+    VALUES (${uniqueId}, 'signup', ${Math.max(0, Math.floor(SIGNUP_BONUS_COINS))})
+    ON CONFLICT (user_unique_id, action_key) DO NOTHING
+  `;
+}
+
 export type CreateProfileResult =
   | { status: "created"; profile: DbProfile }
   | { status: "existing" };
@@ -70,10 +80,13 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
   })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
     const rows = (await sql()`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
+    if (rows[0]) await ensureSignupBonus(sql, rows[0].unique_id);
     return rows[0] ?? null;
   });
 
@@ -170,12 +183,7 @@ export const createProfile = createServerFn({ method: "POST" })
     `;
 
     // One-time signup bonus: 50 coins per account (enforced by coin_ledger PK).
-    const { SIGNUP_BONUS_COINS } = await import("./coin-rewards");
-    await sql()`
-      INSERT INTO coin_ledger (user_unique_id, action_key, amount)
-      VALUES (${uniqueId}, 'signup', ${Math.max(0, Math.floor(SIGNUP_BONUS_COINS))})
-      ON CONFLICT (user_unique_id, action_key) DO NOTHING
-    `;
+    await ensureSignupBonus(sql, uniqueId);
 
     const rows = (await sql()`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
@@ -211,6 +219,7 @@ export const loginProfile = createServerFn({ method: "POST" })
     }
 
     await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${rows[0].id}`;
+    await ensureSignupBonus(sql, rows[0].unique_id);
     const refreshed = (await sql()`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
       FROM profiles WHERE id = ${rows[0].id} LIMIT 1

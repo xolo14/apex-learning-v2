@@ -7,6 +7,7 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { CoinsCard } from "@/components/coins-card";
 import { PostCard } from "@/components/post-card";
 import type { Post, PostKind } from "@/lib/feed-data";
+import { posts as demoPosts } from "@/lib/feed-data";
 import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
@@ -123,7 +124,7 @@ function ProfilePage() {
       />
       <section className="px-5 pt-5">
         <div className="flex items-center gap-4">
-          <IdentityAvatar color={identity.color} icon={identity.icon} className="h-16 w-16 text-[32px]" />
+          <IdentityAvatar uniqueId={identity.uniqueId} className="h-16 w-16 text-[32px]" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-[18px] font-semibold tracking-tight text-foreground">
@@ -235,8 +236,25 @@ function ProfilePage() {
             )}
           </>
         )}
-        {tab !== "Posts" && (
-          <EmptyState text={`Your ${tab.toLowerCase()} will appear here.`} />
+        {tab === "Replies" && demoPosts.slice(0, 2).map((p) => <PostCard key={`reply-${p.id}`} post={p} />)}
+        {tab === "Bookmarks" && demoPosts.slice(2, 5).map((p) => <PostCard key={`saved-${p.id}`} post={p} />)}
+        {tab === "Communities" && (
+          <div className="px-5 py-6">
+            <ul className="space-y-2">
+              {["ai", "programming", "startup", "uiux"].map((slug) => (
+                <li key={slug}>
+                  <Link
+                    to="/c/$slug"
+                    params={{ slug }}
+                    className="flex items-center justify-between rounded-xl border border-hairline px-4 py-3 text-[14px] font-medium active:bg-surface/60"
+                  >
+                    c/{slug}
+                    <span className="text-[12px] text-ink-muted">Demo</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </MobileShell>

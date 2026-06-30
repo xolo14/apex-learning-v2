@@ -13,6 +13,7 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
+import { PriceCoinBadges, RewardLegend } from "@/components/price-coin-badges";
 import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
@@ -154,6 +155,7 @@ function EarnPage() {
           }}
         >
           <section className="w-1/2 shrink-0 px-5">
+            <RewardLegend kind="quiz" className="mb-3 px-1" />
             {quizzes.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {quizzesQ.isLoading ? "Loading…" : "No quizzes yet."}
@@ -172,7 +174,7 @@ function EarnPage() {
                     <Gem strokeWidth={1.75} className="h-[18px] w-[18px]" />
                   </span>
                 </div>
-                <div className="mt-3 flex items-center justify-between text-[12px] text-ink-muted">
+                <div className="mt-3 flex items-center justify-between gap-3 text-[12px] text-ink-muted">
                   <span className="inline-flex items-center gap-3">
                     <span className="inline-flex items-center gap-1.5">
                       <Trophy strokeWidth={1.75} className="h-[14px] w-[14px]" /> {q.questions_count} Q
@@ -181,18 +183,14 @@ function EarnPage() {
                       <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" /> {q.minutes}m
                     </span>
                   </span>
-                  {q.coins > 0 && (
-                    <button className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange px-3 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                      <img src={goldCoin} alt="" className="h-[12px] w-[12px] object-contain" />
-                      +{q.coins}
-                    </button>
-                  )}
+                  <PriceCoinBadges kind="quiz" coins={q.coins} />
                 </div>
               </article>
             ))}
           </section>
 
           <section className="w-1/2 shrink-0 px-5">
+            <RewardLegend kind="gig" className="mb-3 px-1" />
             {gigs.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {gigsQ.isLoading ? "Loading…" : "No gigs yet."}
@@ -209,11 +207,9 @@ function EarnPage() {
                       </div>
                       <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{g.title}</h3>
                     </div>
-                    {g.pay > 0 ? (
-                      <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-[11px] font-medium text-foreground">
-                        ₹{g.pay}
-                      </span>
-                    ) : null}
+                  </div>
+                  <div className="mt-3">
+                    <PriceCoinBadges kind="gig" amount={g.pay} coins={g.coins} />
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-ink-muted">
                     {g.location ? (
@@ -226,12 +222,6 @@ function EarnPage() {
                       <span className="inline-flex items-center gap-1.5">
                         <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" />
                         {g.duration}
-                      </span>
-                    ) : null}
-                    {g.coins > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 text-orange">
-                        <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-                        +{g.coins}
                       </span>
                     ) : null}
                   </div>

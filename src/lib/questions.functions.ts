@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { demoProfileQuestions, withDemoFallback } from "./demo-data";
 
 export type DbQuestion = {
   id: string;
@@ -56,7 +57,7 @@ export const listMyQuestions = createServerFn({ method: "POST" })
       ORDER BY created_at DESC
       LIMIT 100
     `) as DbQuestion[];
-    return rows;
+    return withDemoFallback(rows, demoProfileQuestions(data.uniqueId));
   });
 
 export const createQuestion = createServerFn({ method: "POST" })

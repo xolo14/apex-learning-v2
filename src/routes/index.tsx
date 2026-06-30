@@ -1,14 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X } from "lucide-react";
+import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X, MapPin } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/mobile-shell";
+import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { PostCard } from "@/components/post-card";
 import { posts, communities, balancedFeed } from "@/lib/feed-data";
 import { useDensity } from "@/lib/density";
 import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
+import { listEvents } from "@/lib/communities.functions";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
@@ -50,6 +52,7 @@ function Home() {
   const compact = density === "compact";
   const feed = balancedFeed(posts);
   const fHot = useServerFn(listHot);
+  const fEvents = useServerFn(listEvents);
   const hotQ = useQuery({
     queryKey: ["feed", "hot"],
     queryFn: () => fHot(),
@@ -58,6 +61,11 @@ function Home() {
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+  });
+  const eventsQ = useQuery({
+    queryKey: ["public", "events"],
+    queryFn: () => fEvents(),
+    staleTime: 60_000,
   });
   const savedIds = useSavedIds();
   const savedPosts = feed.filter((p) => savedIds.includes(p.id));
@@ -73,7 +81,7 @@ function Home() {
               aria-label="Open profile"
               className="rounded-full ring-1 ring-hairline active:scale-95 transition"
             >
-              <IdentityAvatar color={identity.color} icon={identity.icon} className="h-10 w-10" />
+              <IdentityAvatar uniqueId={identity.uniqueId} className="h-10 w-10" />
             </Link>
             {earningsEnabled ? (
               <Link
@@ -231,12 +239,13 @@ function Home() {
         {sort === "hot" ? (
           <HotFeed loading={hotQ.isLoading} error={hotQ.error} items={hotQ.data ?? []} compact={compact} />
         ) : sort === "events" ? (
-          <Empty compact={compact}>No upcoming events yet. Check back soon.</Empty>
+          <EventsFeed loading={eventsQ.isLoading} events={eventsQ.data ?? []} compact={compact} />
         ) : sort === "saved" ? (
           savedPosts.length === 0 && savedHot.length === 0 ? (
-            <Empty compact={compact}>
-              No saved posts yet. Tap the bookmark on any post or trending story to save it here.
-            </Empty>
+            <>
+              <p className="px-5 pb-2 text-[11px] text-ink-muted">Demo saved posts</p>
+              {feed.slice(0, 3).map((p) => <PostCard key={`demo-saved-${p.id}`} post={p} />)}
+            </>
           ) : (
             <>
               {savedHot.length > 0 ? <SavedHotList items={savedHot} compact={compact} /> : null}
@@ -244,7 +253,12 @@ function Home() {
             </>
           )
         ) : (
-          feed.map((p) => <PostCard key={p.id} post={p} />)
+          <>
+            {sort === "following" ? (
+              <p className="px-5 pb-2 text-[11px] text-ink-muted">Demo feed from people you follow</p>
+            ) : null}
+            {feed.map((p) => <PostCard key={p.id} post={p} />)}
+          </>
         )}
       </div>
 
@@ -256,6 +270,74 @@ function Home() {
         </p>
       </div>
     </MobileShell>
+  );
+}
+
+function EventsFeed({
+  loading,
+  events,
+  compact,
+}: {
+  loading: boolean;
+  events: {
+    id: string;
+    community_slug: string | null;
+    title: string;
+    description: string;
+    image_url: string;
+    location: string;
+    starts_at: string;
+    price: number;
+    coins: number;
+  }[];
+  compact: boolean;
+}) {
+  if (loading) return <Empty compact={compact}>Loading events…</Empty>;
+  if (!events.length) return <Empty compact={compact}>No upcoming events yet.</Empty>;
+  return (
+    <ul>
+      {events.map((e) => (
+        <li
+          key={e.id}
+          className={
+            "border-b border-hairline active:bg-surface/60 " +
+            (compact ? "px-4 py-3" : "px-5 py-4")
+          }
+        >
+          {e.image_url ? (
+            <img src={e.image_url} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {e.community_slug ? (
+              <span className="rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-foreground">
+                c/{e.community_slug}
+              </span>
+            ) : null}
+            <PriceCoinBadges kind="event" amount={e.price} coins={e.coins} />
+          </div>
+          <h3 className="mt-2 text-[16px] font-semibold leading-snug tracking-tight text-foreground">
+            {e.title}
+          </h3>
+          {e.description ? (
+            <p className="mt-1 text-[12.5px] text-ink-muted">{e.description}</p>
+          ) : null}
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-muted">
+            {e.starts_at ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                {e.starts_at}
+              </span>
+            ) : null}
+            {e.location ? (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin strokeWidth={1.75} className="h-[14px] w-[14px]" />
+                {e.location}
+              </span>
+            ) : null}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 

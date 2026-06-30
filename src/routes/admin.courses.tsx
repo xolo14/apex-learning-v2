@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { AdminCoinLabel, AdminPriceLabel } from "@/components/price-coin-badges";
 import {
   listCourses, createCourse, deleteCourse,
   listCommunities, type DbCourse,
@@ -73,12 +74,16 @@ function AdminCourses() {
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Image URL (optional)"
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)}
-                 placeholder="Price (₹) — 0 for free"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
-                 placeholder="Coins reward"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          <label className="flex flex-col gap-1">
+            <AdminPriceLabel kind="course" />
+            <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
+          <label className="flex flex-col gap-1">
+            <AdminCoinLabel kind="course" />
+            <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
           <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description"
                  className="md:col-span-2 rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <button type="submit"

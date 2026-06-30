@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { AdminCoinLabel, AdminPriceLabel } from "@/components/price-coin-badges";
 import {
   listInternshipPostings, createInternshipPosting, deleteInternshipPosting,
   listCommunities, type DbInternshipPosting,
@@ -83,11 +84,16 @@ function AdminInternshipPostings() {
           </select>
           <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Duration (e.g. 12 weeks)"
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={stipend} onChange={(e) => setStipend(e.target.value)}
-                 placeholder="Stipend (₹ / mo)"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)} placeholder="Coins reward"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          <label className="flex flex-col gap-1">
+            <AdminPriceLabel kind="internship" />
+            <input type="number" min={0} value={stipend} onChange={(e) => setStipend(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
+          <label className="flex flex-col gap-1">
+            <AdminCoinLabel kind="internship" />
+            <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
           <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description"
                  className="md:col-span-2 rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <button type="submit"

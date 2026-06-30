@@ -7,7 +7,7 @@
 set -euo pipefail
 
 APP_DIR="/var/www/syncpedia-community"
-APP_PORT=3000
+APP_PORT=3001
 DOMAIN="app.syncpedia.in"
 REPO="${REPO:-https://github.com/xolo14/apex-learning-v2.git}"
 

@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { adminStats } from "@/lib/questions.functions";
 import { adminAnalytics } from "@/lib/profiles.functions";
-import { MessageSquare, Users, Clock, GraduationCap, Briefcase, UserPlus, TrendingUp } from "lucide-react";
+import { runProductionSeed } from "@/lib/seed.functions";
+import { MessageSquare, Users, Clock, GraduationCap, Briefcase, UserPlus, TrendingUp, Database } from "lucide-react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, CartesianGrid, Legend,
@@ -16,8 +18,22 @@ export const Route = createFileRoute("/admin/")({
 const PIE_COLORS = ["#1f6b4a", "#d97706", "#2563eb", "#9333ea", "#dc2626", "#0891b2", "#65a30d", "#db2777"];
 
 function AdminOverview() {
+  const qc = useQueryClient();
   const stats = useServerFn(adminStats);
   const analytics = useServerFn(adminAnalytics);
+  const seed = useServerFn(runProductionSeed);
+  const [seedLog, setSeedLog] = useState<string | null>(null);
+
+  const seedM = useMutation({
+    mutationFn: () => seed(),
+    onSuccess: (res) => {
+      setSeedLog(res.stdout || "Seed completed.");
+      qc.invalidateQueries({ queryKey: ["admin"] });
+    },
+    onError: (err) => {
+      setSeedLog(err instanceof Error ? err.message : "Seed failed.");
+    },
+  });
 
   const statsQ = useQuery({
     queryKey: ["admin", "stats"],
@@ -53,6 +69,34 @@ function AdminOverview() {
           {statsQ.isLoading || aQ.isLoading ? "Syncing…" : "Live · Neon"}
         </span>
       </header>
+
+      <section className="mt-6 rounded-2xl border border-hairline bg-surface/40 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[13px] font-medium uppercase tracking-[0.14em] text-ink-muted">
+              Production data
+            </h2>
+            <p className="mt-1 max-w-xl text-[13px] text-ink-muted">
+              Adds 20 students, 10 professionals, 17 communities, 10 Hyderabad events, Syncpedia gigs,
+              internships, courses, quizzes, and sample posts. Safe to run more than once.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={seedM.isPending}
+            onClick={() => seedM.mutate()}
+            className="inline-flex items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-[13px] font-medium text-background disabled:opacity-50"
+          >
+            <Database className="h-4 w-4" />
+            {seedM.isPending ? "Seeding…" : "Seed all production data"}
+          </button>
+        </div>
+        {seedLog ? (
+          <pre className="mt-4 overflow-x-auto rounded-xl border border-hairline bg-background p-3 text-[11px] text-ink-muted whitespace-pre-wrap">
+            {seedLog}
+          </pre>
+        ) : null}
+      </section>
 
       {/* KPI grid */}
       <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">

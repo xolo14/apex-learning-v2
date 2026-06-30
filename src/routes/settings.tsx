@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, Bell, Lock, Eye, HelpCircle, LogOut, Palette, Globe, Copy, Check, Loader2, Pencil, X } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { useDensity } from "@/lib/density";
-import { useIdentity, IdentityAvatar, AVATAR_COLORS, AVATAR_STYLES } from "@/lib/identity";
+import { IdentityAvatar, useIdentity, AVATAR_COLORS, AVATAR_STYLES } from "@/lib/identity";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkUniqueIdAvailable, updateUniqueId } from "@/lib/profiles.functions";
@@ -151,7 +151,7 @@ function SettingsPage() {
         {/* Identity card — compact */}
         <div className="rounded-2xl border border-hairline p-4">
           <div className="flex items-center gap-3">
-            <IdentityAvatar color={identity.color} icon={identity.icon} className="h-14 w-14" />
+            <IdentityAvatar uniqueId={identity.uniqueId} className="h-14 w-14" />
             <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">Syncpedia ID</div>
               {!editing ? (
@@ -310,7 +310,18 @@ function SettingsPage() {
               {pushBusy ? "…" : pushOn ? "On" : "Enable"}
             </button>
           </Row>
-          <Row icon={Lock} label="Privacy" hint="Who can DM and tag you" />
+          <Link
+            to="/privacy"
+            className="flex w-full items-center gap-3 border-b border-hairline px-4 py-3 text-left active:bg-surface/60"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface">
+              <Lock strokeWidth={1.75} className="h-[18px] w-[18px] text-foreground" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-medium text-foreground">Privacy policy</span>
+              <span className="block truncate text-[12px] text-ink-muted">How we handle your data</span>
+            </span>
+          </Link>
           <Row icon={Eye} label="Blocked accounts" hint="Manage your block list" />
           <Row icon={Globe} label="Language" hint="English (US)" />
           <Row icon={HelpCircle} label="Help center" hint="Guides and FAQs" />

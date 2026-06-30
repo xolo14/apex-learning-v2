@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { AdminCoinLabel, AdminPriceLabel } from "@/components/price-coin-badges";
 import {
   listGigs, createGig, deleteGig,
   listCommunities, type DbGig,
@@ -77,10 +78,16 @@ function AdminGigs() {
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Duration (e.g. 1 week)"
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={pay} onChange={(e) => setPay(e.target.value)} placeholder="Pay (₹)"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
-          <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)} placeholder="Coins reward"
-                 className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          <label className="flex flex-col gap-1">
+            <AdminPriceLabel kind="gig" />
+            <input type="number" min={0} value={pay} onChange={(e) => setPay(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
+          <label className="flex flex-col gap-1">
+            <AdminCoinLabel kind="gig" />
+            <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
+                   className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
+          </label>
           <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description"
                  className="md:col-span-2 rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <button type="submit"

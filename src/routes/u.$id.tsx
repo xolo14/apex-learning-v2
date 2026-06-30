@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useIdentity } from "@/lib/identity";
+import { UserAvatar } from "@/lib/identity";
 import {
   getFollowState,
   sendFollowRequest,
@@ -63,9 +63,7 @@ function UserProfileRoute() {
       <div className="mx-auto max-w-2xl px-4 pt-6 pb-24">
         <div className="rounded-2xl border bg-card p-5">
           <div className="flex items-center gap-3">
-            <div className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-lg font-semibold text-primary-foreground">
-              {id.replace(/^SP-?/, "").slice(0, 2)}
-            </div>
+            <UserAvatar uniqueId={id} className="h-14 w-14" />
             <div>
               <div className="text-base font-semibold">{id}</div>
               <div className="text-xs text-muted-foreground">Syncpedia member</div>

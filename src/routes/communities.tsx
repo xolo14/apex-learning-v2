@@ -3,11 +3,43 @@ import { Search, BadgeCheck, Calendar, MapPin, Users, CalendarDays } from "lucid
 import { useRef, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
-import { communities, posts } from "@/lib/feed-data";
-import { listEvents } from "@/lib/communities.functions";
+import { PriceCoinBadges, RewardLegend } from "@/components/price-coin-badges";
+import { communities as staticCommunities, posts } from "@/lib/feed-data";
+import { listCommunities, listEvents } from "@/lib/communities.functions";
+import { iconFromKey } from "@/lib/community-icons";
+import type { LucideIcon } from "lucide-react";
 import { pageHead } from "@/lib/seo";
+
+type DisplayCommunity = {
+  slug: string;
+  name: string;
+  icon: LucideIcon;
+  tint?: string;
+  members: string;
+  online: number;
+  about: string;
+  image_url?: string;
+};
+
+function buildCommunityList(
+  approved: { slug: string; name: string; about: string; icon_key: string; image_url: string }[],
+): DisplayCommunity[] {
+  if (approved.length === 0) return staticCommunities;
+  return approved.map((c) => {
+    const meta = staticCommunities.find((x) => x.slug === c.slug);
+    return {
+      slug: c.slug,
+      name: c.name,
+      about: c.about,
+      icon: iconFromKey(c.icon_key),
+      tint: meta?.tint ?? "#111827",
+      members: meta?.members ?? "2k+",
+      online: meta?.online ?? 120,
+      image_url: c.image_url || meta?.image_url,
+    };
+  });
+}
 
 export const Route = createFileRoute("/communities")({
   head: () =>
@@ -31,11 +63,23 @@ function NetworkPage() {
 
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "pros">("all");
+  const listCom = useServerFn(listCommunities);
+  const comQuery = useQuery({ queryKey: ["public", "communities"], queryFn: () => listCom() });
+  const communityList = useMemo(
+    () => buildCommunityList((comQuery.data ?? []).filter((c) => c.status === "approved")),
+    [comQuery.data],
+  );
   const proSlugs = useMemo(
-    () => new Set(posts.filter((p) => p.mentor).map((p) => p.communitySlug)),
+    () =>
+      new Set([
+        ...posts.filter((p) => p.mentor).map((p) => p.communitySlug),
+        "ai",
+        "startup",
+        "programming",
+      ]),
     [],
   );
-  const filtered = communities.filter(
+  const filtered = communityList.filter(
     (c) =>
       c.name.toLowerCase().includes(q.toLowerCase()) &&
       (filter === "all" || proSlugs.has(c.slug)),
@@ -163,7 +207,7 @@ function CommunitiesView({
   setQ: (v: string) => void;
   filter: "all" | "pros";
   setFilter: (v: "all" | "pros") => void;
-  filtered: typeof communities;
+  filtered: DisplayCommunity[];
   proSlugs: Set<string>;
 }) {
   return (
@@ -267,30 +311,21 @@ function EventsView() {
   }
   return (
     <ul>
+      <li className="px-5 pb-2">
+        <RewardLegend kind="event" />
+      </li>
       {events.map((e) => (
         <li key={e.id} className="border-b border-hairline px-5 py-4 active:bg-surface/60">
           {e.image_url ? (
             <img src={e.image_url} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
           ) : null}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {e.community_slug ? (
               <span className="rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-foreground">
                 c/{e.community_slug}
               </span>
             ) : null}
-            {e.coins > 0 ? (
-              <span className="inline-flex items-center gap-1 text-[11px] text-orange">
-                <img src={goldCoin} alt="" className="h-3 w-3 object-contain" />+{e.coins}
-              </span>
-            ) : null}
-            <span className={
-              "rounded-full px-2 py-0.5 text-[11px] font-medium " +
-              (e.price > 0
-                ? "bg-foreground/[0.06] text-foreground"
-                : "bg-forest/10 text-forest")
-            }>
-              {e.price > 0 ? `₹${e.price}` : "Free"}
-            </span>
+            <PriceCoinBadges kind="event" amount={e.price} coins={e.coins} />
           </div>
           <h3 className="mt-2 text-[16px] font-semibold leading-snug tracking-tight text-foreground">
             {e.title}

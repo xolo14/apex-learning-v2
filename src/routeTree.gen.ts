@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as GigsRouteImport } from './routes/gigs'
 import { Route as CoursesRouteImport } from './routes/courses'
@@ -53,6 +54,11 @@ const QuizzesRoute = QuizzesRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagesRoute = MessagesRouteImport.update({
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/courses': typeof CoursesRoute
   '/gigs': typeof GigsRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRoute
   '/settings': typeof SettingsRoute
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/gigs'
     | '/messages'
+    | '/privacy'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/gigs'
     | '/messages'
+    | '/privacy'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/courses'
     | '/gigs'
     | '/messages'
+    | '/privacy'
     | '/profile'
     | '/quizzes'
     | '/settings'
@@ -394,6 +406,7 @@ export interface RootRouteChildren {
   CoursesRoute: typeof CoursesRoute
   GigsRoute: typeof GigsRoute
   MessagesRoute: typeof MessagesRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   QuizzesRoute: typeof QuizzesRoute
   SettingsRoute: typeof SettingsRoute
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/messages': {
@@ -674,6 +694,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesRoute: CoursesRoute,
   GigsRoute: GigsRoute,
   MessagesRoute: MessagesRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   QuizzesRoute: QuizzesRoute,
   SettingsRoute: SettingsRoute,

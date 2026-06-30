@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { AdminCoinLabel, AdminPriceLabel } from "@/components/price-coin-badges";
 import {
   listEvents, createEvent, deleteEvent,
   listCommunities, type DbEvent,
@@ -76,12 +77,12 @@ function AdminEvents() {
           <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location"
                  className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Price (₹) · 0 = Free</span>
+            <AdminPriceLabel kind="event" />
             <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)}
                    className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">Coins reward (on attend)</span>
+            <AdminCoinLabel kind="event" />
             <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)}
                    className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]" />
           </label>

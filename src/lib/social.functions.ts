@@ -1,4 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
+import {
+  DEMO_FOLLOW_REQUESTS,
+  DEMO_MESSAGE_THREADS,
+  DEMO_QUIZZES,
+  DEMO_THREADS,
+  isDemoThreadId,
+  withDemoFallback,
+} from "./demo-data";
 
 const rid = (p: string) => `${p}_` + Math.random().toString(36).slice(2, 10);
 
@@ -110,7 +118,7 @@ export const listIncomingRequests = createServerFn({ method: "POST" })
       WHERE target_id = ${me} AND status = 'pending'
       ORDER BY created_at DESC LIMIT 100
     `) as { id: string; requesterId: string; createdAt: string }[];
-    return rows;
+    return withDemoFallback(rows, DEMO_FOLLOW_REQUESTS);
   });
 
 export const listFollowing = createServerFn({ method: "POST" })
@@ -174,13 +182,24 @@ export const listThreads = createServerFn({ method: "POST" })
       WHERE t.user_a = ${me} OR t.user_b = ${me}
       ORDER BY t.last_message_at DESC
     `) as { id: string; otherId: string; lastMessageAt: string; preview: string | null }[];
-    return rows;
+    return withDemoFallback(rows, DEMO_THREADS);
   });
 
 export const listMessages = createServerFn({ method: "POST" })
   .inputValidator((d: { meId: string; threadId: string }) => d)
   .handler(async ({ data }) => {
     const me = clean(data.meId);
+    if (isDemoThreadId(data.threadId)) {
+      const demo = DEMO_MESSAGE_THREADS[data.threadId];
+      if (!demo) throw new Error("Thread not found");
+      return {
+        otherId: demo.otherId,
+        messages: demo.messages.map((m) => ({
+          ...m,
+          senderId: m.senderId === "SP-YOU" ? me : m.senderId,
+        })),
+      };
+    }
     const s = await db();
     const t = (await s`
       SELECT user_a, user_b FROM dm_threads WHERE id = ${data.threadId} LIMIT 1
@@ -205,6 +224,9 @@ export const sendMessage = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const me = clean(data.meId);
+    if (isDemoThreadId(data.threadId)) {
+      throw new Error("This is a demo chat. Follow someone back to unlock real messaging.");
+    }
     const s = await db();
     const t = (await s`
       SELECT user_a, user_b FROM dm_threads WHERE id = ${data.threadId} LIMIT 1
@@ -286,7 +308,7 @@ export const listQuizzes = createServerFn({ method: "GET" }).handler(async () =>
            COALESCE(coins, 0)::int AS coins, created_at
     FROM quizzes ORDER BY created_at DESC
   `) as DbQuiz[];
-  return rows;
+  return withDemoFallback(rows, DEMO_QUIZZES);
 });
 
 export const createQuiz = createServerFn({ method: "POST" })

@@ -1,0 +1,66 @@
+import {
+  Atom,
+  Network,
+  Cpu,
+  Lightbulb,
+  Film,
+  ShieldCheck,
+  Workflow,
+  SquareTerminal,
+  Building2,
+  TrendingUp,
+  Layers,
+  CloudCog,
+  MousePointer2,
+  Radio,
+  Aperture,
+  BarChart3,
+  Flame,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
+
+export const COMMUNITY_ICON_MAP: Record<string, LucideIcon> = {
+  atom: Atom,
+  network: Network,
+  cpu: Cpu,
+  lightbulb: Lightbulb,
+  film: Film,
+  shield: ShieldCheck,
+  workflow: Workflow,
+  terminal: SquareTerminal,
+  building: Building2,
+  trending: TrendingUp,
+  layers: Layers,
+  cloud: CloudCog,
+  cursor: MousePointer2,
+  radio: Radio,
+  aperture: Aperture,
+  chart: BarChart3,
+  flame: Flame,
+  sparkles: Sparkles,
+};
+
+export const SLUG_ICON_KEY: Record<string, string> = {
+  ai: "atom",
+  ml: "network",
+  robotics: "cpu",
+  psychology: "lightbulb",
+  video: "film",
+  cybersec: "shield",
+  automation: "workflow",
+  programming: "terminal",
+  business: "building",
+  finance: "trending",
+  design: "layers",
+  cloud: "cloud",
+  uiux: "cursor",
+  marketing: "radio",
+  photography: "aperture",
+  data: "chart",
+  startup: "flame",
+};
+
+export function iconFromKey(key: string): LucideIcon {
+  return COMMUNITY_ICON_MAP[key] ?? Sparkles;
+}

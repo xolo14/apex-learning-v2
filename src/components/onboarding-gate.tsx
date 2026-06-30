@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createProfile, getProfileByDevice, loginProfile, type DbProfile } from "@/lib/profiles.functions";
+import { useIdentity } from "@/lib/identity";
 
 const DEVICE_KEY = "syncpedia_device_key";
 const PROFILE_CACHE = "syncpedia_profile";
@@ -57,9 +58,11 @@ export function OnboardingGate() {
   const fetchProfile = useServerFn(getProfileByDevice);
   const submitProfile = useServerFn(createProfile);
   const submitLogin = useServerFn(loginProfile);
+  const { setUniqueId } = useIdentity();
 
   function saveProfile(p: DbProfile) {
     localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
+    setUniqueId(p.unique_id);
     setProfile(p);
   }
 
@@ -77,7 +80,9 @@ export function OnboardingGate() {
     const cached = localStorage.getItem(PROFILE_CACHE);
     if (cached) {
       try {
-        setProfile(JSON.parse(cached));
+        const p = JSON.parse(cached) as DbProfile;
+        setUniqueId(p.unique_id);
+        setProfile(p);
         setReady(true);
         return;
       } catch {}
@@ -87,6 +92,7 @@ export function OnboardingGate() {
       .then((p) => {
         if (p) {
           localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
+          setUniqueId(p.unique_id);
           setProfile(p);
         }
       })
@@ -162,16 +168,21 @@ export function OnboardingGate() {
               department: form.department,
             };
       const result = await submitProfile({ data: payload });
-      if (!isProfile(result) && result.status === "existing") {
+      if (result.status === "existing") {
         goToLogin();
         return;
       }
-      if (!isProfile(result)) {
-        setError("Something went wrong. Please try again.");
+      if (result.status === "created") {
+        try { localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests)); } catch {}
+        saveProfile(result.profile);
         return;
       }
-      try { localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests)); } catch {}
-      saveProfile(result);
+      if (isProfile(result)) {
+        try { localStorage.setItem(INTERESTS_KEY, JSON.stringify(interests)); } catch {}
+        saveProfile(result);
+        return;
+      }
+      setError("Something went wrong. Please try again.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save");
     } finally {

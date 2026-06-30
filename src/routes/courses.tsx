@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Clock, MapPin, Briefcase, GraduationCap, ArrowUpRight, ExternalLink } from "lucide-react";
-import goldCoin from "@/assets/syncpedia-gold-coin.png";
+import { PriceCoinBadges, RewardLegend } from "@/components/price-coin-badges";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listCourses, listInternshipPostings } from "@/lib/communities.functions";
 import { pageHead } from "@/lib/seo";
@@ -115,6 +115,7 @@ function LearnPage() {
           }}
         >
           <section className="w-1/2 shrink-0 px-5">
+            <RewardLegend kind="course" className="mb-3 px-1" />
             {courses.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {coursesQ.isLoading ? "Loading…" : "No courses yet."}
@@ -131,19 +132,16 @@ function LearnPage() {
                 )}
                 <div className="p-4">
                   <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
-                    c/{c.community_slug} · {c.price > 0 ? `₹${c.price}` : "Free"}
+                    c/{c.community_slug}
                   </div>
                   <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{c.title}</h3>
                   {c.description ? (
                     <p className="mt-1 line-clamp-2 text-[12.5px] text-ink-muted">{c.description}</p>
                   ) : null}
-                  <div className="mt-3 flex items-center justify-between text-[12px] text-ink-muted">
-                    {c.coins > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 text-orange">
-                        <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-                        +{c.coins}
-                      </span>
-                    ) : <span />}
+                  <div className="mt-3">
+                    <PriceCoinBadges kind="course" amount={c.price} coins={c.coins} />
+                  </div>
+                  <div className="mt-3 flex justify-end text-[12px] text-ink-muted">
                     {c.url ? (
                       <a href={c.url} target="_blank" rel="noreferrer"
                          className="inline-flex items-center gap-1.5 rounded-full bg-orange px-3.5 py-1.5 text-[12px] font-medium text-white active:scale-95">
@@ -157,6 +155,7 @@ function LearnPage() {
           </section>
 
           <section className="w-1/2 shrink-0 px-5">
+            <RewardLegend kind="internship" className="mb-3 px-1" />
             {internships.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {internshipsQ.isLoading ? "Loading…" : "No internships yet."}
@@ -174,11 +173,10 @@ function LearnPage() {
                       <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{i.role}</h3>
                       <p className="text-[13px] text-ink-muted">{i.company}</p>
                     </div>
-                    {i.stipend > 0 ? (
-                      <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-[11px] font-medium text-foreground">
-                        ₹{i.stipend}/mo
-                      </span>
-                    ) : null}
+                  </div>
+
+                  <div className="mt-3">
+                    <PriceCoinBadges kind="internship" amount={i.stipend} coins={i.coins} />
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-ink-muted">
@@ -192,12 +190,6 @@ function LearnPage() {
                       <span className="inline-flex items-center gap-1.5">
                         <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" />
                         {i.duration}
-                      </span>
-                    ) : null}
-                    {i.coins > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 text-orange">
-                        <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-                        +{i.coins}
                       </span>
                     ) : null}
                   </div>

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { AdminCoinLabel } from "@/components/price-coin-badges";
 import { listQuizzes, createQuiz, deleteQuiz } from "@/lib/social.functions";
 import { listCommunities } from "@/lib/communities.functions";
 
@@ -84,7 +85,9 @@ function AdminQuizzes() {
           </Field>
           <Field label="Questions count"><input type="number" min={0} value={count} onChange={(e) => setCount(e.target.value)} className="input" /></Field>
           <Field label="Minutes"><input type="number" min={0} value={mins} onChange={(e) => setMins(e.target.value)} className="input" /></Field>
-          <Field label="Coins reward (on complete)"><input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)} className="input" /></Field>
+          <Field label={<AdminCoinLabel kind="quiz" />}>
+            <input type="number" min={0} value={coins} onChange={(e) => setCoins(e.target.value)} className="input" />
+          </Field>
 
           <div className="md:col-span-2">
             <button
@@ -133,10 +136,14 @@ function AdminQuizzes() {
   );
 }
 
-function Field({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
+function Field({ label, children, full }: { label: React.ReactNode; children: React.ReactNode; full?: boolean }) {
   return (
     <label className={"block " + (full ? "md:col-span-2" : "")}>
-      <span className="block text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}</span>
+      {typeof label === "string" ? (
+        <span className="block text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}</span>
+      ) : (
+        <span className="block">{label}</span>
+      )}
       <div className="mt-1">{children}</div>
     </label>
   );
