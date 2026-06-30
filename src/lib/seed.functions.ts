@@ -1,9 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { execFile } from "node:child_process";
+import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
-import { promisify } from "node:util";
-
-const execFileAsync = promisify(execFile);
 
 export const runProductionSeed = createServerFn({ method: "POST" }).handler(async () => {
   const { requireAdmin } = await import("./security.server");
@@ -14,11 +11,13 @@ export const runProductionSeed = createServerFn({ method: "POST" }).handler(asyn
   }
 
   const script = resolve(process.cwd(), "scripts/seed-production-data.mjs");
-  const { stdout, stderr } = await execFileAsync("node", [script], {
-    cwd: process.cwd(),
-    env: process.env,
-    maxBuffer: 10 * 1024 * 1024,
-  });
+  const mod = (await import(pathToFileURL(script).href)) as {
+    runSeed: () => Promise<Record<string, number>>;
+  };
+  if (typeof mod.runSeed !== "function") {
+    throw new Error("Seed script missing on server — run git pull on the VPS.");
+  }
 
-  return { ok: true as const, stdout: stdout.trim(), stderr: stderr.trim() };
+  const result = await mod.runSeed();
+  return { ok: true as const, result, stdout: JSON.stringify(result, null, 2) };
 });

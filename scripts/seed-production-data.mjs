@@ -662,6 +662,12 @@ async function seedFeatureFlags() {
 }
 
 async function main() {
+  const result = await runSeed();
+  console.log("Done.");
+  console.log(result);
+}
+
+export async function runSeed() {
   console.log("Syncpedia production seed — starting…");
   await ensureSchema();
   const profiles = await seedProfiles();
@@ -673,8 +679,7 @@ async function main() {
   const quizzes = await seedQuizzes();
   const posts = await seedPosts();
   await seedFeatureFlags();
-  console.log("Done.");
-  console.log({
+  return {
     profiles,
     communities,
     events,
@@ -683,10 +688,13 @@ async function main() {
     courses,
     quizzes,
     posts,
-  });
+  };
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const isDirectRun = process.argv[1]?.endsWith("seed-production-data.mjs");
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

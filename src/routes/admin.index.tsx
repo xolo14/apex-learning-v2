@@ -27,7 +27,7 @@ function AdminOverview() {
   const seedM = useMutation({
     mutationFn: () => seed(),
     onSuccess: (res) => {
-      setSeedLog(res.stdout || "Seed completed.");
+      setSeedLog(res.stdout || JSON.stringify(res.result, null, 2));
       qc.invalidateQueries({ queryKey: ["admin"] });
     },
     onError: (err) => {
