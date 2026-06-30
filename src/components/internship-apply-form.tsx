@@ -1,5 +1,7 @@
 import { FileText, Loader2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { internshipDefaultsFromProfile } from "@/lib/profile-form-defaults";
+import { readCachedProfile } from "@/lib/session";
 
 export type InternshipApplyValues = {
   applicantName: string;
@@ -19,8 +21,6 @@ type Props = {
   onClose: () => void;
   roleTitle: string;
   company: string;
-  defaultName?: string;
-  defaultEmail?: string;
   submitting?: boolean;
   onSubmit: (values: InternshipApplyValues) => void;
 };
@@ -32,13 +32,11 @@ export function InternshipApplyForm({
   onClose,
   roleTitle,
   company,
-  defaultName = "",
-  defaultEmail = "",
   submitting = false,
   onSubmit,
 }: Props) {
-  const [name, setName] = useState(defaultName);
-  const [email, setEmail] = useState(defaultEmail);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [college, setCollege] = useState("");
   const [year, setYear] = useState("");
@@ -48,13 +46,32 @@ export function InternshipApplyForm({
   const [resumeName, setResumeName] = useState("");
   const [resumeData, setResumeData] = useState("");
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [profileFilled, setProfileFilled] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setName(defaultName);
-      setEmail(defaultEmail);
-    }
-  }, [open, defaultName, defaultEmail]);
+    if (!open) return;
+
+    const fromProfile = internshipDefaultsFromProfile(readCachedProfile());
+    setName(fromProfile.applicantName);
+    setEmail(fromProfile.email);
+    setPhone(fromProfile.phone);
+    setCollege(fromProfile.college);
+    setYear(fromProfile.year);
+    setBranch(fromProfile.branch);
+    setLinkedin("");
+    setMessage("");
+    setResumeName("");
+    setResumeData("");
+    setResumeError(null);
+    setProfileFilled(
+      Boolean(
+        fromProfile.applicantName ||
+          fromProfile.email ||
+          fromProfile.phone ||
+          fromProfile.college,
+      ),
+    );
+  }, [open]);
 
   if (!open) return null;
 
@@ -132,6 +149,14 @@ export function InternshipApplyForm({
           </button>
         </div>
 
+        {profileFilled ? (
+          <p className="mb-4 rounded-xl border border-forest/20 bg-forest/5 px-3 py-2 text-[12px] leading-relaxed text-forest">
+            Filled from your Syncpedia profile — check details below, then add your pitch and resume.
+          </p>
+        ) : null}
+
+        <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-ink-muted">Your details</p>
+
         <label className="block text-[12px] font-medium text-ink-muted">
           Full name *
           <input required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
@@ -167,6 +192,8 @@ export function InternshipApplyForm({
             <input required value={branch} onChange={(e) => setBranch(e.target.value)} className={inputClass} placeholder="CSE" />
           </label>
         </div>
+
+        <p className="mt-5 text-[11px] font-medium uppercase tracking-wider text-ink-muted">Application</p>
 
         <label className="mt-3 block text-[12px] font-medium text-ink-muted">
           LinkedIn (optional)

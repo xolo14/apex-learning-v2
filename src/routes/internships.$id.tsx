@@ -10,7 +10,7 @@ import {
   MapPin,
   Share2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { InternshipApplyForm, type InternshipApplyValues } from "@/components/internship-apply-form";
 import { MobileShell } from "@/components/mobile-shell";
@@ -23,21 +23,6 @@ import { useIdentity } from "@/lib/identity";
 import { pageHead } from "@/lib/seo";
 
 const DEVICE_KEY = "syncpedia_device_key";
-
-function profileDefaults() {
-  if (typeof window === "undefined") return { name: "", email: "" };
-  try {
-    const raw = localStorage.getItem("syncpedia_profile");
-    if (!raw) return { name: "", email: "" };
-    const p = JSON.parse(raw);
-    return {
-      name: typeof p?.name === "string" ? p.name : "",
-      email: typeof p?.gmail === "string" ? p.gmail : "",
-    };
-  } catch {
-    return { name: "", email: "" };
-  }
-}
 
 export const Route = createFileRoute("/internships/$id")({
   head: ({ params }) =>
@@ -58,7 +43,6 @@ function InternshipDetailPage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const identity = useIdentity();
-  const defaults = useMemo(() => profileDefaults(), []);
   const [toast, setToast] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
@@ -256,8 +240,6 @@ function InternshipDetailPage() {
         onClose={() => setFormOpen(false)}
         roleTitle={job.role}
         company={job.company}
-        defaultName={defaults.name}
-        defaultEmail={defaults.email}
         submitting={submitM.isPending}
         onSubmit={(values) => submitM.mutate(values)}
       />
