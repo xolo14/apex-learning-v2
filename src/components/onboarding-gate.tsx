@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -41,12 +41,8 @@ type Step = 0 | 1 | 2;
 type Interest = { id: string; label: string; emoji: string; gradient: string };
 
 export function OnboardingGate() {
-  const [ready, setReady] = useState(() => {
-    if (typeof window === "undefined") return false;
-    if (isSignedOut()) return true;
-    return readCachedProfile() != null;
-  });
-  const [profile, setProfile] = useState<DbProfile | null>(() => readCachedProfile());
+  const [mounted, setMounted] = useState(false);
+  const [profile, setProfile] = useState<DbProfile | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>("welcome");
@@ -71,6 +67,12 @@ export function OnboardingGate() {
   const submitLogin = useServerFn(loginProfile);
   const submitGoogle = useServerFn(authWithGoogle);
   const { setUniqueId, applyAvatar } = useIdentity();
+  const fetchProfileRef = useRef(fetchProfile);
+  fetchProfileRef.current = fetchProfile;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function saveProfile(p: DbProfile) {
     clearSignedOutFlag();
@@ -104,75 +106,51 @@ export function OnboardingGate() {
         branch: "B.Tech",
         department: "",
       });
-      setReady(true);
     };
     window.addEventListener(SIGNED_OUT_EVENT, onSignedOut);
     return () => window.removeEventListener(SIGNED_OUT_EVENT, onSignedOut);
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    if (!mounted) return;
 
     if (isSignedOut()) {
       setProfile(null);
-      setReady(true);
       return;
     }
 
-    const cached = localStorage.getItem(PROFILE_CACHE);
+    const cached = readCachedProfile();
     if (cached) {
-      try {
-        const p = JSON.parse(cached) as DbProfile;
-        if (!cancelled) {
-          const prefs = avatarPrefsFromProfile(p);
-          setUniqueId(p.unique_id);
-          applyAvatar(prefs.icon, prefs.color);
-          setProfile(p);
-          setReady(true);
-        }
-        return;
-      } catch {
-        /* fall through to server lookup */
-      }
+      setUniqueId(cached.unique_id);
+      const prefs = avatarPrefsFromProfile(cached);
+      applyAvatar(prefs.icon, prefs.color);
+      setProfile(cached);
+      return;
     }
 
+    let alive = true;
     const key = getOrCreateDeviceKey();
-    fetchProfile({ data: { deviceKey: key } })
+    fetchProfileRef
+      .current({ data: { deviceKey: key } })
       .then((p) => {
-        if (cancelled) return;
-        if (p) {
-          localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
-          setUniqueId(p.unique_id);
-          const prefs = avatarPrefsFromProfile(p);
-          applyAvatar(prefs.icon, prefs.color);
-          setProfile(p);
-        }
+        if (!alive || !p || isSignedOut()) return;
+        localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
+        setUniqueId(p.unique_id);
+        const prefs = avatarPrefsFromProfile(p);
+        applyAvatar(prefs.icon, prefs.color);
+        setProfile(p);
       })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setReady(true);
-      });
+      .catch(() => {});
 
     return () => {
-      cancelled = true;
+      alive = false;
     };
-    // Run once on mount — identity helpers change every render and must not retrigger this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchProfile]);
+  }, [mounted]);
+
+  if (!mounted) return null;
 
   if (profile) return null;
-
-  if (!ready && !isSignedOut()) {
-    return (
-      <div
-        className="fixed inset-0 z-[100] grid place-items-center bg-[#0c2420] text-white/70"
-        aria-busy
-        aria-label="Loading"
-      >
-        <p className="text-sm">Loading…</p>
-      </div>
-    );
-  }
 
   const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v as never }));
 
