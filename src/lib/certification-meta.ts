@@ -31,7 +31,7 @@ export function normalizeClassLink(
 
   if (!url) return null;
 
-  if (!title || title === url || /^https?:\/\//i.test(title)) {
+  if (!title || title === url || /^https?:\/\//i.test(title) || /^all classes$/i.test(title)) {
     title = index > 0 ? `Class ${index + 1}` : "Class 1";
   }
 
@@ -110,18 +110,11 @@ export function serializeClassLinks(links: ClassLink[]): string {
   return JSON.stringify(links.slice(0, 50));
 }
 
-/** Same-origin proxy for external MP4 hosts (avoids hotlink / player quirks). */
+/** Direct MP4 URLs play in the browser; proxy only as fallback from the player. */
 export function proxiedVideoUrl(raw: string): string | null {
   const url = extractMediaUrl(raw);
   if (!url || !isDirectVideo(url)) return null;
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, "");
-    const allowed = ["lmsclasses.com", "syncpedia.in", "app.syncpedia.in"];
-    if (!allowed.includes(host)) return url;
-    return `/api/public/class-video?src=${encodeURIComponent(url)}`;
-  } catch {
-    return url;
-  }
+  return `/api/public/class-video?src=${encodeURIComponent(url)}`;
 }
 
 /** YouTube / Vimeo / direct video file → embeddable URL, else null. */
@@ -129,7 +122,7 @@ export function videoEmbedUrl(raw: string): string | null {
   const url = extractMediaUrl(raw);
   if (!url) return null;
 
-  if (/\.(mp4|webm|ogg|m3u8)(\?|#|$)/i.test(url)) return proxiedVideoUrl(url) ?? url;
+  if (/\.(mp4|webm|ogg|m3u8)(\?|#|$)/i.test(url)) return url;
 
   try {
     const u = new URL(url);

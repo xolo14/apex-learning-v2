@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Pencil, Plus, Trash2, X } from "lucide-react";
+import { Pencil, Save, Trash2, X } from "lucide-react";
 import { AdminCoinLabel, AdminPriceLabel } from "@/components/price-coin-badges";
 import {
   formatClassLinksForAdmin,
@@ -141,8 +141,22 @@ function AdminCertifications() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  const canSave = Boolean(form.title.trim() && form.slug);
+  const isSaving = mCreate.isPending || mUpdate.isPending;
+  const classCount = parseClassLinksFromAdmin(form.classLinksText).length;
+
+  function handleSave() {
+    if (!canSave || isSaving) return;
+    const data = payloadFromForm(form);
+    if (editingId) {
+      mUpdate.mutate({ data: { id: editingId, ...data } }, { onSuccess: resetForm });
+    } else {
+      mCreate.mutate({ data }, { onSuccess: resetForm });
+    }
+  }
+
   return (
-    <div>
+    <div className="pb-28">
       <header>
         <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">Certifications</p>
         <h1 className="mt-1 font-serif text-[34px] leading-[1.05] tracking-tight">
@@ -173,13 +187,7 @@ function AdminCertifications() {
           className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!form.title.trim() || !form.slug) return;
-            const data = payloadFromForm(form);
-            if (editingId) {
-              mUpdate.mutate({ data: { id: editingId, ...data } }, { onSuccess: resetForm });
-            } else {
-              mCreate.mutate({ data }, { onSuccess: resetForm });
-            }
+            handleSave();
           }}
         >
           <input
@@ -307,16 +315,56 @@ function AdminCertifications() {
             className="md:col-span-2 rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
           />
 
-          <button
-            type="submit"
-            disabled={mCreate.isPending || mUpdate.isPending}
-            className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-[13px] text-background disabled:opacity-50"
-          >
-            <Plus className="h-4 w-4" />
-            {editingId ? "Save changes" : "Add certification"}
-          </button>
+          <div className="md:col-span-2 rounded-xl border border-dashed border-hairline bg-surface/40 p-4">
+            <p className="text-[12px] text-ink-muted">
+              {canSave ? (
+                <>
+                  Ready to save
+                  {classCount > 0 ? ` · ${classCount} class link${classCount === 1 ? "" : "s"}` : ""}
+                  {form.imageUrl.trim() ? " · cover image set" : ""}
+                </>
+              ) : (
+                <>Add a title and community to enable save.</>
+              )}
+            </p>
+            <button
+              type="submit"
+              disabled={!canSave || isSaving}
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange px-5 py-3 text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? "Saving…" : editingId ? "Save changes" : "Save certification"}
+            </button>
+          </div>
         </form>
       </section>
+
+      {/* Sticky save — stays visible while scrolling the long form */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-background/95 px-4 py-3 backdrop-blur md:left-60">
+        <div className="mx-auto flex max-w-[calc(1400px-15rem)] items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-medium">
+              {form.title.trim() || (editingId ? "Edit certification" : "New certification")}
+            </p>
+            <p className="truncate text-[11px] text-ink-muted">
+              {canSave
+                ? editingId
+                  ? "Tap save to update this program"
+                  : "Tap save to publish this program"
+                : "Title and community required"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSave || isSaving}
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-orange px-5 py-2.5 text-[14px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
 
       <section className="mt-6 rounded-2xl border border-hairline">
         <header className="border-b border-hairline px-5 py-3">

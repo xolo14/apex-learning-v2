@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const ALLOWED_HOSTS = new Set(["lmsclasses.com", "syncpedia.in", "app.syncpedia.in"]);
+const ALLOWED_HOSTS = new Set([
+  "lmsclasses.com",
+  "syncpedia.in",
+  "app.syncpedia.in",
+  "hostinger.com",
+]);
 
 function isAllowedVideoUrl(raw: string): URL | null {
   try {
@@ -27,7 +32,11 @@ export const Route = createFileRoute("/api/public/class-video")({
 
         const range = request.headers.get("range");
         const upstream = await fetch(target.toString(), {
-          headers: range ? { Range: range } : undefined,
+          redirect: "follow",
+          headers: {
+            ...(range ? { Range: range } : {}),
+            "User-Agent": "Syncpedia-Classroom/1.0",
+          },
         });
 
         if (!upstream.ok && upstream.status !== 206) {

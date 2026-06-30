@@ -123,7 +123,7 @@ function CertificationDetailPage() {
             </Link>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[14px] font-semibold text-white">{course.title}</p>
-              <p className="truncate text-[11px] text-[#d4a853]">Classroom unlocked</p>
+              <p className="truncate text-[11px] text-white/50">Your classroom</p>
             </div>
             <button
               type="button"
