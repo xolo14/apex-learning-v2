@@ -71,6 +71,11 @@ export function GoogleContinueButton({
 
   if (!ready || !clientId) return null;
 
+  const useRedirect =
+    typeof window !== "undefined" &&
+    (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768);
+  const redirectUri = typeof window !== "undefined" ? window.location.origin : undefined;
+
   return (
     <div className={disabled ? "pointer-events-none opacity-50" : ""}>
       <GoogleLogin
@@ -80,6 +85,8 @@ export function GoogleContinueButton({
         }}
         onError={onError}
         useOneTap={false}
+        ux_mode={useRedirect ? "redirect" : "popup"}
+        redirect_uri={useRedirect ? redirectUri : undefined}
         type="standard"
         theme="outline"
         size="large"
