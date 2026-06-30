@@ -311,6 +311,24 @@ export const listQuizzes = createServerFn({ method: "GET" }).handler(async () =>
   return withDemoFallback(rows, DEMO_QUIZZES);
 });
 
+export const getQuiz = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => {
+    if (!d.id?.trim()) throw new Error("id required");
+    return { id: d.id.trim().slice(0, 80) };
+  })
+  .handler(async ({ data }) => {
+    const s = await db();
+    const rows = (await s`
+      SELECT id, community_slug, title, description,
+             COALESCE(questions_count, 0)::int AS questions_count,
+             COALESCE(minutes, 0)::int AS minutes,
+             COALESCE(coins, 0)::int AS coins, created_at
+      FROM quizzes WHERE id = ${data.id} LIMIT 1
+    `) as DbQuiz[];
+    if (rows[0]) return rows[0];
+    return DEMO_QUIZZES.find((q) => q.id === data.id) ?? null;
+  });
+
 export const createQuiz = createServerFn({ method: "POST" })
   .inputValidator((d: {
     title: string;

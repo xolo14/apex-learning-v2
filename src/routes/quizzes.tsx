@@ -161,13 +161,18 @@ function EarnPage() {
               </p>
             )}
             {quizzes.map((q) => (
-              <article key={q.id} className="mb-3 rounded-[20px] border border-hairline bg-background p-4">
+              <Link
+                key={q.id}
+                to="/quizzes/$id"
+                params={{ id: q.id }}
+                className="mb-3 block rounded-[20px] border border-hairline bg-background p-4 active:scale-[0.99] transition-transform"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
                       {q.community_slug ? `c/${q.community_slug}` : "Syncpedia"}
                     </div>
-                    <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{q.title}</h3>
+                    <h3 className="mt-1.5 text-[17px] font-semibold tracking-tight text-foreground">{q.title}</h3>
                   </div>
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-forest text-white">
                     <Gem strokeWidth={1.75} className="h-[18px] w-[18px]" />
@@ -182,9 +187,15 @@ function EarnPage() {
                       <Clock strokeWidth={1.75} className="h-[14px] w-[14px]" /> {q.minutes}m
                     </span>
                   </span>
+                  <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-forest">
+                    Open
+                    <ArrowUpRight strokeWidth={2} className="h-3.5 w-3.5" />
+                  </span>
+                </div>
+                <div className="mt-2">
                   <PriceCoinBadges kind="quiz" coins={q.coins} />
                 </div>
-              </article>
+              </Link>
             ))}
           </section>
 
@@ -195,15 +206,26 @@ function EarnPage() {
               </p>
             )}
             {gigs.map((g) => (
-              <article key={g.id} className="mb-3 overflow-hidden rounded-[20px] border border-hairline bg-background">
-                {g.image_url ? <img src={g.image_url} alt="" className="h-28 w-full object-cover" /> : null}
+              <Link
+                key={g.id}
+                to="/gigs/$id"
+                params={{ id: g.id }}
+                className="mb-3 block overflow-hidden rounded-[20px] border border-hairline bg-background active:scale-[0.99] transition-transform"
+              >
+                {g.image_url ? (
+                  <img src={g.image_url} alt="" className="h-32 w-full object-cover" />
+                ) : (
+                  <div className="flex h-28 items-center justify-center bg-orange/90 text-white">
+                    <Wallet strokeWidth={1.5} className="h-10 w-10 opacity-90" />
+                  </div>
+                )}
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[11px] uppercase tracking-[0.12em] text-ink-muted">
                         {g.community_slug ? `c/${g.community_slug} · ` : ""}{g.poster || "—"}
                       </div>
-                      <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{g.title}</h3>
+                      <h3 className="mt-1.5 text-[17px] font-semibold tracking-tight text-foreground">{g.title}</h3>
                     </div>
                   </div>
                   <div className="mt-3">
@@ -223,17 +245,14 @@ function EarnPage() {
                       </span>
                     ) : null}
                   </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <button className="text-[12px] font-medium text-ink-muted underline-offset-4 hover:underline">
-                      View brief
-                    </button>
-                    <button className="inline-flex items-center gap-1.5 rounded-full bg-orange px-3.5 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                      Apply
-                      <ArrowUpRight strokeWidth={2} className="h-[12px] w-[12px]" />
-                    </button>
+                  <div className="mt-4 flex justify-end">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-orange px-4 py-2 text-[12px] font-semibold text-white">
+                      View gig
+                      <ArrowUpRight strokeWidth={2} className="h-3.5 w-3.5" />
+                    </span>
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </section>
         </div>

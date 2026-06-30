@@ -104,7 +104,11 @@ function ApplicantRow({ r, open, onToggle, onAccept, onReject, onDelete }: {
             {r.applicant_name} · <span className="text-ink-muted">{r.role}</span>
           </p>
           <p className="text-[11px] text-ink-muted truncate">
-            {r.email} · {r.community_slug ? `/${r.community_slug}` : "no community"} · {new Date(r.created_at).toLocaleString()}
+            {r.email}
+            {r.phone ? ` · ${r.phone}` : ""}
+            {r.college ? ` · ${r.college}` : ""}
+            {r.community_slug ? ` · c/${r.community_slug}` : ""}
+            {" · "}{new Date(r.created_at).toLocaleString()}
           </p>
         </div>
         <span className={"rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider " + badge}>
@@ -127,8 +131,23 @@ function ApplicantRow({ r, open, onToggle, onAccept, onReject, onDelete }: {
         </button>
       </div>
       {open && (
-        <div className="mt-3 rounded-lg bg-surface p-4 text-[13px]">
-          <p className="whitespace-pre-wrap">{r.message || "No message."}</p>
+        <div className="mt-3 rounded-lg bg-surface p-4 text-[13px] space-y-2">
+          <p><span className="text-ink-muted">Year / Branch:</span> {r.year || "—"} · {r.branch || "—"}</p>
+          {r.linkedin ? (
+            <p><span className="text-ink-muted">LinkedIn:</span>{" "}
+              <a href={r.linkedin} target="_blank" rel="noreferrer" className="underline">{r.linkedin}</a>
+            </p>
+          ) : null}
+          <p className="whitespace-pre-wrap">{r.message || "No cover letter."}</p>
+          {r.resume_data ? (
+            <a
+              href={r.resume_data}
+              download={r.resume_name || "resume.pdf"}
+              className="inline-flex items-center gap-1 rounded-full bg-foreground px-3 py-1.5 text-[12px] font-medium text-background"
+            >
+              Download resume{r.resume_name ? `: ${r.resume_name}` : ""}
+            </a>
+          ) : null}
           <a href={`mailto:${r.email}`} className="mt-2 inline-flex items-center gap-1 text-[12px] underline">
             <Mail className="h-3 w-3" /> {r.email}
           </a>

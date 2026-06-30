@@ -40,11 +40,20 @@ export type DbCourse = {
 
 export type DbInternship = {
   id: string;
+  posting_id: string | null;
   applicant_name: string;
   email: string;
+  phone: string;
+  college: string;
+  year: string;
+  branch: string;
+  linkedin: string;
   role: string;
   community_slug: string | null;
   message: string;
+  resume_name: string;
+  resume_data: string;
+  user_unique_id: string | null;
   status: "pending" | "accepted" | "rejected";
   created_at: string;
 };
@@ -197,6 +206,230 @@ export const listCourses = createServerFn({ method: "GET" }).handler(async () =>
   return withDemoFallback(rows, DEMO_COURSES);
 });
 
+export const getCourse = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => {
+    if (!d.id?.trim()) throw new Error("id required");
+    return { id: d.id.trim().slice(0, 80) };
+  })
+  .handler(async ({ data }) => {
+    const s = await db();
+    const rows = (await s`
+      SELECT id, community_slug, title, description, url,
+             COALESCE(price, 0)::float AS price,
+             COALESCE(coins, 0)::int AS coins,
+             COALESCE(image_url, '') AS image_url,
+             created_at
+      FROM courses WHERE id = ${data.id} LIMIT 1
+    `) as DbCourse[];
+    if (rows[0]) return rows[0];
+    return DEMO_COURSES.find((c) => c.id === data.id) ?? null;
+  });
+
+export type CourseEnrollment = {
+  id: string;
+  course_id: string;
+  user_unique_id: string;
+  status: "confirmed" | "pending_payment";
+  price_snapshot: number;
+  coins_credited: number;
+  created_at: string;
+};
+
+async function resolveCourse(s: Awaited<ReturnType<typeof db>>, courseId: string): Promise<DbCourse | null> {
+  const rows = (await s`
+    SELECT id, community_slug, title, description, url,
+           COALESCE(price, 0)::float AS price,
+           COALESCE(coins, 0)::int AS coins,
+           COALESCE(image_url, '') AS image_url,
+           created_at
+    FROM courses WHERE id = ${courseId} LIMIT 1
+  `) as DbCourse[];
+  if (rows[0]) return rows[0];
+  return DEMO_COURSES.find((c) => c.id === courseId) ?? null;
+}
+
+export const getMyCourseEnrollment = createServerFn({ method: "POST" })
+  .inputValidator((d: { courseId: string; deviceKey: string }) => d)
+  .handler(async ({ data }) => {
+    const { isValidDeviceKey } = await import("./security.server");
+    if (!isValidDeviceKey(data.deviceKey)) return null;
+    const s = await db();
+    const profiles = (await s`
+      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string }[];
+    const uid = profiles[0]?.unique_id;
+    if (!uid) return null;
+    const rows = (await s`
+      SELECT id, course_id, user_unique_id, status, price_snapshot, coins_credited, created_at
+      FROM course_enrollments
+      WHERE course_id = ${data.courseId} AND user_unique_id = ${uid}
+      LIMIT 1
+    `) as CourseEnrollment[];
+    return rows[0] ?? null;
+  });
+
+export const enrollInCourse = createServerFn({ method: "POST" })
+  .inputValidator((d: { courseId: string; deviceKey: string }) => {
+    if (!d.courseId?.trim()) throw new Error("courseId required");
+    return { courseId: d.courseId.trim().slice(0, 80), deviceKey: d.deviceKey };
+  })
+  .handler(async ({ data }) => {
+    const { isValidDeviceKey, rateLimit } = await import("./security.server");
+    if (!isValidDeviceKey(data.deviceKey)) throw new Error("Invalid session");
+    rateLimit(`course-enroll:${data.deviceKey}`, 8, 60_000);
+
+    const s = await db();
+    const profiles = (await s`
+      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string }[];
+    const profile = profiles[0];
+    if (!profile) throw new Error("Create your Syncpedia profile before enrolling.");
+
+    const course = await resolveCourse(s, data.courseId);
+    if (!course) throw new Error("Course not found.");
+
+    const existing = (await s`
+      SELECT id, status, price_snapshot, coins_credited, created_at
+      FROM course_enrollments
+      WHERE course_id = ${data.courseId} AND user_unique_id = ${profile.unique_id}
+      LIMIT 1
+    `) as CourseEnrollment[];
+    if (existing[0]) {
+      return {
+        alreadyEnrolled: true as const,
+        enrollment: existing[0],
+        message: "You are already enrolled in this course.",
+      };
+    }
+
+    const price = Math.max(0, Math.floor(Number(course.price) || 0));
+    const coinReward = Math.min(Math.max(0, Math.floor(Number(course.coins) || 0)), 10_000);
+    const regId = `crsreg_${data.courseId.slice(0, 16)}_${profile.unique_id.replace(/[^A-Z0-9]/gi, "").slice(0, 12)}`;
+
+    if (price > 0) {
+      await s`
+        INSERT INTO course_enrollments (id, course_id, user_unique_id, device_key, price_snapshot, status, coins_credited)
+        VALUES (${regId}, ${data.courseId}, ${profile.unique_id}, ${data.deviceKey}, ${price}, 'pending_payment', 0)
+      `;
+      return {
+        alreadyEnrolled: false as const,
+        enrollment: {
+          id: regId,
+          course_id: data.courseId,
+          user_unique_id: profile.unique_id,
+          status: "pending_payment" as const,
+          price_snapshot: price,
+          coins_credited: 0,
+          created_at: new Date().toISOString(),
+        },
+        message: `Pay ₹${price.toLocaleString("en-IN")} to unlock the full playlist.`,
+        coinsPending: coinReward > 0,
+        coinReward,
+      };
+    }
+
+    let coinsCredited = 0;
+    if (coinReward > 0) {
+      const actionKey = `course:${data.courseId}`;
+      const inserted = (await s`
+        INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+        VALUES (${profile.unique_id}, ${actionKey}, ${coinReward})
+        ON CONFLICT (user_unique_id, action_key) DO NOTHING
+        RETURNING amount
+      `) as { amount: number }[];
+      coinsCredited = inserted[0]?.amount ?? 0;
+    }
+
+    await s`
+      INSERT INTO course_enrollments (id, course_id, user_unique_id, device_key, price_snapshot, status, coins_credited)
+      VALUES (${regId}, ${data.courseId}, ${profile.unique_id}, ${data.deviceKey}, 0, 'confirmed', ${coinsCredited})
+    `;
+
+    return {
+      alreadyEnrolled: false as const,
+      enrollment: {
+        id: regId,
+        course_id: data.courseId,
+        user_unique_id: profile.unique_id,
+        status: "confirmed" as const,
+        price_snapshot: 0,
+        coins_credited: coinsCredited,
+        created_at: new Date().toISOString(),
+      },
+      message:
+        coinsCredited > 0
+          ? `You're in! +${coinsCredited} coins added. Open your playlist below.`
+          : "You're enrolled! Open your playlist below.",
+      coinsPending: false,
+      coinReward: coinsCredited,
+    };
+  });
+
+export const confirmCoursePayment = createServerFn({ method: "POST" })
+  .inputValidator((d: { courseId: string; deviceKey: string }) => {
+    if (!d.courseId?.trim()) throw new Error("courseId required");
+    return { courseId: d.courseId.trim().slice(0, 80), deviceKey: d.deviceKey };
+  })
+  .handler(async ({ data }) => {
+    const { isValidDeviceKey, rateLimit } = await import("./security.server");
+    if (!isValidDeviceKey(data.deviceKey)) throw new Error("Invalid session");
+    rateLimit(`course-pay:${data.deviceKey}`, 6, 60_000);
+
+    const s = await db();
+    const profiles = (await s`
+      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string }[];
+    const profile = profiles[0];
+    if (!profile) throw new Error("Profile required.");
+
+    const course = await resolveCourse(s, data.courseId);
+    if (!course) throw new Error("Course not found.");
+
+    const rows = (await s`
+      SELECT id, status, price_snapshot, coins_credited
+      FROM course_enrollments
+      WHERE course_id = ${data.courseId} AND user_unique_id = ${profile.unique_id}
+      LIMIT 1
+    `) as CourseEnrollment[];
+    const enrollment = rows[0];
+    if (!enrollment) throw new Error("Enroll first before confirming payment.");
+    if (enrollment.status === "confirmed") {
+      return { ok: true as const, message: "Playlist already unlocked.", enrollment };
+    }
+
+    const coinReward = Math.min(Math.max(0, Math.floor(Number(course.coins) || 0)), 10_000);
+    let coinsCredited = 0;
+    if (coinReward > 0) {
+      const actionKey = `course:${data.courseId}`;
+      const inserted = (await s`
+        INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+        VALUES (${profile.unique_id}, ${actionKey}, ${coinReward})
+        ON CONFLICT (user_unique_id, action_key) DO NOTHING
+        RETURNING amount
+      `) as { amount: number }[];
+      coinsCredited = inserted[0]?.amount ?? 0;
+    }
+
+    await s`
+      UPDATE course_enrollments
+      SET status = 'confirmed', coins_credited = ${coinsCredited}
+      WHERE id = ${enrollment.id}
+    `;
+
+    return {
+      ok: true as const,
+      message:
+        coinsCredited > 0
+          ? `Payment recorded. Playlist unlocked! +${coinsCredited} coins added.`
+          : "Payment recorded. Your playlist is now unlocked.",
+      enrollment: {
+        ...enrollment,
+        status: "confirmed" as const,
+        coins_credited: coinsCredited,
+      },
+    };
+  });
+
 export const createCourse = createServerFn({ method: "POST" })
   .inputValidator((d: {
     communitySlug: string;
@@ -271,7 +504,16 @@ export const deleteCourse = createServerFn({ method: "POST" })
 export const listInternships = createServerFn({ method: "GET" }).handler(async () => {
   const s = await db();
   const rows = (await s`
-    SELECT id, applicant_name, email, role, community_slug, message, status, created_at
+    SELECT id, posting_id, applicant_name, email,
+           COALESCE(phone, '') AS phone,
+           COALESCE(college, '') AS college,
+           COALESCE(year, '') AS year,
+           COALESCE(branch, '') AS branch,
+           COALESCE(linkedin, '') AS linkedin,
+           role, community_slug, message,
+           COALESCE(resume_name, '') AS resume_name,
+           COALESCE(resume_data, '') AS resume_data,
+           user_unique_id, status, created_at
     FROM internship_applications ORDER BY created_at DESC
   `) as DbInternship[];
   return rows;
@@ -552,6 +794,23 @@ export const listGigs = createServerFn({ method: "GET" }).handler(async () => {
   return withDemoFallback(rows, DEMO_GIGS);
 });
 
+export const getGig = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => {
+    if (!d.id?.trim()) throw new Error("id required");
+    return { id: d.id.trim().slice(0, 80) };
+  })
+  .handler(async ({ data }) => {
+    const s = await db();
+    const rows = (await s`
+      SELECT id, community_slug, title, poster, description, image_url, location, duration,
+             COALESCE(pay, 0)::float AS pay,
+             COALESCE(coins, 0)::int AS coins, created_at
+      FROM gigs WHERE id = ${data.id} LIMIT 1
+    `) as DbGig[];
+    if (rows[0]) return rows[0];
+    return DEMO_GIGS.find((g) => g.id === data.id) ?? null;
+  });
+
 export const createGig = createServerFn({ method: "POST" })
   .inputValidator((d: {
     title: string;
@@ -612,6 +871,148 @@ export const listInternshipPostings = createServerFn({ method: "GET" }).handler(
   `) as DbInternshipPosting[];
   return withDemoFallback(rows, DEMO_INTERNSHIP_POSTINGS);
 });
+
+export const getInternshipPosting = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => {
+    if (!d.id?.trim()) throw new Error("id required");
+    return { id: d.id.trim().slice(0, 80) };
+  })
+  .handler(async ({ data }) => {
+    const s = await db();
+    const rows = (await s`
+      SELECT id, community_slug, role, company, description, image_url, location, mode, duration,
+             COALESCE(stipend, 0)::float AS stipend,
+             COALESCE(coins, 0)::int AS coins, created_at
+      FROM internship_postings WHERE id = ${data.id} LIMIT 1
+    `) as DbInternshipPosting[];
+    if (rows[0]) return rows[0];
+    return DEMO_INTERNSHIP_POSTINGS.find((i) => i.id === data.id) ?? null;
+  });
+
+export const getMyInternshipApplication = createServerFn({ method: "POST" })
+  .inputValidator((d: { postingId: string; deviceKey: string }) => d)
+  .handler(async ({ data }) => {
+    const { isValidDeviceKey } = await import("./security.server");
+    if (!isValidDeviceKey(data.deviceKey)) return null;
+    const s = await db();
+    const profiles = (await s`
+      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string }[];
+    const uid = profiles[0]?.unique_id;
+    if (!uid) return null;
+    const rows = (await s`
+      SELECT id, posting_id, applicant_name, email,
+             COALESCE(phone, '') AS phone,
+             COALESCE(college, '') AS college,
+             COALESCE(year, '') AS year,
+             COALESCE(branch, '') AS branch,
+             COALESCE(linkedin, '') AS linkedin,
+             role, community_slug, message,
+             COALESCE(resume_name, '') AS resume_name,
+             COALESCE(resume_data, '') AS resume_data,
+             user_unique_id, status, created_at
+      FROM internship_applications
+      WHERE posting_id = ${data.postingId} AND user_unique_id = ${uid}
+      LIMIT 1
+    `) as DbInternship[];
+    return rows[0] ?? null;
+  });
+
+export const submitInternshipApplication = createServerFn({ method: "POST" })
+  .inputValidator((d: {
+    postingId: string;
+    deviceKey: string;
+    applicantName: string;
+    email: string;
+    phone?: string;
+    college?: string;
+    year?: string;
+    branch?: string;
+    linkedin?: string;
+    message?: string;
+    resumeName?: string;
+    resumeData?: string;
+  }) => {
+    if (!d.postingId?.trim()) throw new Error("postingId required");
+    if (!d.applicantName?.trim()) throw new Error("Name required");
+    if (!d.email?.trim()) throw new Error("Email required");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) throw new Error("Valid email required");
+    if (d.resumeData && d.resumeData.length > 600_000) throw new Error("Resume file is too large (max ~400KB)");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { isValidDeviceKey, rateLimit } = await import("./security.server");
+    if (!isValidDeviceKey(data.deviceKey)) throw new Error("Invalid session");
+    rateLimit(`internship-apply:${data.deviceKey}`, 5, 120_000);
+
+    const s = await db();
+    const profiles = (await s`
+      SELECT unique_id, name, gmail FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string; name: string; gmail: string | null }[];
+    const profile = profiles[0];
+    if (!profile) throw new Error("Create your Syncpedia profile before applying.");
+
+    const postings = (await s`
+      SELECT id, role, community_slug, company
+      FROM internship_postings WHERE id = ${data.postingId} LIMIT 1
+    `) as { id: string; role: string; community_slug: string | null; company: string }[];
+    const posting = postings[0] ?? DEMO_INTERNSHIP_POSTINGS.find((p) => p.id === data.postingId);
+    if (!posting) throw new Error("Internship not found.");
+
+    const existing = (await s`
+      SELECT id, status FROM internship_applications
+      WHERE posting_id = ${data.postingId} AND user_unique_id = ${profile.unique_id}
+      LIMIT 1
+    `) as { id: string; status: string }[];
+    if (existing[0]) {
+      return {
+        alreadyApplied: true as const,
+        id: existing[0].id,
+        message: "You already applied for this role.",
+      };
+    }
+
+    const id = rid("int");
+    await s`
+      INSERT INTO internship_applications (
+        id, posting_id, applicant_name, email, phone, college, year, branch, linkedin,
+        role, community_slug, message, resume_name, resume_data, user_unique_id, status
+      )
+      VALUES (
+        ${id}, ${data.postingId},
+        ${data.applicantName.slice(0, 80)},
+        ${data.email.trim().slice(0, 120)},
+        ${(data.phone || "").slice(0, 20)},
+        ${(data.college || "").slice(0, 120)},
+        ${(data.year || "").slice(0, 40)},
+        ${(data.branch || "").slice(0, 80)},
+        ${(data.linkedin || "").slice(0, 200)},
+        ${posting.role.slice(0, 120)},
+        ${posting.community_slug || null},
+        ${(data.message || "").slice(0, 2000)},
+        ${(data.resumeName || "").slice(0, 120)},
+        ${(data.resumeData || "").slice(0, 600_000)},
+        ${profile.unique_id},
+        'pending'
+      )
+    `;
+
+    const coinReward = 0;
+    if (coinReward > 0) {
+      const actionKey = `internship:${data.postingId}`;
+      await s`
+        INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+        VALUES (${profile.unique_id}, ${actionKey}, ${coinReward})
+        ON CONFLICT (user_unique_id, action_key) DO NOTHING
+      `;
+    }
+
+    return {
+      alreadyApplied: false as const,
+      id,
+      message: "Application submitted! The team will review your profile soon.",
+    };
+  });
 
 export const createInternshipPosting = createServerFn({ method: "POST" })
   .inputValidator((d: {

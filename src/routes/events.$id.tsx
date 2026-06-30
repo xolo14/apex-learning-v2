@@ -21,7 +21,7 @@ export const Route = createFileRoute("/events/$id")({
       path: `/events/${params.id}`,
     }),
   notFoundComponent: () => (
-    <MobileShell>
+    <MobileShell immersive>
       <div className="px-6 pt-20 text-center text-ink-muted">Event not found.</div>
     </MobileShell>
   ),
@@ -68,7 +68,7 @@ function EventDetailPage() {
   const event = eventQ.data;
   if (eventQ.isLoading) {
     return (
-      <MobileShell>
+      <MobileShell immersive>
         <div className="grid place-items-center py-24 text-ink-muted">
           <Loader2 className="h-6 w-6 animate-spin" />
         </div>
@@ -125,9 +125,9 @@ function EventDetailPage() {
   );
 
   return (
-    <MobileShell>
+    <MobileShell immersive>
       <header className="sticky top-0 z-20 border-b border-hairline bg-background/95 backdrop-blur">
-        <div className="flex items-center gap-2 px-3 py-2.5">
+        <div className="flex items-center gap-2 px-3 py-2.5 pt-[max(env(safe-area-inset-top),10px)]">
           <Link
             to="/communities"
             search={{ tab: "events" }}
@@ -170,7 +170,7 @@ function EventDetailPage() {
         coins={event.coins}
         showTitle={false}
         fixedFooter
-        className="pb-28"
+        className="pb-4"
         footer={footer}
       />
 

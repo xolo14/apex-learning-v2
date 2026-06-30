@@ -32,6 +32,23 @@ export const listNewQuestions = createServerFn({ method: "GET" }).handler(async 
   return rows;
 });
 
+export const listCommunityQuestions = createServerFn({ method: "GET" })
+  .inputValidator((d: { slug: string }) => {
+    if (!d.slug?.trim()) throw new Error("slug required");
+    return { slug: d.slug.trim().slice(0, 40) };
+  })
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const rows = (await sql()`
+      SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
+      FROM questions
+      WHERE hidden = false AND community_slug = ${data.slug}
+      ORDER BY created_at DESC
+      LIMIT 100
+    `) as DbQuestion[];
+    return rows;
+  });
+
 export const listAllQuestions = createServerFn({ method: "GET" }).handler(async () => {
   const { requireAdmin } = await import("./security.server");
   await requireAdmin();

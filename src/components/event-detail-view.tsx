@@ -141,7 +141,7 @@ export function EventDetailView({
       {footer !== undefined ? (
         <div
           className={
-            (fixedFooter ? "fixed inset-x-0 bottom-0 z-20 max-w-lg mx-auto " : "") +
+            (fixedFooter ? "fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] " : "") +
             "border-t border-hairline bg-background/95 backdrop-blur"
           }
         >

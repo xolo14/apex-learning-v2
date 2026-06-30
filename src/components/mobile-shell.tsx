@@ -1,40 +1,122 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Plus, Rows3, Rows2 } from "lucide-react";
+import { useEffect, useSyncExternalStore, type ComponentType, type ReactNode, type SVGProps } from "react";
 import {
   HomeIcon,
   UserGroupIcon,
   WalletIcon,
   BriefcaseIcon,
 } from "@heroicons/react/24/solid";
-import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useDensity } from "@/lib/density";
 import { useHomeTab } from "@/lib/home-tab";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
+const IMMERSIVE_ROUTE_IDS = new Set([
+  "/events/$id",
+  "/courses/$id",
+  "/internships/$id",
+  "/gigs/$id",
+  "/quizzes/$id",
+]);
 
-export function MobileShell({ children }: { children: ReactNode }) {
+function subscribePathname(cb: () => void) {
+  window.addEventListener("popstate", cb);
+  window.addEventListener("syncpedia:navigate", cb);
+  return () => {
+    window.removeEventListener("popstate", cb);
+    window.removeEventListener("syncpedia:navigate", cb);
+  };
+}
+
+function getClientPathname() {
+  return window.location.pathname;
+}
+
+function useClientPathname() {
+  return useSyncExternalStore(subscribePathname, getClientPathname, () => "");
+}
+
+/** Hide bottom tab bar on detail pages, admin, and other full-screen views. */
+export function isImmersiveRoute(pathname: string): boolean {
+  const path = (pathname.split("?")[0]?.split("#")[0] ?? pathname).replace(/\/+$/, "") || "/";
+  if (path.startsWith("/admin")) return true;
+  return (
+    /^\/events\/[^/]+/.test(path) ||
+    /^\/courses\/[^/]+/.test(path) ||
+    /^\/internships\/[^/]+/.test(path) ||
+    /^\/gigs\/[^/]+/.test(path) ||
+    /^\/quizzes\/[^/]+/.test(path)
+  );
+}
+
+export function useHideBottomNav(immersive?: boolean): boolean {
+  const routerHide = useRouterState({
+    select: (s) => {
+      if (s.matches.some((m) => IMMERSIVE_ROUTE_IDS.has(m.routeId))) return true;
+      return isImmersiveRoute(s.location.pathname);
+    },
+  });
+  const clientPath = useClientPathname();
+  if (immersive === true) return true;
+  if (immersive === false) return false;
+  return routerHide || isImmersiveRoute(clientPath);
+}
+
+/** Sync immersive state to <html> for CSS failsafe hiding of the tab bar. */
+export function ImmersiveHtmlSync() {
+  const hide = useHideBottomNav();
+  useEffect(() => {
+    document.documentElement.dataset.immersive = hide ? "true" : "false";
+    return () => {
+      document.documentElement.dataset.immersive = "false";
+    };
+  }, [hide]);
+  return null;
+}
+
+/**
+ * Global mobile chrome — render once in __root.tsx (not inside each page).
+ * Hidden automatically on /events/:id, /courses/:id, etc.
+ */
+export function AppMobileChrome() {
+  const hideNav = useHideBottomNav();
+  if (hideNav) return null;
+  return (
+    <>
+      <AskFab />
+      <BottomTabs />
+    </>
+  );
+}
+
+export function MobileShell({
+  children,
+  immersive,
+}: {
+  children: ReactNode;
+  immersive?: boolean;
+}) {
+  const hideNav = useHideBottomNav(immersive);
   const { density } = useDensity();
   return (
     <div
       data-density={density}
+      data-immersive={hideNav ? "true" : undefined}
       className="mx-auto min-h-screen max-w-[480px] bg-background text-foreground"
     >
-      <div className="pb-28">{children}</div>
-      <AskFab />
-      <BottomTabs />
+      <div className={hideNav ? "pb-0" : "pb-28"}>{children}</div>
     </div>
   );
 }
 
 function AskFab() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const homeTab = useHomeTab();
-  // Show only on the home Questions tab.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (pathname !== "/" || homeTab !== "questions") return null;
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-40 mx-auto max-w-[480px] px-5">
+    <div className="app-mobile-chrome pointer-events-none fixed inset-x-0 bottom-[88px] z-40 mx-auto max-w-[480px] px-5">
       <div className="flex justify-end pb-[max(env(safe-area-inset-bottom),0px)]">
         <Link
           to="/ask"
@@ -85,8 +167,9 @@ function BottomTabs() {
   const visible = earnings ? tabs : tabs.filter((t) => t.to !== "/quizzes");
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[480px] px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2"
+      className="app-bottom-nav app-mobile-chrome fixed inset-x-0 bottom-0 z-50 mx-auto max-w-[480px] px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2"
       style={{ background: "linear-gradient(to top, rgba(255,255,255,0.96) 60%, rgba(255,255,255,0))" }}
+      aria-label="Main navigation"
     >
       <div className="flex items-center justify-between rounded-[28px] border border-hairline bg-background/95 px-2 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
         {visible.map(({ to, label, icon: Icon }) => {

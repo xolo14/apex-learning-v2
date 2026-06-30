@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { DensityProvider } from "@/lib/density";
 import { IdentityProvider } from "@/lib/identity";
 import { OnboardingGate } from "@/components/onboarding-gate";
+import { AppMobileChrome, ImmersiveHtmlSync } from "@/components/mobile-shell";
 import { organizationJsonLd, pageHead } from "@/lib/seo";
 import { BRAND } from "@/lib/site";
 
@@ -144,8 +145,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <DensityProvider>
         <IdentityProvider>
+          <ImmersiveHtmlSync />
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
+          <AppMobileChrome />
           <OnboardingGate />
         </IdentityProvider>
       </DensityProvider>

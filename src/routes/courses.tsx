@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Clock, MapPin, Briefcase, GraduationCap, ArrowUpRight, ExternalLink } from "lucide-react";
+import { Clock, MapPin, Briefcase, GraduationCap, ArrowUpRight } from "lucide-react";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listCourses, listInternshipPostings } from "@/lib/communities.functions";
@@ -121,11 +121,16 @@ function LearnPage() {
               </p>
             )}
             {courses.map((c) => (
-              <article key={c.id} className="mb-3 overflow-hidden rounded-[20px] border border-hairline bg-background">
+              <Link
+                key={c.id}
+                to="/courses/$id"
+                params={{ id: c.id }}
+                className="mb-3 block overflow-hidden rounded-[20px] border border-hairline bg-background active:scale-[0.99] transition-transform"
+              >
                 {c.image_url ? (
-                  <img src={c.image_url} alt="" className="h-32 w-full object-cover" />
+                  <img src={c.image_url} alt="" className="h-36 w-full object-cover" />
                 ) : (
-                  <div className="flex h-32 items-center justify-center bg-forest/95 text-white">
+                  <div className="flex h-36 items-center justify-center bg-forest/95 text-white">
                     <GraduationCap strokeWidth={1.5} className="h-12 w-12 opacity-90" />
                   </div>
                 )}
@@ -133,23 +138,19 @@ function LearnPage() {
                   <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
                     c/{c.community_slug}
                   </div>
-                  <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{c.title}</h3>
+                  <h3 className="mt-1.5 text-[17px] font-semibold tracking-tight text-foreground">{c.title}</h3>
                   {c.description ? (
-                    <p className="mt-1 line-clamp-2 text-[12.5px] text-ink-muted">{c.description}</p>
+                    <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">{c.description}</p>
                   ) : null}
-                  <div className="mt-3">
+                  <div className="mt-3 flex items-center justify-between">
                     <PriceCoinBadges kind="course" amount={c.price} coins={c.coins} />
-                  </div>
-                  <div className="mt-3 flex justify-end text-[12px] text-ink-muted">
-                    {c.url ? (
-                      <a href={c.url} target="_blank" rel="noreferrer"
-                         className="inline-flex items-center gap-1.5 rounded-full bg-orange px-3.5 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                        Open <ExternalLink strokeWidth={2} className="h-[12px] w-[12px]" />
-                      </a>
-                    ) : null}
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-forest">
+                      View course
+                      <ArrowUpRight strokeWidth={2} className="h-3.5 w-3.5" />
+                    </span>
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </section>
 
@@ -160,18 +161,25 @@ function LearnPage() {
               </p>
             )}
             {internships.map((i) => (
-              <article key={i.id} className="mb-3 overflow-hidden rounded-[20px] border border-hairline bg-background">
-                {i.image_url ? <img src={i.image_url} alt="" className="h-28 w-full object-cover" /> : null}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
-                        {i.community_slug ? `c/${i.community_slug} · ` : ""}{i.mode}
-                      </div>
-                      <h3 className="mt-1.5 text-[16px] font-semibold tracking-tight text-foreground">{i.role}</h3>
-                      <p className="text-[13px] text-ink-muted">{i.company}</p>
-                    </div>
+              <Link
+                key={i.id}
+                to="/internships/$id"
+                params={{ id: i.id }}
+                className="mb-3 block overflow-hidden rounded-[20px] border border-hairline bg-background active:scale-[0.99] transition-transform"
+              >
+                {i.image_url ? (
+                  <img src={i.image_url} alt="" className="h-32 w-full object-cover" />
+                ) : (
+                  <div className="flex h-28 items-center justify-center bg-foreground text-white">
+                    <Briefcase strokeWidth={1.5} className="h-10 w-10 opacity-80" />
                   </div>
+                )}
+                <div className="p-4">
+                  <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
+                    {i.community_slug ? `c/${i.community_slug} · ` : ""}{i.mode}
+                  </div>
+                  <h3 className="mt-1.5 text-[17px] font-semibold tracking-tight text-foreground">{i.role}</h3>
+                  <p className="text-[13px] text-ink-muted">{i.company}</p>
 
                   <div className="mt-3">
                     <PriceCoinBadges kind="internship" amount={i.stipend} coins={i.coins} />
@@ -192,18 +200,14 @@ function LearnPage() {
                     ) : null}
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <button className="text-[12px] font-medium text-ink-muted underline-offset-4 hover:underline">
-                      View details
-                    </button>
-                    <Link to="/coins"
-                          className="inline-flex items-center gap-1.5 rounded-full bg-orange px-3.5 py-1.5 text-[12px] font-medium text-white active:scale-95">
-                      Apply
-                      <ArrowUpRight strokeWidth={2} className="h-[12px] w-[12px]" />
-                    </Link>
+                  <div className="mt-4 flex justify-end">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-forest px-4 py-2 text-[12px] font-semibold text-white">
+                      View role
+                      <ArrowUpRight strokeWidth={2} className="h-3.5 w-3.5" />
+                    </span>
                   </div>
                 </div>
-              </article>
+              </Link>
             ))}
           </section>
         </div>

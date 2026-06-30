@@ -23,9 +23,13 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UIdRouteImport } from './routes/u.$id'
+import { Route as QuizzesIdRouteImport } from './routes/quizzes.$id'
 import { Route as PIdRouteImport } from './routes/p.$id'
 import { Route as MessagesThreadIdRouteImport } from './routes/messages.$threadId'
+import { Route as InternshipsIdRouteImport } from './routes/internships.$id'
+import { Route as GigsIdRouteImport } from './routes/gigs.$id'
 import { Route as EventsIdRouteImport } from './routes/events.$id'
+import { Route as CoursesIdRouteImport } from './routes/courses.$id'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminQuizzesRouteImport } from './routes/admin.quizzes'
@@ -112,6 +116,11 @@ const UIdRoute = UIdRouteImport.update({
   path: '/u/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuizzesIdRoute = QuizzesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => QuizzesRoute,
+} as any)
 const PIdRoute = PIdRouteImport.update({
   id: '/p/$id',
   path: '/p/$id',
@@ -122,10 +131,25 @@ const MessagesThreadIdRoute = MessagesThreadIdRouteImport.update({
   path: '/$threadId',
   getParentRoute: () => MessagesRoute,
 } as any)
+const InternshipsIdRoute = InternshipsIdRouteImport.update({
+  id: '/internships/$id',
+  path: '/internships/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GigsIdRoute = GigsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => GigsRoute,
+} as any)
 const EventsIdRoute = EventsIdRouteImport.update({
   id: '/events/$id',
   path: '/events/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CoursesIdRoute = CoursesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => CoursesRoute,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
@@ -209,12 +233,12 @@ export interface FileRoutesByFullPath {
   '/ask': typeof AskRoute
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
-  '/courses': typeof CoursesRoute
-  '/gigs': typeof GigsRoute
+  '/courses': typeof CoursesRouteWithChildren
+  '/gigs': typeof GigsRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
-  '/quizzes': typeof QuizzesRoute
+  '/quizzes': typeof QuizzesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
@@ -229,9 +253,13 @@ export interface FileRoutesByFullPath {
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/courses/$id': typeof CoursesIdRoute
   '/events/$id': typeof EventsIdRoute
+  '/gigs/$id': typeof GigsIdRoute
+  '/internships/$id': typeof InternshipsIdRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
+  '/quizzes/$id': typeof QuizzesIdRoute
   '/u/$id': typeof UIdRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
@@ -242,12 +270,12 @@ export interface FileRoutesByTo {
   '/ask': typeof AskRoute
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
-  '/courses': typeof CoursesRoute
-  '/gigs': typeof GigsRoute
+  '/courses': typeof CoursesRouteWithChildren
+  '/gigs': typeof GigsRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
-  '/quizzes': typeof QuizzesRoute
+  '/quizzes': typeof QuizzesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
@@ -262,9 +290,13 @@ export interface FileRoutesByTo {
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/courses/$id': typeof CoursesIdRoute
   '/events/$id': typeof EventsIdRoute
+  '/gigs/$id': typeof GigsIdRoute
+  '/internships/$id': typeof InternshipsIdRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
+  '/quizzes/$id': typeof QuizzesIdRoute
   '/u/$id': typeof UIdRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
@@ -277,12 +309,12 @@ export interface FileRoutesById {
   '/ask': typeof AskRoute
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
-  '/courses': typeof CoursesRoute
-  '/gigs': typeof GigsRoute
+  '/courses': typeof CoursesRouteWithChildren
+  '/gigs': typeof GigsRouteWithChildren
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
-  '/quizzes': typeof QuizzesRoute
+  '/quizzes': typeof QuizzesRouteWithChildren
   '/settings': typeof SettingsRoute
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
@@ -297,9 +329,13 @@ export interface FileRoutesById {
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/courses/$id': typeof CoursesIdRoute
   '/events/$id': typeof EventsIdRoute
+  '/gigs/$id': typeof GigsIdRoute
+  '/internships/$id': typeof InternshipsIdRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
+  '/quizzes/$id': typeof QuizzesIdRoute
   '/u/$id': typeof UIdRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
@@ -333,9 +369,13 @@ export interface FileRouteTypes {
     | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
+    | '/courses/$id'
     | '/events/$id'
+    | '/gigs/$id'
+    | '/internships/$id'
     | '/messages/$threadId'
     | '/p/$id'
+    | '/quizzes/$id'
     | '/u/$id'
     | '/admin/'
     | '/api/public/sitemap'
@@ -366,9 +406,13 @@ export interface FileRouteTypes {
     | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
+    | '/courses/$id'
     | '/events/$id'
+    | '/gigs/$id'
+    | '/internships/$id'
     | '/messages/$threadId'
     | '/p/$id'
+    | '/quizzes/$id'
     | '/u/$id'
     | '/admin'
     | '/api/public/sitemap'
@@ -400,9 +444,13 @@ export interface FileRouteTypes {
     | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
+    | '/courses/$id'
     | '/events/$id'
+    | '/gigs/$id'
+    | '/internships/$id'
     | '/messages/$threadId'
     | '/p/$id'
+    | '/quizzes/$id'
     | '/u/$id'
     | '/admin/'
     | '/api/public/sitemap'
@@ -415,15 +463,16 @@ export interface RootRouteChildren {
   AskRoute: typeof AskRoute
   CoinsRoute: typeof CoinsRoute
   CommunitiesRoute: typeof CommunitiesRoute
-  CoursesRoute: typeof CoursesRoute
-  GigsRoute: typeof GigsRoute
+  CoursesRoute: typeof CoursesRouteWithChildren
+  GigsRoute: typeof GigsRouteWithChildren
   MessagesRoute: typeof MessagesRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
-  QuizzesRoute: typeof QuizzesRoute
+  QuizzesRoute: typeof QuizzesRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   CSlugRoute: typeof CSlugRoute
   EventsIdRoute: typeof EventsIdRoute
+  InternshipsIdRoute: typeof InternshipsIdRoute
   PIdRoute: typeof PIdRoute
   UIdRoute: typeof UIdRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
@@ -530,6 +579,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/quizzes/$id': {
+      id: '/quizzes/$id'
+      path: '/$id'
+      fullPath: '/quizzes/$id'
+      preLoaderRoute: typeof QuizzesIdRouteImport
+      parentRoute: typeof QuizzesRoute
+    }
     '/p/$id': {
       id: '/p/$id'
       path: '/p/$id'
@@ -544,12 +600,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagesThreadIdRouteImport
       parentRoute: typeof MessagesRoute
     }
+    '/internships/$id': {
+      id: '/internships/$id'
+      path: '/internships/$id'
+      fullPath: '/internships/$id'
+      preLoaderRoute: typeof InternshipsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gigs/$id': {
+      id: '/gigs/$id'
+      path: '/$id'
+      fullPath: '/gigs/$id'
+      preLoaderRoute: typeof GigsIdRouteImport
+      parentRoute: typeof GigsRoute
+    }
     '/events/$id': {
       id: '/events/$id'
       path: '/events/$id'
       fullPath: '/events/$id'
       preLoaderRoute: typeof EventsIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/courses/$id': {
+      id: '/courses/$id'
+      path: '/$id'
+      fullPath: '/courses/$id'
+      preLoaderRoute: typeof CoursesIdRouteImport
+      parentRoute: typeof CoursesRoute
     }
     '/c/$slug': {
       id: '/c/$slug'
@@ -693,6 +770,27 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface CoursesRouteChildren {
+  CoursesIdRoute: typeof CoursesIdRoute
+}
+
+const CoursesRouteChildren: CoursesRouteChildren = {
+  CoursesIdRoute: CoursesIdRoute,
+}
+
+const CoursesRouteWithChildren =
+  CoursesRoute._addFileChildren(CoursesRouteChildren)
+
+interface GigsRouteChildren {
+  GigsIdRoute: typeof GigsIdRoute
+}
+
+const GigsRouteChildren: GigsRouteChildren = {
+  GigsIdRoute: GigsIdRoute,
+}
+
+const GigsRouteWithChildren = GigsRoute._addFileChildren(GigsRouteChildren)
+
 interface MessagesRouteChildren {
   MessagesThreadIdRoute: typeof MessagesThreadIdRoute
 }
@@ -705,21 +803,33 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
   MessagesRouteChildren,
 )
 
+interface QuizzesRouteChildren {
+  QuizzesIdRoute: typeof QuizzesIdRoute
+}
+
+const QuizzesRouteChildren: QuizzesRouteChildren = {
+  QuizzesIdRoute: QuizzesIdRoute,
+}
+
+const QuizzesRouteWithChildren =
+  QuizzesRoute._addFileChildren(QuizzesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AskRoute: AskRoute,
   CoinsRoute: CoinsRoute,
   CommunitiesRoute: CommunitiesRoute,
-  CoursesRoute: CoursesRoute,
-  GigsRoute: GigsRoute,
+  CoursesRoute: CoursesRouteWithChildren,
+  GigsRoute: GigsRouteWithChildren,
   MessagesRoute: MessagesRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
-  QuizzesRoute: QuizzesRoute,
+  QuizzesRoute: QuizzesRouteWithChildren,
   SettingsRoute: SettingsRoute,
   CSlugRoute: CSlugRoute,
   EventsIdRoute: EventsIdRoute,
+  InternshipsIdRoute: InternshipsIdRoute,
   PIdRoute: PIdRoute,
   UIdRoute: UIdRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,

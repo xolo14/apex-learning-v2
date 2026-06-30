@@ -168,6 +168,57 @@ export function ensureSchema() {
     `;
     await s`CREATE INDEX IF NOT EXISTS event_registrations_event_idx ON event_registrations(event_id)`;
 
+    // -------- Course enrollments --------
+    await s`
+      CREATE TABLE IF NOT EXISTS course_enrollments (
+        id text PRIMARY KEY,
+        course_id text NOT NULL,
+        user_unique_id text NOT NULL,
+        device_key text NOT NULL,
+        price_snapshot numeric NOT NULL DEFAULT 0,
+        status text NOT NULL DEFAULT 'confirmed',
+        coins_credited integer NOT NULL DEFAULT 0,
+        created_at timestamptz DEFAULT now(),
+        UNIQUE(course_id, user_unique_id)
+      )
+    `;
+    await s`CREATE INDEX IF NOT EXISTS course_enrollments_course_idx ON course_enrollments(course_id)`;
+
+    // -------- Internship applications (student submissions) --------
+    await s`
+      CREATE TABLE IF NOT EXISTS internship_applications (
+        id text PRIMARY KEY,
+        posting_id text,
+        applicant_name text NOT NULL,
+        email text NOT NULL,
+        phone text DEFAULT '',
+        college text DEFAULT '',
+        year text DEFAULT '',
+        branch text DEFAULT '',
+        linkedin text DEFAULT '',
+        role text NOT NULL,
+        community_slug text,
+        message text DEFAULT '',
+        resume_name text DEFAULT '',
+        resume_data text DEFAULT '',
+        user_unique_id text,
+        status text NOT NULL DEFAULT 'pending',
+        created_at timestamptz DEFAULT now()
+      )
+    `;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS posting_id text`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS phone text DEFAULT ''`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS college text DEFAULT ''`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS year text DEFAULT ''`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS branch text DEFAULT ''`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS linkedin text DEFAULT ''`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS resume_name text DEFAULT ''`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS resume_data text DEFAULT ''`;
+    await s`ALTER TABLE internship_applications ADD COLUMN IF NOT EXISTS user_unique_id text`;
+    try {
+      await s`CREATE UNIQUE INDEX IF NOT EXISTS internship_app_posting_user_uniq ON internship_applications (posting_id, user_unique_id) WHERE posting_id IS NOT NULL AND user_unique_id IS NOT NULL AND user_unique_id <> ''`;
+    } catch {}
+
     // -------- One account per email and per mobile --------
     // Best-effort: ignore failure if duplicates already exist in legacy data.
     try {

@@ -179,4 +179,12 @@
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
+
+  /* Full-screen detail pages: never show the floating bottom tab bar */
+  html[data-immersive="true"] .app-bottom-nav,
+  html[data-immersive="true"] .app-mobile-chrome {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
 }
