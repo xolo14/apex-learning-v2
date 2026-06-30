@@ -93,7 +93,7 @@ function NetworkPage() {
   const onPointerDown = (e: React.PointerEvent) => {
     startX.current = e.clientX;
     width.current = paneRef.current?.clientWidth ?? 1;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (startX.current == null) return;
@@ -114,8 +114,7 @@ function NetworkPage() {
     setDrag(0);
   };
 
-  const basePct = tab === "events" ? -50 : 0;
-  const dragPct = width.current ? (drag / width.current) * 50 : 0;
+  const dragOffset = tab === "communities" ? Math.min(0, drag) : Math.max(0, drag);
 
   return (
     <MobileShell>
@@ -160,23 +159,23 @@ function NetworkPage() {
         </div>
       </div>
 
-      {/* Swipeable pager */}
+      {/* Tab content — only active pane mounts so height matches the list */}
       <div
         ref={paneRef}
-        className="mt-4 overflow-hidden touch-pan-y"
+        className="mt-4 touch-pan-y"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
         <div
-          className="flex w-[200%]"
+          className="transition-transform duration-300 ease-out"
           style={{
-            transform: `translateX(${basePct + dragPct}%)`,
-            transition: drag === 0 ? "transform 300ms ease" : "none",
+            transform: dragOffset ? `translateX(${dragOffset}px)` : undefined,
+            transition: dragOffset ? "none" : undefined,
           }}
         >
-          <section className="w-1/2 shrink-0">
+          {tab === "communities" ? (
             <CommunitiesView
               q={q}
               setQ={setQ}
@@ -185,10 +184,9 @@ function NetworkPage() {
               filtered={filtered}
               proSlugs={proSlugs}
             />
-          </section>
-          <section className="w-1/2 shrink-0">
+          ) : (
             <EventsView />
-          </section>
+          )}
         </div>
       </div>
     </MobileShell>
@@ -249,7 +247,7 @@ function CommunitiesView({
         </div>
       </div>
 
-      <ul className="mt-3">
+      <ul className="mt-3 pb-2">
         {filtered.length === 0 ? (
           <li className="px-5 py-10 text-center text-[13px] text-ink-muted">
             No communities match.
