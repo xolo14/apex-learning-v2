@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Pencil, Save, Trash2, X } from "lucide-react";
 import { AdminCoinLabel, AdminPriceLabel } from "@/components/price-coin-badges";
+import { AdminImageUpload } from "@/components/admin-image-upload";
 import {
   countClassLinks,
   formatClassLinksForAdmin,
@@ -306,11 +307,12 @@ function AdminCertifications() {
             placeholder="Category tag (e.g. MARKETING)"
             className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
           />
-          <input
+
+          <AdminImageUpload
+            label="Cover thumbnail"
             value={form.imageUrl}
-            onChange={(e) => set("imageUrl", e.target.value)}
-            placeholder="Cover image URL"
-            className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13.5px]"
+            onChange={(url) => set("imageUrl", url)}
+            hint="Upload from phone or computer · or paste an image URL"
           />
 
           <label className="flex flex-col gap-1">
@@ -483,11 +485,20 @@ function AdminCertifications() {
           )}
           {(q.data ?? []).map((c: DbCourse) => (
             <li key={c.id} className="flex items-center gap-3 px-5 py-3">
-              {c.image_url ? (
-                <img src={c.image_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-              ) : (
-                <div className="h-10 w-10 rounded-lg bg-surface" />
-              )}
+              <button
+                type="button"
+                onClick={() => startEdit(c)}
+                className="shrink-0 overflow-hidden rounded-lg ring-1 ring-hairline hover:ring-orange/50"
+                title="Edit thumbnail"
+              >
+                {c.image_url ? (
+                  <img src={c.image_url} alt="" className="h-12 w-12 object-cover" />
+                ) : (
+                  <div className="grid h-12 w-12 place-items-center bg-surface text-[10px] text-ink-muted">
+                    Add
+                  </div>
+                )}
+              </button>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13.5px] font-medium">{c.title}</p>
                 <p className="truncate text-[11px] text-ink-muted">

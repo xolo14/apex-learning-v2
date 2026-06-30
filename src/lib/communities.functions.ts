@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { MAX_STORED_IMAGE_CHARS } from "./media-limits";
 import {
   DEMO_COURSES,
   DEMO_EVENTS,
@@ -509,7 +510,7 @@ export const createCourse = createServerFn({ method: "POST" })
         ${(data.description || "").slice(0, 2000)}, ${(data.url || "").slice(0, 500)},
         ${Math.max(0, Math.floor(Number(data.price) || 0))},
         ${Math.max(0, Math.floor(Number(data.coins) || 0))},
-        ${(data.imageUrl || "").slice(0, 800)},
+        ${(data.imageUrl || "").slice(0, MAX_STORED_IMAGE_CHARS)},
         ${(data.category || "").slice(0, 80)},
         ${(data.programDuration || "").slice(0, 80)},
         ${(data.subtitle || "").slice(0, 120)},
@@ -554,6 +555,8 @@ export const updateCourse = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await adminOnly();
     const s = await db();
+    const imageUrl =
+      data.imageUrl != null ? data.imageUrl.slice(0, MAX_STORED_IMAGE_CHARS) : null;
     await s`
       UPDATE courses SET
         title = COALESCE(${data.title ?? null}, title),
@@ -562,7 +565,7 @@ export const updateCourse = createServerFn({ method: "POST" })
         community_slug = COALESCE(${data.communitySlug ?? null}, community_slug),
         price = COALESCE(${data.price ?? null}, price),
         coins = COALESCE(${data.coins ?? null}, coins),
-        image_url = COALESCE(${data.imageUrl ?? null}, image_url),
+        image_url = COALESCE(${imageUrl}, image_url),
         category = COALESCE(${data.category ?? null}, category),
         program_duration = COALESCE(${data.programDuration ?? null}, program_duration),
         subtitle = COALESCE(${data.subtitle ?? null}, subtitle),
