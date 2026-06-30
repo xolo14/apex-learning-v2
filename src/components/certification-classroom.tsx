@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, ExternalLink, Play } from "lucide-react";
+import { CheckCircle2, Play } from "lucide-react";
 import type { DbCourse } from "@/lib/communities.functions";
 import {
   certificationMeta,
@@ -17,6 +17,7 @@ export function CertificationClassroomView({ course, coinsCredited = 0 }: Props)
   const meta = certificationMeta(course);
   const links = meta.classLinks;
   const [activeIdx, setActiveIdx] = useState(0);
+  const [videoError, setVideoError] = useState(false);
   const active = links[activeIdx] ?? links[0];
 
   const embed = useMemo(() => (active ? videoEmbedUrl(active.url) : null), [active]);
@@ -46,11 +47,14 @@ export function CertificationClassroomView({ course, coinsCredited = 0 }: Props)
             />
           ) : direct && embed ? (
             <video
-              key={embed}
+              key={`${embed}-${activeIdx}`}
               src={embed}
               controls
               playsInline
+              preload="metadata"
               className="h-full w-full bg-black object-contain"
+              onError={() => setVideoError(true)}
+              onLoadedData={() => setVideoError(false)}
             >
               <track kind="captions" />
             </video>
@@ -58,6 +62,13 @@ export function CertificationClassroomView({ course, coinsCredited = 0 }: Props)
             <ClassFallbackPlayer link={active} poster={meta.previewUrl} />
           )}
         </div>
+
+        {videoError && direct ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/80 px-6 text-center">
+            <p className="text-[14px] font-medium">Could not load this video</p>
+            <p className="text-[12px] text-white/60">Try another class below, or contact support.</p>
+          </div>
+        ) : null}
 
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent px-4 pb-4 pt-10">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-orange">
@@ -104,7 +115,10 @@ export function CertificationClassroomView({ course, coinsCredited = 0 }: Props)
               link={link}
               index={i}
               active={i === activeIdx}
-              onSelect={() => setActiveIdx(i)}
+              onSelect={() => {
+                setVideoError(false);
+                setActiveIdx(i);
+              }}
             />
           ))}
         </ul>
@@ -150,8 +164,6 @@ function ClassPlaylistItem({
   active: boolean;
   onSelect: () => void;
 }) {
-  const embeddable = !!videoEmbedUrl(link.url);
-
   return (
     <li>
       <button
@@ -170,33 +182,21 @@ function ClassPlaylistItem({
             (active ? "bg-orange text-white" : "bg-white/10 text-white/80")
           }
         >
-          {String(index + 1).padStart(2, "0")}
+          {active ? <Play className="h-4 w-4" fill="currentColor" /> : String(index + 1).padStart(2, "0")}
         </span>
         <span className="min-w-0 flex-1">
           <p className={"truncate text-[14px] font-medium " + (active ? "text-white" : "text-white/90")}>
             {link.title}
           </p>
           <p className="mt-0.5 text-[11px] text-white/45">
-            {embeddable ? "Plays in app" : "Opens external link"}
+            {active ? "Now playing" : "Tap to play"}
           </p>
         </span>
         {active ? (
           <span className="flex items-center gap-1 rounded-full bg-orange/20 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange">
-            <Play className="h-3 w-3" fill="currentColor" />
-            Playing
+            Live
           </span>
-        ) : (
-          <a
-            href={link.url}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/70"
-            aria-label="Open in new tab"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        )}
+        ) : null}
       </button>
     </li>
   );

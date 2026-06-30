@@ -211,9 +211,15 @@ function CertificationDetailPage() {
           </div>
 
           {isConfirmed ? (
-            <button type="button" disabled className="rounded-full bg-surface px-6 py-3 text-[14px] font-semibold text-ink-muted">
-              Enrolled
-            </button>
+            classLinks.length > 0 ? (
+              <p className="rounded-full bg-forest/10 px-6 py-3 text-[14px] font-semibold text-forest">
+                Classroom unlocked ↑
+              </p>
+            ) : (
+              <button type="button" disabled className="rounded-full bg-surface px-6 py-3 text-[14px] font-semibold text-ink-muted">
+                Enrolled
+              </button>
+            )
           ) : isPending ? (
             <button
               type="button"

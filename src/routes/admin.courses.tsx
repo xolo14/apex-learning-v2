@@ -293,7 +293,7 @@ function AdminCertifications() {
             <textarea
               value={form.classLinksText}
               onChange={(e) => set("classLinksText", e.target.value)}
-              placeholder={"Class 1 | https://youtube.com/...\nClass 2 | https://drive.google.com/...\nOr paste URLs only, one per line"}
+              placeholder={"Class 1 | https://lmsclasses.com/videos/...\nClass 2 : https://youtube.com/...\nOr paste video URLs only, one per line"}
               rows={5}
               className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13px] font-mono"
             />

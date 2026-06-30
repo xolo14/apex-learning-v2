@@ -2,21 +2,54 @@ import type { DbCourse } from "@/lib/communities.functions";
 
 export type ClassLink = { title: string; url: string };
 
+/** Pull a clean https URL out of messy admin text (`class 1 : https://…mp4`). */
+export function extractMediaUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/https?:\/\/[^\s<>"']+/i);
+  if (!match) return trimmed;
+  return match[0].replace(/[),.;]+$/g, "");
+}
+
+export function normalizeClassLink(
+  row: { title?: string; url?: string },
+  index = 0,
+): ClassLink | null {
+  let title = (row.title || "").trim();
+  let url = extractMediaUrl(row.url || "");
+
+  if (!url && title) {
+    const fromTitle = extractMediaUrl(title);
+    if (fromTitle) {
+      url = fromTitle;
+      title = title
+        .replace(fromTitle, "")
+        .replace(/^[:\s\-–|]+|[:\s\-–|]+$/g, "")
+        .trim();
+    }
+  }
+
+  if (!url) return null;
+
+  if (!title || title === url || /^https?:\/\//i.test(title)) {
+    title = index > 0 ? `Class ${index + 1}` : "Class 1";
+  }
+
+  return {
+    title: title.slice(0, 120),
+    url: url.slice(0, 500),
+  };
+}
+
 export function parseClassLinks(course: Pick<DbCourse, "class_links" | "url">): ClassLink[] {
   if (course.class_links?.trim()) {
     try {
       const parsed = JSON.parse(course.class_links) as unknown;
       if (Array.isArray(parsed)) {
         return parsed
-          .map((item) => {
+          .map((item, i) => {
             if (!item || typeof item !== "object") return null;
-            const row = item as { title?: string; url?: string };
-            const url = (row.url || "").trim();
-            if (!url) return null;
-            return {
-              title: (row.title || "Class").trim().slice(0, 120) || "Class",
-              url: url.slice(0, 500),
-            };
+            return normalizeClassLink(item as { title?: string; url?: string }, i);
           })
           .filter((x): x is ClassLink => !!x);
       }
@@ -25,25 +58,44 @@ export function parseClassLinks(course: Pick<DbCourse, "class_links" | "url">): 
     }
   }
   if (course.url?.trim()) {
-    return [{ title: "All classes", url: course.url.trim() }];
+    const link = normalizeClassLink({ title: "Class 1", url: course.url }, 0);
+    return link ? [link] : [];
   }
   return [];
 }
 
-/** Admin textarea: `Title | https://…` per line, or URL only. */
+/** Admin textarea: `Title | URL` or `Title : URL` per line, or URL only. */
 export function parseClassLinksFromAdmin(text: string): ClassLink[] {
   const links: ClassLink[] = [];
   for (const line of text.split("\n")) {
     const trimmed = line.trim();
     if (!trimmed) continue;
+
+    const titled = trimmed.match(/^(.+?)\s*[:|]\s*(https?:\/\/.+)$/i);
+    if (titled) {
+      const link = normalizeClassLink({ title: titled[1], url: titled[2] }, links.length);
+      if (link) links.push(link);
+      continue;
+    }
+
     const pipe = trimmed.indexOf("|");
     if (pipe > 0) {
-      const title = trimmed.slice(0, pipe).trim();
-      const url = trimmed.slice(pipe + 1).trim();
-      if (url) links.push({ title: title || "Class", url });
-    } else if (/^https?:\/\//i.test(trimmed)) {
-      links.push({ title: `Class ${links.length + 1}`, url: trimmed });
+      const link = normalizeClassLink(
+        { title: trimmed.slice(0, pipe), url: trimmed.slice(pipe + 1) },
+        links.length,
+      );
+      if (link) links.push(link);
+      continue;
     }
+
+    if (/^https?:\/\//i.test(trimmed)) {
+      const link = normalizeClassLink({ title: `Class ${links.length + 1}`, url: trimmed }, links.length);
+      if (link) links.push(link);
+      continue;
+    }
+
+    const link = normalizeClassLink({ title: trimmed, url: "" }, links.length);
+    if (link) links.push(link);
   }
   return links;
 }
@@ -58,12 +110,26 @@ export function serializeClassLinks(links: ClassLink[]): string {
   return JSON.stringify(links.slice(0, 50));
 }
 
+/** Same-origin proxy for external MP4 hosts (avoids hotlink / player quirks). */
+export function proxiedVideoUrl(raw: string): string | null {
+  const url = extractMediaUrl(raw);
+  if (!url || !isDirectVideo(url)) return null;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    const allowed = ["lmsclasses.com", "syncpedia.in", "app.syncpedia.in"];
+    if (!allowed.includes(host)) return url;
+    return `/api/public/class-video?src=${encodeURIComponent(url)}`;
+  } catch {
+    return url;
+  }
+}
+
 /** YouTube / Vimeo / direct video file → embeddable URL, else null. */
 export function videoEmbedUrl(raw: string): string | null {
-  const url = raw.trim();
+  const url = extractMediaUrl(raw);
   if (!url) return null;
 
-  if (/\.(mp4|webm|ogg|m3u8)(\?|#|$)/i.test(url)) return url;
+  if (/\.(mp4|webm|ogg|m3u8)(\?|#|$)/i.test(url)) return proxiedVideoUrl(url) ?? url;
 
   try {
     const u = new URL(url);
@@ -92,7 +158,7 @@ export function videoEmbedUrl(raw: string): string | null {
 }
 
 export function isDirectVideo(url: string): boolean {
-  return /\.(mp4|webm|ogg)(\?|#|$)/i.test(url.trim());
+  return /\.(mp4|webm|ogg)(\?|#|$)/i.test(extractMediaUrl(url));
 }
 
 /** Only show what admin configured — no fake defaults. */

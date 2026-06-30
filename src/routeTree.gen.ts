@@ -46,6 +46,7 @@ import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 import { Route as AdminCoinsRouteImport } from './routes/admin.coins'
 import { Route as ApiPublicSitemapRouteImport } from './routes/api/public/sitemap'
+import { Route as ApiPublicClassVideoRouteImport } from './routes/api/public/class-video'
 import { Route as ApiPublicCronRefreshHotRouteImport } from './routes/api/public/cron.refresh-hot'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -233,6 +234,11 @@ const ApiPublicSitemapRoute = ApiPublicSitemapRouteImport.update({
   path: '/api/public/sitemap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicClassVideoRoute = ApiPublicClassVideoRouteImport.update({
+  id: '/api/public/class-video',
+  path: '/api/public/class-video',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronRefreshHotRoute = ApiPublicCronRefreshHotRouteImport.update({
   id: '/api/public/cron/refresh-hot',
   path: '/api/public/cron/refresh-hot',
@@ -276,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/quizzes/': typeof QuizzesIndexRoute
+  '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/courses': typeof CoursesIndexRoute
   '/quizzes': typeof QuizzesIndexRoute
+  '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/quizzes/': typeof QuizzesIndexRoute
+  '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/courses/'
     | '/quizzes/'
+    | '/api/public/class-video'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesByTo: FileRoutesByTo
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/courses'
     | '/quizzes'
+    | '/api/public/class-video'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   id:
@@ -475,6 +486,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/courses/'
     | '/quizzes/'
+    | '/api/public/class-video'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesById: FileRoutesById
@@ -498,6 +510,7 @@ export interface RootRouteChildren {
   PIdRoute: typeof PIdRoute
   UIdRoute: typeof UIdRoute
   CoursesIndexRoute: typeof CoursesIndexRoute
+  ApiPublicClassVideoRoute: typeof ApiPublicClassVideoRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
   ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
 }
@@ -763,6 +776,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitemapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/class-video': {
+      id: '/api/public/class-video'
+      path: '/api/public/class-video'
+      fullPath: '/api/public/class-video'
+      preLoaderRoute: typeof ApiPublicClassVideoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/refresh-hot': {
       id: '/api/public/cron/refresh-hot'
       path: '/api/public/cron/refresh-hot'
@@ -863,6 +883,7 @@ const rootRouteChildren: RootRouteChildren = {
   PIdRoute: PIdRoute,
   UIdRoute: UIdRoute,
   CoursesIndexRoute: CoursesIndexRoute,
+  ApiPublicClassVideoRoute: ApiPublicClassVideoRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,
   ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,
 }
