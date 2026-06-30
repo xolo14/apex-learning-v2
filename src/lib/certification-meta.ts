@@ -41,10 +41,32 @@ export function normalizeClassLink(
   };
 }
 
-export function parseClassLinks(course: Pick<DbCourse, "class_links" | "url">): ClassLink[] {
-  if (course.class_links?.trim()) {
+export function parseClassLinks(
+  course: Pick<DbCourse, "class_links" | "url" | "video_url">,
+): ClassLink[] {
+  const fromDb = readClassLinksRaw(course.class_links);
+  if (fromDb.length > 0) return fromDb;
+
+  if (course.url?.trim()) {
+    const link = normalizeClassLink({ title: "Class 1", url: course.url }, 0);
+    if (link) return [link];
+  }
+
+  if (course.video_url?.trim()) {
+    const link = normalizeClassLink({ title: "Class 1", url: course.video_url }, 0);
+    if (link && (isDirectVideo(link.url) || videoEmbedUrl(link.url))) return [link];
+  }
+
+  return [];
+}
+
+function readClassLinksRaw(raw: string | null | undefined): ClassLink[] {
+  const text = raw?.trim();
+  if (!text) return [];
+
+  if (text.startsWith("[")) {
     try {
-      const parsed = JSON.parse(course.class_links) as unknown;
+      const parsed = JSON.parse(text) as unknown;
       if (Array.isArray(parsed)) {
         return parsed
           .map((item, i) => {
@@ -54,53 +76,81 @@ export function parseClassLinks(course: Pick<DbCourse, "class_links" | "url">): 
           .filter((x): x is ClassLink => !!x);
       }
     } catch {
-      /* fall through */
+      /* try plain-text fallback below */
     }
   }
-  if (course.url?.trim()) {
-    const link = normalizeClassLink({ title: "Class 1", url: course.url }, 0);
-    return link ? [link] : [];
-  }
-  return [];
+
+  return parseClassLinksFromAdmin(text);
 }
 
 /** Admin textarea: `Title | URL` or `Title : URL` per line, or URL only. */
 export function parseClassLinksFromAdmin(text: string): ClassLink[] {
   const links: ClassLink[] = [];
-  for (const line of text.split("\n")) {
+  const seen = new Set<string>();
+
+  const push = (link: ClassLink | null) => {
+    if (!link || seen.has(link.url)) return;
+    seen.add(link.url);
+    links.push(link);
+  };
+
+  for (const line of text.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
     const titled = trimmed.match(/^(.+?)\s*[:|]\s*(https?:\/\/.+)$/i);
     if (titled) {
-      const link = normalizeClassLink({ title: titled[1], url: titled[2] }, links.length);
-      if (link) links.push(link);
+      push(normalizeClassLink({ title: titled[1], url: titled[2] }, links.length));
+      continue;
+    }
+
+    const tabParts = trimmed.split(/\t+/);
+    if (tabParts.length >= 2 && /^https?:\/\//i.test(tabParts[tabParts.length - 1])) {
+      push(
+        normalizeClassLink(
+          { title: tabParts.slice(0, -1).join(" "), url: tabParts[tabParts.length - 1] },
+          links.length,
+        ),
+      );
       continue;
     }
 
     const pipe = trimmed.indexOf("|");
     if (pipe > 0) {
-      const link = normalizeClassLink(
-        { title: trimmed.slice(0, pipe), url: trimmed.slice(pipe + 1) },
-        links.length,
+      push(
+        normalizeClassLink(
+          { title: trimmed.slice(0, pipe), url: trimmed.slice(pipe + 1) },
+          links.length,
+        ),
       );
-      if (link) links.push(link);
       continue;
     }
 
     if (/^https?:\/\//i.test(trimmed)) {
-      const link = normalizeClassLink({ title: `Class ${links.length + 1}`, url: trimmed }, links.length);
-      if (link) links.push(link);
+      push(normalizeClassLink({ title: `Class ${links.length + 1}`, url: trimmed }, links.length));
       continue;
     }
 
-    const link = normalizeClassLink({ title: trimmed, url: "" }, links.length);
-    if (link) links.push(link);
+    push(normalizeClassLink({ title: trimmed, url: "" }, links.length));
   }
+
+  if (links.length === 0 && text.trim()) {
+    const urls = text.match(/https?:\/\/[^\s<>"',\r\n]+/gi) ?? [];
+    for (const url of urls) {
+      push(normalizeClassLink({ title: `Class ${links.length + 1}`, url }, links.length));
+    }
+  }
+
   return links;
 }
 
-export function formatClassLinksForAdmin(course: Pick<DbCourse, "class_links" | "url">): string {
+export function countClassLinks(course: Pick<DbCourse, "class_links" | "url" | "video_url">): number {
+  return parseClassLinks(course).length;
+}
+
+export function formatClassLinksForAdmin(
+  course: Pick<DbCourse, "class_links" | "url" | "video_url">,
+): string {
   const links = parseClassLinks(course);
   if (links.length === 0) return "";
   return links.map((l) => `${l.title} | ${l.url}`).join("\n");

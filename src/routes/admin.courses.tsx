@@ -5,9 +5,14 @@ import { useState } from "react";
 import { Pencil, Save, Trash2, X } from "lucide-react";
 import { AdminCoinLabel, AdminPriceLabel } from "@/components/price-coin-badges";
 import {
+  countClassLinks,
   formatClassLinksForAdmin,
+  isDirectVideo,
+  normalizeClassLink,
   parseClassLinksFromAdmin,
   serializeClassLinks,
+  videoEmbedUrl,
+  extractMediaUrl,
 } from "@/lib/certification-meta";
 import {
   listCourses,
@@ -81,8 +86,20 @@ function courseToForm(c: DbCourse): FormState {
   };
 }
 
+function buildClassLinks(form: FormState) {
+  let links = parseClassLinksFromAdmin(form.classLinksText);
+  if (links.length === 0 && form.videoUrl.trim()) {
+    const url = extractMediaUrl(form.videoUrl);
+    if (url && (isDirectVideo(url) || videoEmbedUrl(url))) {
+      const link = normalizeClassLink({ title: "Class 1", url }, 0);
+      if (link) links = [link];
+    }
+  }
+  return links;
+}
+
 function payloadFromForm(form: FormState) {
-  const links = serializeClassLinks(parseClassLinksFromAdmin(form.classLinksText));
+  const links = buildClassLinks(form);
   return {
     title: form.title,
     communitySlug: form.slug,
@@ -99,7 +116,7 @@ function payloadFromForm(form: FormState) {
     level: form.level,
     projectsLabel: form.projectsLabel,
     videoUrl: form.videoUrl,
-    classLinks: links,
+    classLinks: serializeClassLinks(links),
   };
 }
 
@@ -117,7 +134,11 @@ function AdminCertifications() {
     refetchInterval: 10_000,
   });
   const qCom = useQuery({ queryKey: ["admin", "communities"], queryFn: () => listCom() });
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "courses"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["admin", "courses"] });
+    qc.invalidateQueries({ queryKey: ["course"] });
+    qc.invalidateQueries({ queryKey: ["courses"] });
+  };
 
   const mCreate = useMutation({ mutationFn: create, onSuccess: invalidate });
   const mUpdate = useMutation({ mutationFn: update, onSuccess: invalidate });
@@ -126,6 +147,8 @@ function AdminCertifications() {
   const approvedCom = (qCom.data ?? []).filter((c) => c.status === "approved");
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
 
   const set = (key: keyof FormState, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -143,15 +166,58 @@ function AdminCertifications() {
 
   const canSave = Boolean(form.title.trim() && form.slug);
   const isSaving = mCreate.isPending || mUpdate.isPending;
-  const classCount = parseClassLinksFromAdmin(form.classLinksText).length;
+  const parsedLinks = buildClassLinks(form);
+  const classCount = parsedLinks.length;
+  const hasLinkText = Boolean(form.classLinksText.trim());
 
   function handleSave() {
     if (!canSave || isSaving) return;
+    setSaveErr(null);
+    setSaveMsg(null);
+
+    if (hasLinkText && classCount === 0) {
+      setSaveErr(
+        "Could not read those links. Use one per line: Class 1 | https://lmsclasses.com/...mp4",
+      );
+      return;
+    }
+
     const data = payloadFromForm(form);
+    const n = parsedLinks.length;
+
     if (editingId) {
-      mUpdate.mutate({ data: { id: editingId, ...data } }, { onSuccess: resetForm });
+      mUpdate.mutate(
+        { data: { id: editingId, ...data } },
+        {
+          onSuccess: () => {
+            setSaveMsg(
+              n > 0
+                ? `Saved · ${n} class video${n === 1 ? "" : "s"} live for students`
+                : "Saved · add class links below, then save again",
+            );
+          },
+          onError: (err) => {
+            setSaveErr(err instanceof Error ? err.message : "Could not save.");
+          },
+        },
+      );
     } else {
-      mCreate.mutate({ data }, { onSuccess: resetForm });
+      mCreate.mutate(
+        { data },
+        {
+          onSuccess: () => {
+            setSaveMsg(
+              n > 0
+                ? `Created · ${n} class video${n === 1 ? "" : "s"} added`
+                : "Created · edit this program to add class video links",
+            );
+            resetForm();
+          },
+          onError: (err) => {
+            setSaveErr(err instanceof Error ? err.message : "Could not create.");
+          },
+        },
+      );
     }
   }
 
@@ -163,9 +229,21 @@ function AdminCertifications() {
           Manage certification programs
         </h1>
         <p className="mt-1 text-[13px] text-ink-muted">
-          Set price to 0 for free programs. Add class links — students see them after enroll / payment.
+          Set price to 0 for free programs. Paste class video links below — students see them after enroll.
+          You must tap <strong className="font-medium text-foreground">Save</strong> after adding links.
         </p>
       </header>
+
+      {saveMsg ? (
+        <p className="mt-4 rounded-xl border border-forest/30 bg-forest/10 px-4 py-3 text-[13px] text-forest">
+          {saveMsg}
+        </p>
+      ) : null}
+      {saveErr ? (
+        <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-[13px] text-red-700">
+          {saveErr}
+        </p>
+      ) : null}
 
       <section className="mt-8 rounded-2xl border border-hairline p-5">
         <div className="flex items-center justify-between gap-3">
@@ -300,11 +378,34 @@ function AdminCertifications() {
             </span>
             <textarea
               value={form.classLinksText}
-              onChange={(e) => set("classLinksText", e.target.value)}
-              placeholder={"Class 1 | https://lmsclasses.com/videos/...\nClass 2 : https://youtube.com/...\nOr paste video URLs only, one per line"}
-              rows={5}
+              onChange={(e) => {
+                set("classLinksText", e.target.value);
+                setSaveErr(null);
+              }}
+              placeholder={"Class 1 | https://lmsclasses.com/videos/canva/video1.mp4\nClass 2 | https://lmsclasses.com/videos/canva/video2.mp4\n\nOr paste one MP4 / YouTube URL per line"}
+              rows={6}
               className="rounded-lg border border-hairline bg-background px-3 py-2 text-[13px] font-mono"
             />
+            {classCount > 0 ? (
+              <ul className="mt-2 space-y-1 rounded-lg border border-forest/25 bg-forest/5 p-3">
+                <p className="text-[11px] font-semibold text-forest">
+                  {classCount} class video{classCount === 1 ? "" : "s"} detected — will save on tap Save
+                </p>
+                {parsedLinks.map((link, i) => (
+                  <li key={`${link.url}-${i}`} className="truncate text-[12px] text-ink-muted">
+                    {i + 1}. {link.title}
+                  </li>
+                ))}
+              </ul>
+            ) : hasLinkText ? (
+              <p className="mt-2 text-[12px] text-red-600">
+                No valid video URLs found. Each line needs https://… (.mp4 or YouTube).
+              </p>
+            ) : (
+              <p className="mt-2 text-[12px] text-ink-muted">
+                Tip: edit an existing program (pencil icon), paste links here, then Save.
+              </p>
+            )}
           </label>
 
           <textarea
@@ -348,9 +449,11 @@ function AdminCertifications() {
             </p>
             <p className="truncate text-[11px] text-ink-muted">
               {canSave
-                ? editingId
-                  ? "Tap save to update this program"
-                  : "Tap save to publish this program"
+                ? classCount > 0
+                  ? `Save ${classCount} class video${classCount === 1 ? "" : "s"}`
+                  : editingId
+                    ? "Tap save to update this program"
+                    : "Tap save to publish"
                 : "Title and community required"}
             </p>
           </div>
@@ -393,6 +496,12 @@ function AdminCertifications() {
                   {" · "}
                   {c.price > 0 ? `₹${c.price}` : "Free"}
                   {" · "}+{c.coins} coins
+                  {" · "}
+                  <span className={countClassLinks(c) > 0 ? "text-forest font-medium" : "text-orange"}>
+                    {countClassLinks(c) > 0
+                      ? `${countClassLinks(c)} class video${countClassLinks(c) === 1 ? "" : "s"}`
+                      : "No class videos"}
+                  </span>
                 </p>
               </div>
               <button
