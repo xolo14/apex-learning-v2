@@ -124,7 +124,12 @@ function ProfilePage() {
       />
       <section className="px-5 pt-5">
         <div className="flex items-center gap-4">
-          <IdentityAvatar uniqueId={identity.uniqueId} className="h-16 w-16 text-[32px]" />
+          <IdentityAvatar
+            uniqueId={identity.uniqueId}
+            icon={identity.icon}
+            color={identity.color}
+            className="h-16 w-16 text-[32px]"
+          />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-[18px] font-semibold tracking-tight text-foreground">

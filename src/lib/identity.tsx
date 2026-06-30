@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { DbProfile } from "./profiles.functions";
 
 export const AVATAR_COLORS = [
   "#1f6f54",
@@ -46,6 +47,10 @@ function hashString(seed: string): number {
   return h;
 }
 
+function isAvatarIcon(id: string): id is AvatarIcon {
+  return AVATAR_STYLES.some((s) => s.id === id);
+}
+
 /** Deterministic avatar look per Syncpedia unique id. */
 export function avatarFromUniqueId(uniqueId: string): { icon: AvatarIcon; color: string } {
   const h = hashString(uniqueId.trim().toUpperCase());
@@ -76,6 +81,7 @@ type Ctx = Identity & {
   setColor: (c: string) => void;
   setIcon: (i: AvatarIcon) => void;
   setUniqueId: (id: string) => void;
+  applyAvatar: (icon: AvatarIcon, color: string) => void;
   regenerateId: () => string;
 };
 
@@ -89,9 +95,22 @@ function genId() {
   return `SP-${s}`;
 }
 
-function applyIdentityForUniqueId(state: Identity, uniqueId: string): Identity {
+function applyIdentityForUniqueId(state: Identity, uniqueId: string, resetLook = false): Identity {
+  if (!resetLook && state.uniqueId === uniqueId) return { ...state, uniqueId };
   const { icon, color } = avatarFromUniqueId(uniqueId);
   return { ...state, uniqueId, icon, color };
+}
+
+export function avatarPrefsFromProfile(
+  profile: Pick<DbProfile, "unique_id" | "avatar_icon" | "avatar_color">,
+): { icon: AvatarIcon; color: string } {
+  const derived = avatarFromUniqueId(profile.unique_id);
+  const icon = profile.avatar_icon && isAvatarIcon(profile.avatar_icon) ? profile.avatar_icon : derived.icon;
+  const color =
+    profile.avatar_color && AVATAR_COLORS.includes(profile.avatar_color)
+      ? profile.avatar_color
+      : derived.color;
+  return { icon, color };
 }
 
 export function IdentityProvider({ children }: { children: ReactNode }) {
@@ -112,9 +131,16 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
       if (raw) base = { ...base, ...JSON.parse(raw) };
       const profileRaw = localStorage.getItem("syncpedia_profile");
       if (profileRaw) {
-        const p = JSON.parse(profileRaw);
+        const p = JSON.parse(profileRaw) as DbProfile;
         if (p?.unique_id) {
-          setState(applyIdentityForUniqueId(base, p.unique_id));
+          const prefs = avatarPrefsFromProfile(p);
+          const icon =
+            base.uniqueId === p.unique_id && isAvatarIcon(base.icon) ? base.icon : prefs.icon;
+          const color =
+            base.uniqueId === p.unique_id && AVATAR_COLORS.includes(base.color)
+              ? base.color
+              : prefs.color;
+          setState({ uniqueId: p.unique_id, icon, color });
           return;
         }
       }
@@ -122,23 +148,41 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  const persist = (next: Identity) => {
-    setState(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {}
-  };
-
   return (
     <IdentityContext.Provider
       value={{
         ...state,
-        setColor: (color) => persist({ ...state, color }),
-        setIcon: (icon) => persist({ ...state, icon }),
+        setColor: (color) => {
+          setState((s) => {
+            const next = { ...s, color };
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+        },
+        setIcon: (icon) => {
+          setState((s) => {
+            const next = { ...s, icon };
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+        },
+        applyAvatar: (icon, color) => {
+          setState((s) => {
+            const next = { ...s, icon, color };
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+        },
         setUniqueId: (uniqueId) => {
           setState((s) => {
             const next =
-              s.uniqueId === uniqueId ? s : applyIdentityForUniqueId(s, uniqueId);
+              s.uniqueId === uniqueId ? s : applyIdentityForUniqueId(s, uniqueId, true);
             try {
               localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
             } catch {}
@@ -147,7 +191,13 @@ export function IdentityProvider({ children }: { children: ReactNode }) {
         },
         regenerateId: () => {
           const id = genId();
-          persist(applyIdentityForUniqueId(state, id));
+          setState((s) => {
+            const next = applyIdentityForUniqueId(s, id, true);
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
           return id;
         },
       }}
@@ -167,6 +217,7 @@ export function useIdentity(): Ctx {
       setColor: () => {},
       setIcon: () => {},
       setUniqueId: () => {},
+      applyAvatar: () => {},
       regenerateId: () => "SP-XXXXXX",
     };
   }
@@ -185,10 +236,10 @@ export function IdentityAvatar({
   className?: string;
 }) {
   const derived = uniqueId ? avatarFromUniqueId(uniqueId) : null;
+  const resolvedIcon = icon ?? derived?.icon ?? "bot-1";
   const bg = color ?? derived?.color ?? AVATAR_COLORS[0]!;
-  const src = uniqueId
-    ? avatarImageUrl(uniqueId)
-    : avatarUrl(icon ?? derived?.icon ?? "bot-1");
+  const seed = uniqueId?.trim().toUpperCase();
+  const src = avatarUrl(resolvedIcon, seed);
 
   return (
     <span

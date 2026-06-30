@@ -81,7 +81,12 @@ function Home() {
               aria-label="Open profile"
               className="rounded-full ring-1 ring-hairline active:scale-95 transition"
             >
-              <IdentityAvatar uniqueId={identity.uniqueId} className="h-10 w-10" />
+              <IdentityAvatar
+                uniqueId={identity.uniqueId}
+                icon={identity.icon}
+                color={identity.color}
+                className="h-10 w-10"
+              />
             </Link>
             {earningsEnabled ? (
               <Link

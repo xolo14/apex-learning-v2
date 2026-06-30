@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createProfile, getProfileByDevice, loginProfile, type DbProfile } from "@/lib/profiles.functions";
-import { useIdentity } from "@/lib/identity";
+import { useIdentity, avatarPrefsFromProfile } from "@/lib/identity";
 
 const DEVICE_KEY = "syncpedia_device_key";
 const PROFILE_CACHE = "syncpedia_profile";
@@ -58,11 +58,13 @@ export function OnboardingGate() {
   const fetchProfile = useServerFn(getProfileByDevice);
   const submitProfile = useServerFn(createProfile);
   const submitLogin = useServerFn(loginProfile);
-  const { setUniqueId } = useIdentity();
+  const { setUniqueId, applyAvatar } = useIdentity();
 
   function saveProfile(p: DbProfile) {
     localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
     setUniqueId(p.unique_id);
+    const prefs = avatarPrefsFromProfile(p);
+    applyAvatar(prefs.icon, prefs.color);
     setProfile(p);
   }
 

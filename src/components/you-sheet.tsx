@@ -29,7 +29,12 @@ export function YouTrigger({ className = "" }: { className?: string }) {
           aria-label="Open your profile"
           className={"rounded-full ring-1 ring-hairline active:scale-95 transition " + className}
         >
-          <IdentityAvatar uniqueId={identity.uniqueId} className="h-10 w-10" />
+          <IdentityAvatar
+            uniqueId={identity.uniqueId}
+            icon={identity.icon}
+            color={identity.color}
+            className="h-10 w-10"
+          />
         </button>
       </SheetTrigger>
       <SheetContent
@@ -106,7 +111,12 @@ function YouPanel({ onClose }: { onClose: () => void }) {
     <div className="flex h-full flex-col">
       <div className="px-5 pb-4 pt-[max(env(safe-area-inset-top),20px)]">
         <div className="flex items-start gap-3">
-          <IdentityAvatar uniqueId={identity.uniqueId} className="h-14 w-14 shrink-0" />
+          <IdentityAvatar
+            uniqueId={identity.uniqueId}
+            icon={identity.icon}
+            color={identity.color}
+            className="h-14 w-14 shrink-0"
+          />
           <div className="min-w-0 flex-1">
             {editing ? (
               <input

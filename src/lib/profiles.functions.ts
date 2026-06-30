@@ -23,6 +23,8 @@ export type DbProfile = {
   experience: string | null;
   branch: string | null;
   department: string | null;
+  avatar_icon: string;
+  avatar_color: string;
   created_at: string;
 };
 
@@ -83,7 +85,8 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
     const { ensureSchema } = await import("./db-ensure.server");
     await ensureSchema();
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     if (rows[0]) await ensureSignupBonus(sql, rows[0].unique_id);
@@ -127,7 +130,8 @@ export const createProfile = createServerFn({ method: "POST" })
 
     // If already onboarded on this device, return existing profile
     const existing = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     if (existing[0]) return existing[0];
@@ -186,7 +190,8 @@ export const createProfile = createServerFn({ method: "POST" })
     await ensureSignupBonus(sql, uniqueId);
 
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
       FROM profiles WHERE id = ${id} LIMIT 1
     `) as DbProfile[];
     return { status: "created", profile: rows[0]! };
@@ -209,7 +214,8 @@ export const loginProfile = createServerFn({ method: "POST" })
     const mobileNorm = normalizeMobile(data.mobile);
 
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
       FROM profiles
       WHERE lower(gmail) = ${emailNorm} AND mobile = ${mobileNorm}
       LIMIT 1
@@ -221,7 +227,8 @@ export const loginProfile = createServerFn({ method: "POST" })
     await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${rows[0].id}`;
     await ensureSignupBonus(sql, rows[0].unique_id);
     const refreshed = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
       FROM profiles WHERE id = ${rows[0].id} LIMIT 1
     `) as DbProfile[];
     return refreshed[0]!;
@@ -231,7 +238,8 @@ export const listProfiles = createServerFn({ method: "GET" }).handler(async () =
   await requireAdmin();
   const { sql } = await import("./db.server");
   const rows = (await sql()`
-    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+           COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
     FROM profiles ORDER BY created_at DESC
   `) as DbProfile[];
   return rows;
@@ -371,8 +379,52 @@ export const updateUniqueId = createServerFn({ method: "POST" })
       UPDATE profiles SET unique_id = ${data.uniqueId} WHERE device_key = ${data.deviceKey}
     `;
     const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department, created_at
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
       FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as DbProfile[];
     return rows[0]!;
+  });
+
+const AVATAR_ICON_RE = /^[a-z]+-\d+$/;
+
+export const updateAvatarPreferences = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string; icon: string; color: string }) => {
+    if (!isValidDeviceKey(d.deviceKey)) throw new Error("Device key required");
+    if (!d.color.startsWith("#") || d.color.length < 4) throw new Error("Invalid color");
+    if (!AVATAR_ICON_RE.test(d.icon)) throw new Error("Invalid avatar");
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+    await sql()`
+      UPDATE profiles
+      SET avatar_icon = ${data.icon.slice(0, 20)}, avatar_color = ${data.color.slice(0, 20)}
+      WHERE device_key = ${data.deviceKey}
+    `;
+    const rows = (await sql()`
+      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
+      FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as DbProfile[];
+    if (!rows[0]) throw new Error("Profile not found");
+    return rows[0];
+  });
+
+export const getPublicAvatar = createServerFn({ method: "GET" })
+  .inputValidator((d: { uniqueId: string }) => {
+    if (!d.uniqueId?.trim()) throw new Error("uniqueId required");
+    return { uniqueId: d.uniqueId.trim().slice(0, 24) };
+  })
+  .handler(async ({ data }) => {
+    const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+    const rows = (await sql()`
+      SELECT COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color
+      FROM profiles WHERE unique_id = ${data.uniqueId} LIMIT 1
+    `) as { avatar_icon: string; avatar_color: string }[];
+    return rows[0] ?? { avatar_icon: "", avatar_color: "" };
   });

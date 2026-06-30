@@ -80,6 +80,8 @@ export function CoinsCard({
         </div>
         <IdentityAvatar
           uniqueId={identity.uniqueId}
+          icon={identity.icon}
+          color={identity.color}
           className="h-10 w-10 shrink-0 ring-2 ring-background/20"
         />
       </div>

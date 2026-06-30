@@ -242,6 +242,11 @@ export function ensureSchema() {
     try {
       await s`ALTER TABLE communities ADD COLUMN IF NOT EXISTS image_url text DEFAULT ''`;
     } catch {}
+
+    try {
+      await s`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_icon text DEFAULT ''`;
+      await s`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_color text DEFAULT ''`;
+    } catch {}
   })().catch((e) => {
     _ready = null;
     throw e;
