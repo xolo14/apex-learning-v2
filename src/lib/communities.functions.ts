@@ -363,7 +363,7 @@ export const createEvent = createServerFn({ method: "POST" })
       await sendPushToAll({
         title: "New event on Syncpedia",
         body: data.title.slice(0, 120),
-        url: "/communities?tab=events",
+        url: `/events/${id}`,
         tag: `evt-${id}`,
       });
     } catch {}
@@ -377,6 +377,155 @@ export const deleteEvent = createServerFn({ method: "POST" })
     const s = await db();
     await s`DELETE FROM events WHERE id = ${data.id}`;
     return { ok: true };
+  });
+
+export const getEvent = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => {
+    if (!d.id?.trim()) throw new Error("id required");
+    return { id: d.id.trim().slice(0, 80) };
+  })
+  .handler(async ({ data }) => {
+    const s = await db();
+    const rows = (await s`
+      SELECT id, community_slug, title, description, image_url, location, starts_at,
+             COALESCE(price, 0)::float AS price,
+             COALESCE(coins, 0)::int AS coins, created_at
+      FROM events WHERE id = ${data.id} LIMIT 1
+    `) as DbEvent[];
+    if (rows[0]) return rows[0];
+    const demo = DEMO_EVENTS.find((e) => e.id === data.id);
+    return demo ?? null;
+  });
+
+export type EventRegistration = {
+  id: string;
+  event_id: string;
+  user_unique_id: string;
+  status: "confirmed" | "pending_payment";
+  price_snapshot: number;
+  coins_credited: number;
+  created_at: string;
+};
+
+export const getMyEventRegistration = createServerFn({ method: "POST" })
+  .inputValidator((d: { eventId: string; deviceKey: string }) => d)
+  .handler(async ({ data }) => {
+    const { isValidDeviceKey } = await import("./security.server");
+    if (!isValidDeviceKey(data.deviceKey)) return null;
+    const s = await db();
+    const profiles = (await s`
+      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string }[];
+    const uid = profiles[0]?.unique_id;
+    if (!uid) return null;
+    const rows = (await s`
+      SELECT id, event_id, user_unique_id, status, price_snapshot, coins_credited, created_at
+      FROM event_registrations
+      WHERE event_id = ${data.eventId} AND user_unique_id = ${uid}
+      LIMIT 1
+    `) as EventRegistration[];
+    return rows[0] ?? null;
+  });
+
+export const registerForEvent = createServerFn({ method: "POST" })
+  .inputValidator((d: { eventId: string; deviceKey: string }) => {
+    if (!d.eventId?.trim()) throw new Error("eventId required");
+    return { eventId: d.eventId.trim().slice(0, 80), deviceKey: d.deviceKey };
+  })
+  .handler(async ({ data }) => {
+    const { isValidDeviceKey, rateLimit } = await import("./security.server");
+    if (!isValidDeviceKey(data.deviceKey)) throw new Error("Invalid session");
+    rateLimit(`event-rsvp:${data.deviceKey}`, 8, 60_000);
+
+    const s = await db();
+    const profiles = (await s`
+      SELECT unique_id, name FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string; name: string }[];
+    const profile = profiles[0];
+    if (!profile) throw new Error("Create your Syncpedia profile before RSVPing.");
+
+    const events = (await s`
+      SELECT id, title, COALESCE(price, 0)::float AS price, COALESCE(coins, 0)::int AS coins
+      FROM events WHERE id = ${data.eventId} LIMIT 1
+    `) as { id: string; title: string; price: number; coins: number }[];
+    const event = events[0];
+    if (!event) throw new Error("Event not found.");
+
+    const existing = (await s`
+      SELECT id, status, price_snapshot, coins_credited, created_at
+      FROM event_registrations
+      WHERE event_id = ${data.eventId} AND user_unique_id = ${profile.unique_id}
+      LIMIT 1
+    `) as EventRegistration[];
+    if (existing[0]) {
+      return {
+        alreadyRegistered: true as const,
+        registration: existing[0],
+        message: "You are already registered for this event.",
+      };
+    }
+
+    const price = Math.max(0, Math.floor(Number(event.price) || 0));
+    const coinReward = Math.min(Math.max(0, Math.floor(Number(event.coins) || 0)), 10_000);
+    const regId = `evreg_${data.eventId.slice(0, 20)}_${profile.unique_id.replace(/[^A-Z0-9]/gi, "").slice(0, 12)}`;
+
+    if (price > 0) {
+      await s`
+        INSERT INTO event_registrations (id, event_id, user_unique_id, device_key, price_snapshot, status, coins_credited)
+        VALUES (${regId}, ${data.eventId}, ${profile.unique_id}, ${data.deviceKey}, ${price}, 'pending_payment', 0)
+      `;
+      return {
+        alreadyRegistered: false as const,
+        registration: {
+          id: regId,
+          event_id: data.eventId,
+          user_unique_id: profile.unique_id,
+          status: "pending_payment" as const,
+          price_snapshot: price,
+          coins_credited: 0,
+          created_at: new Date().toISOString(),
+        },
+        message: `Spot reserved. Pay ₹${price.toLocaleString("en-IN")} to confirm your seat.`,
+        coinsPending: coinReward > 0,
+        coinReward,
+      };
+    }
+
+    let coinsCredited = 0;
+    if (coinReward > 0) {
+      const actionKey = `event:${data.eventId}`;
+      const inserted = (await s`
+        INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+        VALUES (${profile.unique_id}, ${actionKey}, ${coinReward})
+        ON CONFLICT (user_unique_id, action_key) DO NOTHING
+        RETURNING amount
+      `) as { amount: number }[];
+      coinsCredited = inserted[0]?.amount ?? 0;
+    }
+
+    await s`
+      INSERT INTO event_registrations (id, event_id, user_unique_id, device_key, price_snapshot, status, coins_credited)
+      VALUES (${regId}, ${data.eventId}, ${profile.unique_id}, ${data.deviceKey}, 0, 'confirmed', ${coinsCredited})
+    `;
+
+    return {
+      alreadyRegistered: false as const,
+      registration: {
+        id: regId,
+        event_id: data.eventId,
+        user_unique_id: profile.unique_id,
+        status: "confirmed" as const,
+        price_snapshot: 0,
+        coins_credited: coinsCredited,
+        created_at: new Date().toISOString(),
+      },
+      message:
+        coinsCredited > 0
+          ? `You're registered! +${coinsCredited} coins added to your wallet.`
+          : "You're registered for this free event.",
+      coinsPending: false,
+      coinReward: coinsCredited,
+    };
   });
 
 // ---------------- Gigs ----------------

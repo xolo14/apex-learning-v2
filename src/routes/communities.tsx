@@ -4,7 +4,7 @@ import { useRef, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
-import { PriceCoinBadges, RewardLegend } from "@/components/price-coin-badges";
+import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { communities as staticCommunities, posts } from "@/lib/feed-data";
 import { listCommunities, listEvents } from "@/lib/communities.functions";
 import { iconFromKey } from "@/lib/community-icons";
@@ -311,11 +311,13 @@ function EventsView() {
   }
   return (
     <ul>
-      <li className="px-5 pb-2">
-        <RewardLegend kind="event" />
-      </li>
       {events.map((e) => (
-        <li key={e.id} className="border-b border-hairline px-5 py-4 active:bg-surface/60">
+        <li key={e.id}>
+          <Link
+            to="/events/$id"
+            params={{ id: e.id }}
+            className="block border-b border-hairline px-5 py-4 active:bg-surface/60"
+          >
           {e.image_url ? (
             <img src={e.image_url} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
           ) : null}
@@ -331,7 +333,7 @@ function EventsView() {
             {e.title}
           </h3>
           {e.description ? (
-            <p className="mt-1 text-[12.5px] text-ink-muted">{e.description}</p>
+            <p className="mt-1 line-clamp-2 text-[12.5px] text-ink-muted">{e.description}</p>
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-muted">
             {e.starts_at ? (
@@ -347,11 +349,10 @@ function EventsView() {
               </span>
             ) : null}
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <Link to="/coins" className="rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background">
-              RSVP
-            </Link>
-          </div>
+          <span className="mt-3 inline-block rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background">
+            View details
+          </span>
+          </Link>
         </li>
       ))}
     </ul>

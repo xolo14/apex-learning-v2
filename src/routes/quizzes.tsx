@@ -13,7 +13,7 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
-import { PriceCoinBadges, RewardLegend } from "@/components/price-coin-badges";
+import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
@@ -155,7 +155,6 @@ function EarnPage() {
           }}
         >
           <section className="w-1/2 shrink-0 px-5">
-            <RewardLegend kind="quiz" className="mb-3 px-1" />
             {quizzes.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {quizzesQ.isLoading ? "Loading…" : "No quizzes yet."}
@@ -190,7 +189,6 @@ function EarnPage() {
           </section>
 
           <section className="w-1/2 shrink-0 px-5">
-            <RewardLegend kind="gig" className="mb-3 px-1" />
             {gigs.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {gigsQ.isLoading ? "Loading…" : "No gigs yet."}

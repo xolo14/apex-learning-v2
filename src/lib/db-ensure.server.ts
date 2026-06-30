@@ -150,6 +150,22 @@ export function ensureSchema() {
       )
     `;
 
+    // -------- Event RSVPs (server-validated; coins credited only here) --------
+    await s`
+      CREATE TABLE IF NOT EXISTS event_registrations (
+        id text PRIMARY KEY,
+        event_id text NOT NULL,
+        user_unique_id text NOT NULL,
+        device_key text NOT NULL,
+        price_snapshot numeric NOT NULL DEFAULT 0,
+        status text NOT NULL DEFAULT 'confirmed',
+        coins_credited integer NOT NULL DEFAULT 0,
+        created_at timestamptz DEFAULT now(),
+        UNIQUE(event_id, user_unique_id)
+      )
+    `;
+    await s`CREATE INDEX IF NOT EXISTS event_registrations_event_idx ON event_registrations(event_id)`;
+
     // -------- One account per email and per mobile --------
     // Best-effort: ignore failure if duplicates already exist in legacy data.
     try {

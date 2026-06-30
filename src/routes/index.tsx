@@ -297,13 +297,15 @@ function EventsFeed({
   return (
     <ul>
       {events.map((e) => (
-        <li
-          key={e.id}
-          className={
-            "border-b border-hairline active:bg-surface/60 " +
-            (compact ? "px-4 py-3" : "px-5 py-4")
-          }
-        >
+        <li key={e.id}>
+          <Link
+            to="/events/$id"
+            params={{ id: e.id }}
+            className={
+              "block border-b border-hairline active:bg-surface/60 " +
+              (compact ? "px-4 py-3" : "px-5 py-4")
+            }
+          >
           {e.image_url ? (
             <img src={e.image_url} alt="" className="mb-3 h-36 w-full rounded-xl object-cover" />
           ) : null}
@@ -319,7 +321,7 @@ function EventsFeed({
             {e.title}
           </h3>
           {e.description ? (
-            <p className="mt-1 text-[12.5px] text-ink-muted">{e.description}</p>
+            <p className="mt-1 line-clamp-2 text-[12.5px] text-ink-muted">{e.description}</p>
           ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12.5px] text-ink-muted">
             {e.starts_at ? (
@@ -335,6 +337,7 @@ function EventsFeed({
               </span>
             ) : null}
           </div>
+          </Link>
         </li>
       ))}
     </ul>

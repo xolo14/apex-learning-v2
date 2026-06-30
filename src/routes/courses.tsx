@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Clock, MapPin, Briefcase, GraduationCap, ArrowUpRight, ExternalLink } from "lucide-react";
-import { PriceCoinBadges, RewardLegend } from "@/components/price-coin-badges";
+import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { listCourses, listInternshipPostings } from "@/lib/communities.functions";
 import { pageHead } from "@/lib/seo";
@@ -115,7 +115,6 @@ function LearnPage() {
           }}
         >
           <section className="w-1/2 shrink-0 px-5">
-            <RewardLegend kind="course" className="mb-3 px-1" />
             {courses.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {coursesQ.isLoading ? "Loading…" : "No courses yet."}
@@ -155,7 +154,6 @@ function LearnPage() {
           </section>
 
           <section className="w-1/2 shrink-0 px-5">
-            <RewardLegend kind="internship" className="mb-3 px-1" />
             {internships.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
                 {internshipsQ.isLoading ? "Loading…" : "No internships yet."}

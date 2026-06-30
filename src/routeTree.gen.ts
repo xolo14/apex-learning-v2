@@ -25,6 +25,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as UIdRouteImport } from './routes/u.$id'
 import { Route as PIdRouteImport } from './routes/p.$id'
 import { Route as MessagesThreadIdRouteImport } from './routes/messages.$threadId'
+import { Route as EventsIdRouteImport } from './routes/events.$id'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminQuizzesRouteImport } from './routes/admin.quizzes'
@@ -120,6 +121,11 @@ const MessagesThreadIdRoute = MessagesThreadIdRouteImport.update({
   id: '/$threadId',
   path: '/$threadId',
   getParentRoute: () => MessagesRoute,
+} as any)
+const EventsIdRoute = EventsIdRouteImport.update({
+  id: '/events/$id',
+  path: '/events/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CSlugRoute = CSlugRouteImport.update({
   id: '/c/$slug',
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/events/$id': typeof EventsIdRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
   '/u/$id': typeof UIdRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/events/$id': typeof EventsIdRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
   '/u/$id': typeof UIdRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/admin/quizzes': typeof AdminQuizzesRoute
   '/admin/users': typeof AdminUsersRoute
   '/c/$slug': typeof CSlugRoute
+  '/events/$id': typeof EventsIdRoute
   '/messages/$threadId': typeof MessagesThreadIdRoute
   '/p/$id': typeof PIdRoute
   '/u/$id': typeof UIdRoute
@@ -324,6 +333,7 @@ export interface FileRouteTypes {
     | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
+    | '/events/$id'
     | '/messages/$threadId'
     | '/p/$id'
     | '/u/$id'
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
+    | '/events/$id'
     | '/messages/$threadId'
     | '/p/$id'
     | '/u/$id'
@@ -389,6 +400,7 @@ export interface FileRouteTypes {
     | '/admin/quizzes'
     | '/admin/users'
     | '/c/$slug'
+    | '/events/$id'
     | '/messages/$threadId'
     | '/p/$id'
     | '/u/$id'
@@ -411,6 +423,7 @@ export interface RootRouteChildren {
   QuizzesRoute: typeof QuizzesRoute
   SettingsRoute: typeof SettingsRoute
   CSlugRoute: typeof CSlugRoute
+  EventsIdRoute: typeof EventsIdRoute
   PIdRoute: typeof PIdRoute
   UIdRoute: typeof UIdRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
@@ -530,6 +543,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/messages/$threadId'
       preLoaderRoute: typeof MessagesThreadIdRouteImport
       parentRoute: typeof MessagesRoute
+    }
+    '/events/$id': {
+      id: '/events/$id'
+      path: '/events/$id'
+      fullPath: '/events/$id'
+      preLoaderRoute: typeof EventsIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/c/$slug': {
       id: '/c/$slug'
@@ -699,6 +719,7 @@ const rootRouteChildren: RootRouteChildren = {
   QuizzesRoute: QuizzesRoute,
   SettingsRoute: SettingsRoute,
   CSlugRoute: CSlugRoute,
+  EventsIdRoute: EventsIdRoute,
   PIdRoute: PIdRoute,
   UIdRoute: UIdRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,

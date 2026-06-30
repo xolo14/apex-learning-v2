@@ -28,7 +28,7 @@ export const Route = createFileRoute("/api/public/sitemap")({
           const communities = (await s`SELECT slug FROM communities LIMIT 500`) as { slug: string }[];
           const events = (await s`SELECT id FROM events ORDER BY created_at DESC LIMIT 500`) as { id: string }[];
           dynamic += communities.map((c) => `<url><loc>${base}/c/${c.slug}</loc></url>`).join("");
-          dynamic += events.map((e) => `<url><loc>${base}/p/${e.id}</loc></url>`).join("");
+          dynamic += events.map((e) => `<url><loc>${base}/events/${e.id}</loc></url>`).join("");
         } catch {}
         const urls = STATIC_PATHS.map(
           (p) =>
