@@ -1,4 +1,5 @@
-import { Check, X, ZoomIn } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Check, Move, X, ZoomIn } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   exportCroppedImage,
@@ -13,7 +14,7 @@ import {
   COURSE_COVER_WIDTH,
 } from "@/lib/media-limits";
 
-const FRAME_W = 320;
+const FRAME_W = 340;
 
 type Props = {
   open: boolean;
@@ -26,7 +27,7 @@ type Props = {
 export function AdminImageCropModal({
   open,
   imageSrc,
-  title = "Crop cover image",
+  title = "Crop cover thumbnail",
   onClose,
   onApply,
 }: Props) {
@@ -42,6 +43,7 @@ export function AdminImageCropModal({
   useEffect(() => {
     if (!open || !imageSrc) return;
     setError(null);
+    setImage(null);
     let cancelled = false;
     loadImage(imageSrc)
       .then((img) => {
@@ -53,14 +55,14 @@ export function AdminImageCropModal({
         setOffset({ offsetX: 0, offsetY: 0 });
       })
       .catch(() => {
-        if (!cancelled) setError("Could not load image for cropping.");
+        if (!cancelled) setError("Could not load image. Try another file or URL.");
       });
     return () => {
       cancelled = true;
     };
   }, [open, imageSrc, frameH]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const transform: CropTransform = withZoom(
     { offsetX: offset.offsetX, offsetY: offset.offsetY, scale: baseScale },
@@ -110,14 +112,14 @@ export function AdminImageCropModal({
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 sm:items-center">
-      <div className="w-full max-w-md rounded-2xl border border-hairline bg-background shadow-xl">
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end justify-center bg-black/70 p-4 sm:items-center">
+      <div className="w-full max-w-lg rounded-2xl border border-hairline bg-background shadow-2xl">
         <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
           <div>
-            <p className="text-[14px] font-semibold">{title}</p>
-            <p className="text-[11px] text-ink-muted">
-              {COURSE_COVER_WIDTH}×{COURSE_COVER_HEIGHT}px · drag to position
+            <p className="text-[15px] font-semibold">{title}</p>
+            <p className="mt-0.5 text-[12px] text-ink-muted">
+              Required output: <strong className="font-semibold text-foreground">{COURSE_COVER_WIDTH}×{COURSE_COVER_HEIGHT}px</strong> (16:9)
             </p>
           </div>
           <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full bg-surface">
@@ -126,8 +128,13 @@ export function AdminImageCropModal({
         </div>
 
         <div className="p-4">
+          <p className="mb-3 flex items-center gap-1.5 text-[12px] text-ink-muted">
+            <Move className="h-3.5 w-3.5" />
+            Drag to position · use zoom to fit any image ratio
+          </p>
+
           <div
-            className="relative mx-auto overflow-hidden rounded-lg bg-[#111] touch-none"
+            className="relative mx-auto overflow-hidden rounded-xl bg-[#111] touch-none shadow-inner"
             style={{ width: FRAME_W, height: frameH }}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -140,17 +147,15 @@ export function AdminImageCropModal({
                 alt=""
                 draggable={false}
                 className="absolute max-w-none select-none"
-                style={{
-                  width: displayW,
-                  height: displayH,
-                  left: imgX,
-                  top: imgY,
-                }}
+                style={{ width: displayW, height: displayH, left: imgX, top: imgY }}
               />
             ) : (
-              <div className="grid h-full place-items-center text-[12px] text-white/50">Loading…</div>
+              <div className="grid h-full place-items-center text-[13px] text-white/50">Loading image…</div>
             )}
-            <div className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-white/80" />
+            <div className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-inset ring-orange/90" />
+            <span className="pointer-events-none absolute bottom-2 right-2 rounded bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">
+              16:9 crop frame
+            </span>
           </div>
 
           <label className="mt-4 flex items-center gap-3">
@@ -162,7 +167,7 @@ export function AdminImageCropModal({
               step={0.02}
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-full"
+              className="w-full accent-orange"
             />
           </label>
 
@@ -181,13 +186,14 @@ export function AdminImageCropModal({
             type="button"
             disabled={!image || busy}
             onClick={() => void handleApply()}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-orange py-2.5 text-[13px] font-semibold text-white disabled:opacity-40"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-orange py-2.5 text-[14px] font-semibold text-white disabled:opacity-40"
           >
             <Check className="h-4 w-4" />
-            {busy ? "Saving…" : "Use crop"}
+            {busy ? "Cropping…" : `Save ${COURSE_COVER_WIDTH}×${COURSE_COVER_HEIGHT}`}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -30,7 +30,7 @@ export function AdminImageUpload({ label, value, onChange, hint }: Props) {
     if (!file) return;
     setError(null);
     if (!isAcceptedImage(file)) {
-      setError("Use JPG, PNG, or WebP.");
+      setError("Use JPG, PNG, or WebP — any size or ratio is OK.");
       return;
     }
     openCropper(fileToObjectUrl(file));
@@ -45,16 +45,39 @@ export function AdminImageUpload({ label, value, onChange, hint }: Props) {
 
   return (
     <div className="md:col-span-2 flex flex-col gap-2">
-      <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-muted">{label}</span>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-ink-muted">{label}</span>
+        <span className="rounded-full bg-orange/10 px-2.5 py-0.5 text-[10px] font-semibold text-orange">
+          Required {COURSE_COVER_WIDTH}×{COURSE_COVER_HEIGHT}px
+        </span>
+      </div>
+
+      <div className="rounded-xl border border-orange/25 bg-orange/[0.03] p-3">
+        <p className="text-[12px] text-ink-muted">
+          Upload <strong className="font-medium text-foreground">any image ratio</strong> — portrait, square, or wide.
+          The crop tool opens next so you can fit it to the app card.
+        </p>
+      </div>
 
       <div className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface/30 p-3 sm:flex-row">
-        <div className="relative mx-auto aspect-[16/9] w-full max-w-[220px] shrink-0 overflow-hidden rounded-lg bg-background sm:mx-0">
+        <button
+          type="button"
+          onClick={() => (value ? openCropper(value) : fileRef.current?.click())}
+          className="group relative mx-auto aspect-[16/9] w-full max-w-[240px] shrink-0 overflow-hidden rounded-lg bg-background ring-1 ring-hairline sm:mx-0"
+          title={value ? "Tap to crop again" : "Upload image"}
+        >
           {value ? (
-            <img src={value} alt="" className="h-full w-full object-cover" />
+            <>
+              <img src={value} alt="" className="h-full w-full object-cover" />
+              <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/0 text-white opacity-0 transition group-hover:bg-black/45 group-hover:opacity-100">
+                <Crop className="h-6 w-6" />
+                <span className="text-[11px] font-medium">Crop again</span>
+              </span>
+            </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-ink-muted">
               <ImagePlus className="h-8 w-8 opacity-40" />
-              <span className="text-[11px]">No image</span>
+              <span className="text-[11px]">Tap to upload</span>
             </div>
           )}
           {busy ? (
@@ -62,7 +85,7 @@ export function AdminImageUpload({ label, value, onChange, hint }: Props) {
               <Loader2 className="h-6 w-6 animate-spin text-ink-muted" />
             </div>
           ) : null}
-        </div>
+        </button>
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <input
@@ -74,22 +97,23 @@ export function AdminImageUpload({ label, value, onChange, hint }: Props) {
             onChange={(e) => onFilePick(e.target.files?.[0] ?? null)}
           />
 
+          <label
+            htmlFor={inputId}
+            className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-orange px-4 py-3 text-[13px] font-semibold text-white sm:w-auto"
+          >
+            <Upload className="h-4 w-4" />
+            {value ? "Upload new & crop" : "Choose image & crop"}
+          </label>
+
           <div className="flex flex-wrap gap-2">
-            <label
-              htmlFor={inputId}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-[12px] font-medium text-background"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {value ? "Replace" : "Upload & crop"}
-            </label>
             {value ? (
               <button
                 type="button"
                 onClick={() => openCropper(value)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-background px-3 py-2 text-[12px]"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-orange/40 bg-orange/5 px-3 py-2 text-[12px] font-medium text-orange"
               >
                 <Crop className="h-3.5 w-3.5" />
-                Re-crop
+                Adjust crop
               </button>
             ) : null}
             <button
@@ -102,7 +126,7 @@ export function AdminImageUpload({ label, value, onChange, hint }: Props) {
               className="inline-flex items-center gap-1.5 rounded-lg border border-hairline bg-background px-3 py-2 text-[12px]"
             >
               <Link2 className="h-3.5 w-3.5" />
-              {showUrl ? "Hide URL" : "Paste URL"}
+              {showUrl ? "Hide URL" : "From URL"}
             </button>
             {value ? (
               <button
@@ -121,11 +145,11 @@ export function AdminImageUpload({ label, value, onChange, hint }: Props) {
           </div>
 
           {showUrl ? (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 value={urlDraft}
                 onChange={(e) => setUrlDraft(e.target.value)}
-                placeholder="https://… image URL"
+                placeholder="https://… any image URL"
                 className="min-w-0 flex-1 rounded-lg border border-hairline bg-background px-3 py-2 text-[13px]"
               />
               <button
@@ -141,16 +165,16 @@ export function AdminImageUpload({ label, value, onChange, hint }: Props) {
                   openCropper(url);
                   setShowUrl(false);
                 }}
-                className="shrink-0 rounded-lg bg-orange px-3 py-2 text-[12px] font-medium text-white"
+                className="shrink-0 rounded-lg bg-foreground px-4 py-2 text-[12px] font-medium text-background"
               >
-                Crop URL
+                Open crop tool
               </button>
             </div>
           ) : null}
 
           <p className="text-[11px] text-ink-muted">
             {hint ??
-              `Crops to ${COURSE_COVER_WIDTH}×${COURSE_COVER_HEIGHT}px — fits the app card exactly`}
+              `Saves exactly ${COURSE_COVER_WIDTH}×${COURSE_COVER_HEIGHT}px after crop · then tap Save on the form`}
           </p>
           {error ? <p className="text-[12px] text-red-600">{error}</p> : null}
         </div>
