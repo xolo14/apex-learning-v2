@@ -9,7 +9,7 @@ import {
   type DbProfile,
 } from "@/lib/profiles.functions";
 import { useIdentity, avatarPrefsFromProfile } from "@/lib/identity";
-import { GoogleContinueButton, isGoogleAuthEnabled } from "@/components/google-auth";
+import { GoogleContinueButton, useGoogleAuth } from "@/components/google-auth";
 import { SyncpediaLogo, SyncpediaWordmark } from "@/components/syncpedia-logo";
 import {
   DEVICE_KEY,
@@ -564,7 +564,7 @@ function WelcomeScreen({
   onLogin: () => void;
   onEmailSignup: () => void;
 }) {
-  const googleEnabled = isGoogleAuthEnabled();
+  const googleEnabled = Boolean(useGoogleAuth().clientId);
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">

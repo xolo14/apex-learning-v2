@@ -1,3 +1,5 @@
+import { getGoogleClientId } from "./public-config.server";
+
 export type GoogleTokenClaims = {
   email: string;
   name: string;
@@ -5,17 +7,9 @@ export type GoogleTokenClaims = {
   sub: string;
 };
 
-function googleClientId(): string {
-  return (
-    process.env.GOOGLE_CLIENT_ID?.trim() ||
-    process.env.VITE_GOOGLE_CLIENT_ID?.trim() ||
-    ""
-  );
-}
-
 /** Verify a Google Identity Services JWT (credential) server-side. */
 export async function verifyGoogleIdToken(credential: string): Promise<GoogleTokenClaims> {
-  const clientId = googleClientId();
+  const clientId = getGoogleClientId();
   if (!clientId) {
     throw new Error("Google sign-in is not configured on the server.");
   }
@@ -28,7 +22,8 @@ export async function verifyGoogleIdToken(credential: string): Promise<GoogleTok
   }
 
   const data = (await res.json()) as Record<string, string>;
-  if (data.aud !== clientId) {
+  const audOk = data.aud === clientId || data.azp === clientId;
+  if (!audOk) {
     throw new Error("Google sign-in token is not valid for this app.");
   }
   if (data.email_verified !== "true" || !data.email) {

@@ -1,15 +1,61 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { GoogleOAuthProvider, GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 
-const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+type GoogleAuthContextValue = {
+  clientId: string;
+  ready: boolean;
+};
 
-export function GoogleAuthProvider({ children }: { children: ReactNode }) {
-  if (!clientId?.trim()) return <>{children}</>;
-  return <GoogleOAuthProvider clientId={clientId}>{children}</GoogleOAuthProvider>;
+const GoogleAuthContext = createContext<GoogleAuthContextValue>({
+  clientId: "",
+  ready: false,
+});
+
+function resolveBuildTimeClientId(): string {
+  return ((import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? "").trim();
 }
 
-export function isGoogleAuthEnabled() {
-  return Boolean(clientId?.trim());
+export function GoogleAuthProvider({ children }: { children: ReactNode }) {
+  const [clientId, setClientId] = useState("");
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    fetch("/api/public/app-config")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { googleClientId?: string } | null) => {
+        if (!alive) return;
+        const id = data?.googleClientId?.trim() || resolveBuildTimeClientId();
+        setClientId(id);
+      })
+      .catch(() => {
+        if (alive) setClientId(resolveBuildTimeClientId());
+      })
+      .finally(() => {
+        if (alive) setReady(true);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const value: GoogleAuthContextValue = { clientId, ready };
+
+  if (!clientId) {
+    return <GoogleAuthContext.Provider value={value}>{children}</GoogleAuthContext.Provider>;
+  }
+
+  return (
+    <GoogleAuthContext.Provider value={value}>
+      <GoogleOAuthProvider clientId={clientId}>{children}</GoogleOAuthProvider>
+    </GoogleAuthContext.Provider>
+  );
+}
+
+export function useGoogleAuth() {
+  return useContext(GoogleAuthContext);
 }
 
 export function GoogleContinueButton({
@@ -21,7 +67,9 @@ export function GoogleContinueButton({
   onError: () => void;
   disabled?: boolean;
 }) {
-  if (!clientId?.trim()) return null;
+  const { clientId, ready } = useGoogleAuth();
+
+  if (!ready || !clientId) return null;
 
   return (
     <div className={disabled ? "pointer-events-none opacity-50" : ""}>
