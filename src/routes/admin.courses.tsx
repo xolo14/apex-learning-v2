@@ -312,7 +312,7 @@ function AdminCertifications() {
             label="Cover thumbnail"
             value={form.imageUrl}
             onChange={(url) => set("imageUrl", url)}
-            hint="Upload from phone or computer · or paste an image URL"
+            hint="Upload & crop to 800×450px — fits the certification card exactly"
           />
 
           <label className="flex flex-col gap-1">

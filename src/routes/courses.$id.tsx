@@ -62,9 +62,9 @@ function CertificationDetailPage() {
 
   const enrollM = useMutation({
     mutationFn: () => enroll({ data: { courseId: id, deviceKey } }),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       setToast(res.message);
-      qc.invalidateQueries({ queryKey: ["course-enroll", id] });
+      await qc.refetchQueries({ queryKey: ["course-enroll", id] });
       refetchCoins();
     },
     onError: (err) => {
@@ -74,9 +74,9 @@ function CertificationDetailPage() {
 
   const payM = useMutation({
     mutationFn: () => confirmPay({ data: { courseId: id, deviceKey } }),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       setToast(res.message);
-      qc.invalidateQueries({ queryKey: ["course-enroll", id] });
+      await qc.refetchQueries({ queryKey: ["course-enroll", id] });
       refetchCoins();
     },
     onError: (err) => {
@@ -101,7 +101,8 @@ function CertificationDetailPage() {
   const isConfirmed = enrollment?.status === "confirmed";
   const isPending = enrollment?.status === "pending_payment";
   const classLinks = certificationMeta(course).classLinks;
-  const inClassroom = isConfirmed && classLinks.length > 0;
+  const hasClasses = classLinks.length > 0;
+  const inClassroom = isConfirmed && hasClasses;
 
   const openPreview = () => {
     const url = course.video_url || course.image_url;
@@ -211,15 +212,9 @@ function CertificationDetailPage() {
           </div>
 
           {isConfirmed ? (
-            classLinks.length > 0 ? (
-              <p className="rounded-full bg-forest/10 px-6 py-3 text-[14px] font-semibold text-forest">
-                Classroom unlocked ↑
-              </p>
-            ) : (
-              <button type="button" disabled className="rounded-full bg-surface px-6 py-3 text-[14px] font-semibold text-ink-muted">
-                Enrolled
-              </button>
-            )
+            <button type="button" disabled className="rounded-full bg-forest/10 px-6 py-3 text-[14px] font-semibold text-forest">
+              {hasClasses ? "Opening classes…" : "Enrolled — videos soon"}
+            </button>
           ) : isPending ? (
             <button
               type="button"

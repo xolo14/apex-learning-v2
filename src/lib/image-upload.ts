@@ -6,6 +6,10 @@ export function isAcceptedImage(file: File): boolean {
   return ACCEPT.includes(file.type) || file.type.startsWith("image/");
 }
 
+export function fileToObjectUrl(file: File): string {
+  return URL.createObjectURL(file);
+}
+
 export async function fileToStoredImageUrl(file: File): Promise<string> {
   if (!isAcceptedImage(file)) {
     throw new Error("Use JPG, PNG, or WebP.");

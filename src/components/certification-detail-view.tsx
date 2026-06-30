@@ -80,19 +80,30 @@ export function CertificationDetailView({
       <section className="relative z-10 -mt-5 px-5">
         <div className="overflow-hidden rounded-[20px] border border-hairline bg-background shadow-[0_20px_50px_-20px_rgba(0,0,0,0.25)]">
           {meta.previewUrl ? (
-            <button
-              type="button"
-              onClick={onPreviewPlay}
-              className="relative block w-full overflow-hidden"
-              aria-label="Preview"
-            >
-              <img src={meta.previewUrl} alt="" className="h-44 w-full object-cover" />
-              <span className="absolute inset-0 grid place-items-center bg-black/25">
-                <span className="grid h-14 w-14 place-items-center rounded-full bg-white/95 text-[#0c1f1a] shadow-lg">
-                  <Play className="ml-0.5 h-6 w-6" fill="currentColor" />
+            isConfirmed ? (
+              <button
+                type="button"
+                onClick={onPreviewPlay}
+                className="relative block w-full overflow-hidden"
+                aria-label="Preview"
+              >
+                <img src={meta.previewUrl} alt="" className="h-44 w-full object-cover" />
+                <span className="absolute inset-0 grid place-items-center bg-black/25">
+                  <span className="grid h-14 w-14 place-items-center rounded-full bg-white/95 text-[#0c1f1a] shadow-lg">
+                    <Play className="ml-0.5 h-6 w-6" fill="currentColor" />
+                  </span>
                 </span>
-              </span>
-            </button>
+              </button>
+            ) : (
+              <div className="relative block w-full overflow-hidden">
+                <img src={meta.previewUrl} alt="" className="h-44 w-full object-cover" />
+                <span className="absolute inset-0 grid place-items-center bg-black/50 px-6 text-center">
+                  <span className="rounded-full bg-white/95 px-4 py-2 text-[13px] font-semibold text-[#0c1f1a]">
+                    Enroll to unlock classes
+                  </span>
+                </span>
+              </div>
+            )
           ) : null}
 
           {hasStats ? (
