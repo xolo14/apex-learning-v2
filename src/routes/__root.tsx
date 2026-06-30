@@ -126,9 +126,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=location.pathname;if(/^\\/(events|courses|internships|gigs|quizzes)\\/[^/]+/.test(p)||p.indexOf("/admin")===0){document.documentElement.setAttribute("data-immersive","true");}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
         {children}

@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Plus, Rows3, Rows2 } from "lucide-react";
-import { useEffect, useSyncExternalStore, type ComponentType, type ReactNode, type SVGProps } from "react";
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore, type ComponentType, type ReactNode, type SVGProps } from "react";
 import {
   HomeIcon,
   UserGroupIcon,
@@ -52,6 +52,7 @@ export function isImmersiveRoute(pathname: string): boolean {
 }
 
 export function useHideBottomNav(immersive?: boolean): boolean {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const routerHide = useRouterState({
     select: (s) => {
       if (s.matches.some((m) => IMMERSIVE_ROUTE_IDS.has(m.routeId))) return true;
@@ -61,28 +62,34 @@ export function useHideBottomNav(immersive?: boolean): boolean {
   const clientPath = useClientPathname();
   if (immersive === true) return true;
   if (immersive === false) return false;
-  return routerHide || isImmersiveRoute(clientPath);
+  return (
+    routerHide ||
+    isImmersiveRoute(pathname) ||
+    isImmersiveRoute(clientPath)
+  );
 }
 
 /** Sync immersive state to <html> for CSS failsafe hiding of the tab bar. */
 export function ImmersiveHtmlSync() {
   const hide = useHideBottomNav();
+  useLayoutEffect(() => {
+    document.documentElement.dataset.immersive = hide ? "true" : "false";
+  }, [hide]);
   useEffect(() => {
     document.documentElement.dataset.immersive = hide ? "true" : "false";
-    return () => {
-      document.documentElement.dataset.immersive = "false";
-    };
   }, [hide]);
   return null;
 }
 
 /**
  * Global mobile chrome — render once in __root.tsx (not inside each page).
- * Hidden automatically on /events/:id, /courses/:id, etc.
+ * Client-only so SSR never injects the tab bar into detail-page HTML.
  */
 export function AppMobileChrome() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const hideNav = useHideBottomNav();
-  if (hideNav) return null;
+  if (!mounted || hideNav) return null;
   return (
     <>
       <AskFab />
@@ -164,6 +171,8 @@ const tabs: Tab[] = [
 function BottomTabs() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const earnings = useEarningsEnabled();
+  if (isImmersiveRoute(pathname)) return null;
+  if (typeof window !== "undefined" && isImmersiveRoute(window.location.pathname)) return null;
   const visible = earnings ? tabs : tabs.filter((t) => t.to !== "/quizzes");
   return (
     <nav

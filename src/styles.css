@@ -182,9 +182,13 @@
 
   /* Full-screen detail pages: never show the floating bottom tab bar */
   html[data-immersive="true"] .app-bottom-nav,
-  html[data-immersive="true"] .app-mobile-chrome {
+  html[data-immersive="true"] .app-mobile-chrome,
+  html[data-immersive="true"] nav[aria-label="Main navigation"] {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
   }
 }
