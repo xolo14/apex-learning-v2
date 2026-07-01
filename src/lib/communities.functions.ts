@@ -945,6 +945,13 @@ export const registerForEvent = createServerFn({ method: "POST" })
       VALUES (${regId}, ${data.eventId}, ${profile.unique_id}, ${data.deviceKey}, 0, 'confirmed', ${coinsCredited})
     `;
 
+    try {
+      const { tryDailyMission } = await import("./engagement.server");
+      await tryDailyMission(s, profile.unique_id, "event");
+    } catch {
+      /* optional */
+    }
+
     return {
       alreadyRegistered: false as const,
       registration: {

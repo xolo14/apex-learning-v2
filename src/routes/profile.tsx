@@ -12,6 +12,8 @@ import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
+import { getEngagementHub } from "@/lib/engagement.functions";
+import { LevelBadge } from "@/components/level-badge";
 import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/profile")({
@@ -107,6 +109,14 @@ function ProfilePage() {
   const mapped = useMemo(() => (myPosts.data ?? []).map(toPost), [myPosts.data]);
   const { balance: coinBalance } = useCoinBalance();
   const earningsEnabled = useEarningsEnabled();
+  const fetchHub = useServerFn(getEngagementHub);
+  const hubQ = useQuery({
+    queryKey: ["engagement-hub", uniqueId],
+    queryFn: () => fetchHub({ data: { uniqueId } }),
+    enabled: !!uniqueId && earningsEnabled,
+    staleTime: 30_000,
+  });
+  const hub = hubQ.data;
 
   return (
     <MobileShell>
@@ -135,10 +145,12 @@ function ProfilePage() {
               <span className="text-[18px] font-semibold tracking-tight text-foreground">
                 {profileName}
               </span>
+              {earningsEnabled && hub ? <LevelBadge level={hub.level} size="sm" showTitle /> : null}
               <BadgeCheck strokeWidth={2} className="h-4 w-4 text-forest" />
             </div>
             <div className="text-[12px] text-ink-muted">
-              {identity.uniqueId ?? "SP-XXXXXX"} · Joined March 2026
+              {identity.uniqueId ?? "SP-XXXXXX"}
+              {hub ? ` · ${hub.xp.toLocaleString()} XP · ${hub.streak} day streak` : " · Joined March 2026"}
             </div>
           </div>
         </div>
@@ -196,6 +208,30 @@ function ProfilePage() {
             </button>
           )}
         </div>
+        {earningsEnabled && hub && hub.achievements.length > 0 ? (
+          <div className="mt-5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+              Badges · {hub.achievementsUnlocked}/{hub.achievements.length}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {hub.achievements.map((a) => (
+                <span
+                  key={a.id}
+                  title={a.description}
+                  className={
+                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] " +
+                    (a.unlocked
+                      ? "border-forest/30 bg-forest/5 text-foreground"
+                      : "border-hairline bg-surface/40 text-ink-muted opacity-60")
+                  }
+                >
+                  <span>{a.emoji}</span>
+                  <span className="font-medium">{a.title}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {earningsEnabled ? (
           <Link to="/coins" className="mt-5 block active:scale-[0.99] transition-transform">
             <CoinsCard name={profileName} balance={coinBalance} />

@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { QuizLeaderboard } from "@/components/quiz-leaderboard";
+import { LevelBadge } from "@/components/level-badge";
 import { QuizPlayer } from "@/components/quiz-player";
 import { MobileShell } from "@/components/mobile-shell";
 import { QUIZ_DIFFICULTY_LABEL } from "@/lib/quiz-bank";
@@ -87,6 +88,7 @@ function QuizDetailPage() {
       refetchCoins();
       qc.invalidateQueries({ queryKey: ["quiz-play", id] });
       qc.invalidateQueries({ queryKey: ["quiz-leaderboard", id] });
+      qc.invalidateQueries({ queryKey: ["engagement-hub"] });
     },
     onError: (err) => {
       setToast(err instanceof Error ? err.message : "Could not submit quiz.");
@@ -183,6 +185,23 @@ function QuizDetailPage() {
                 +{result.coinsEarned + result.perfectBonus} coins
               </p>
             )}
+            {result.engagement ? (
+              <div className="mt-4 space-y-2 rounded-xl border border-forest/20 bg-forest/5 px-3 py-3 text-left">
+                {result.engagement.xpGained > 0 ? (
+                  <p className="text-[13px] font-medium text-forest">+{result.engagement.xpGained} XP</p>
+                ) : null}
+                {result.engagement.missionCoins > 0 ? (
+                  <p className="text-[12px] text-foreground">
+                    Daily mission: +{result.engagement.missionCoins} coins · {result.engagement.missionLabel}
+                  </p>
+                ) : null}
+                {result.engagement.levelUp ? (
+                  <p className="inline-flex items-center gap-2 text-[13px] font-bold text-orange">
+                    Level up! <LevelBadge level={result.engagement.newLevel} size="sm" />
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <section className="mt-6">

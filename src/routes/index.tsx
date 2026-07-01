@@ -16,6 +16,7 @@ import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
+import { DailyEngagementHub } from "@/components/daily-engagement-hub";
 import { setHomeTab, type HomeTab } from "@/lib/home-tab";
 import { pageHead } from "@/lib/seo";
 
@@ -146,6 +147,8 @@ function Home() {
           Today on <span className="italic text-forest">Syncpedia</span>
         </h1>
       </div>
+
+      {earningsEnabled ? <DailyEngagementHub /> : null}
 
       {/* Sort rail — scrolls away with content */}
       <div

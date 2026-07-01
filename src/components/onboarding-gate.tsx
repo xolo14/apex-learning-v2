@@ -598,8 +598,24 @@ function WelcomeScreen({
 
           <SyncpediaWordmark />
           <p className="mx-auto mt-4 max-w-[280px] text-[15px] leading-relaxed text-white/75">
-            A place to learn, earn, and connect with your community.
+            Learn tech, earn coins, build streaks, and climb the leaderboard — with your community.
           </p>
+          <div className="mx-auto mt-5 flex max-w-[300px] flex-wrap justify-center gap-2">
+            {[
+              { emoji: "🪙", label: "50 coins on signup" },
+              { emoji: "🔥", label: "Daily streaks" },
+              { emoji: "🎯", label: "Quiz challenges" },
+              { emoji: "🏆", label: "Rank & level up" },
+            ].map((chip) => (
+              <span
+                key={chip.label}
+                className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] text-white/85"
+              >
+                <span>{chip.emoji}</span>
+                {chip.label}
+              </span>
+            ))}
+          </div>
 
           <div className="mt-10 space-y-3">
             {googleEnabled && (

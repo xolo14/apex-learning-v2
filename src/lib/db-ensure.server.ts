@@ -180,6 +180,18 @@ export function ensureSchema() {
     `;
     await s`CREATE INDEX IF NOT EXISTS coin_ledger_user_idx ON coin_ledger(user_unique_id)`;
 
+    // -------- User engagement (streaks, XP, daily retention) --------
+    await s`
+      CREATE TABLE IF NOT EXISTS user_engagement (
+        user_unique_id text PRIMARY KEY,
+        current_streak integer NOT NULL DEFAULT 0,
+        longest_streak integer NOT NULL DEFAULT 0,
+        last_check_in date,
+        total_xp integer NOT NULL DEFAULT 0,
+        updated_at timestamptz DEFAULT now()
+      )
+    `;
+
     // -------- Feature flags (admin-toggled globals) --------
     await s`
       CREATE TABLE IF NOT EXISTS feature_flags (

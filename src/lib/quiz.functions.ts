@@ -104,6 +104,14 @@ export type QuizSubmitResult = {
   coinsEarned: number;
   perfectBonus: number;
   message: string;
+  engagement?: {
+    missionCoins: number;
+    missionXp: number;
+    missionLabel: string;
+    xpGained: number;
+    levelUp: boolean;
+    newLevel: number;
+  };
 };
 
 export const submitQuizAttempt = createServerFn({ method: "POST" })
@@ -191,6 +199,44 @@ export const submitQuizAttempt = createServerFn({ method: "POST" })
       perfectBonus = inserted[0]?.amount ?? 0;
     }
 
+    let engagement: QuizSubmitResult["engagement"];
+    try {
+      const { addXp, tryDailyMission, ensureEngagementRow } = await import("./engagement.server");
+      const { levelFromXp } = await import("./engagement.constants");
+      const { XP_REWARDS } = await import("./engagement.constants");
+
+      await ensureEngagementRow(s, uid);
+      const before = (await s`
+        SELECT total_xp FROM user_engagement WHERE user_unique_id = ${uid} LIMIT 1
+      `) as { total_xp: number }[];
+      const oldLevel = levelFromXp(before[0]?.total_xp ?? 0);
+
+      let xpGained = 0;
+      if (!existing[0]) {
+        xpGained += await addXp(s, uid, XP_REWARDS.quiz);
+      }
+
+      const mission = await tryDailyMission(s, uid, "quiz");
+      xpGained += mission.xp;
+      const after = (await s`
+        SELECT total_xp FROM user_engagement WHERE user_unique_id = ${uid} LIMIT 1
+      `) as { total_xp: number }[];
+      const newLevel = levelFromXp(after[0]?.total_xp ?? 0);
+
+      if (xpGained > 0 || mission.coins > 0) {
+        engagement = {
+          missionCoins: mission.coins,
+          missionXp: mission.xp,
+          missionLabel: mission.label,
+          xpGained,
+          levelUp: newLevel > oldLevel,
+          newLevel,
+        };
+      }
+    } catch {
+      /* engagement is optional */
+    }
+
     const message =
       pct === 100
         ? `Perfect score! ${coinsEarned ? `+${coinsEarned} coins` : ""}${perfectBonus ? ` +${perfectBonus} bonus` : ""}.`
@@ -198,7 +244,7 @@ export const submitQuizAttempt = createServerFn({ method: "POST" })
           ? `You scored ${pct}% — ${coinsEarned ? `+${coinsEarned} coins earned` : "nice work!"}.`
           : `You scored ${pct}%. Score 50%+ to earn coins. Retake to improve!`;
 
-    return { score, maxScore, pct, breakdown, coinsEarned, perfectBonus, message };
+    return { score, maxScore, pct, breakdown, coinsEarned, perfectBonus, message, engagement };
   });
 
 export const getQuizLeaderboard = createServerFn({ method: "GET" })

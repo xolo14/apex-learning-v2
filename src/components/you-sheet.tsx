@@ -8,7 +8,6 @@ import {
   TrophyIcon,
   CalendarDaysIcon,
   DocumentTextIcon,
-  BriefcaseIcon,
   WalletIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
@@ -18,6 +17,9 @@ import { IdentityAvatar, useIdentity } from "@/lib/identity";
 import { listMyQuestions } from "@/lib/questions.functions";
 import { useSavedIds } from "@/lib/saved";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
+import { useCoinBalance } from "@/lib/use-coin-balance";
+import { getEngagementHub } from "@/lib/engagement.functions";
+import { LevelBadge } from "@/components/level-badge";
 
 export function YouTrigger({ className = "" }: { className?: string }) {
   const identity = useIdentity();
@@ -93,15 +95,24 @@ function YouPanel({ onClose }: { onClose: () => void }) {
   });
   const savedIds = useSavedIds();
   const earningsEnabled = useEarningsEnabled();
+  const { balance: coinBalance } = useCoinBalance();
+  const fetchHub = useServerFn(getEngagementHub);
+  const hubQ = useQuery({
+    queryKey: ["engagement-hub", uniqueId],
+    queryFn: () => fetchHub({ data: { uniqueId } }),
+    enabled: !!uniqueId && earningsEnabled,
+    staleTime: 30_000,
+  });
+  const hub = hubQ.data;
 
   const stats: Array<{ label: string; value: number; icon?: typeof DocumentTextIcon; tint: string; coin?: boolean }> = [
     { label: "Posts Uploaded", value: myPosts.data?.length ?? 0, icon: DocumentTextIcon, tint: "text-forest" },
-    { label: "Events Attended", value: 0, icon: CalendarDaysIcon, tint: "text-orange" },
-    { label: "Internships Applied", value: 0, icon: BriefcaseIcon, tint: "text-foreground" },
+    { label: "Events Attended", value: hub?.stats.eventsAttended ?? 0, icon: CalendarDaysIcon, tint: "text-orange" },
+    { label: "Quizzes Done", value: hub?.stats.quizzesCompleted ?? 0, icon: TrophyIcon, tint: "text-foreground" },
     ...(earningsEnabled
       ? ([
-          { label: "Earnings", value: 0, icon: WalletIcon, tint: "text-forest" },
-          { label: "Coins Earned", value: 1240, tint: "text-orange", coin: true },
+          { label: "Day Streak", value: hub?.streak ?? 0, icon: WalletIcon, tint: "text-orange" },
+          { label: "Coins Earned", value: coinBalance, tint: "text-orange", coin: true },
         ] as const)
       : []),
     { label: "Saved", value: savedIds.length, icon: BookmarkIcon, tint: "text-foreground" },
@@ -130,7 +141,7 @@ function YouPanel({ onClose }: { onClose: () => void }) {
                 <span className="truncate text-[17px] font-semibold tracking-tight text-foreground">
                   {profileName}
                 </span>
-                <TrophyIcon className="h-4 w-4 shrink-0 text-forest" />
+                {earningsEnabled && hub ? <LevelBadge level={hub.level} size="sm" /> : <TrophyIcon className="h-4 w-4 shrink-0 text-forest" />}
               </div>
             )}
             <div className="mt-0.5 font-mono text-[11px] tracking-[0.14em] text-ink-muted">
