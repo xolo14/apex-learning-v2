@@ -127,7 +127,7 @@ function Home() {
       </header>
 
       {/* Large editorial title — scrolls away with content */}
-      <div className={compact ? "px-5 pb-2 pt-1.5" : "px-5 pb-4 pt-3"}>
+      <div className={compact ? "px-5 pb-1 pt-1.5" : "px-5 pb-2 pt-2"}>
         <p className="text-[11px] uppercase tracking-[0.18em] text-ink-muted">
           {(() => {
             const d = new Date();
@@ -141,7 +141,7 @@ function Home() {
             "font-serif tracking-tight text-foreground " +
             (compact
               ? "mt-0.5 text-[22px] leading-[1.1]"
-              : "mt-1.5 text-[34px] leading-[1.05]")
+              : "mt-1 text-[28px] leading-[1.08]")
           }
         >
           Today on <span className="italic text-forest">Syncpedia</span>

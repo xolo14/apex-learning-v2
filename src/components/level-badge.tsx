@@ -6,15 +6,20 @@ export function LevelBadge({
   showTitle = false,
 }: {
   level: number;
-  size?: "sm" | "md";
+  size?: "xs" | "sm" | "md";
   showTitle?: boolean;
 }) {
   const title = levelTitle(level);
-  const dim = size === "sm" ? "h-6 min-w-6 px-1.5 text-[10px]" : "h-7 min-w-7 px-2 text-[11px]";
+  const dim =
+    size === "xs"
+      ? "h-5 min-w-5 px-1 text-[9px]"
+      : size === "sm"
+        ? "h-6 min-w-6 px-1.5 text-[10px]"
+        : "h-7 min-w-7 px-2 text-[11px]";
   return (
     <span
       className={
-        "inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-br from-forest to-emerald-700 font-bold text-white shadow-sm " +
+        "inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-br from-forest to-emerald-700 font-bold text-white " +
         dim
       }
       title={`Level ${level} · ${title}`}

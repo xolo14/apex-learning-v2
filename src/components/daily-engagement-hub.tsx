@@ -2,14 +2,41 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, ChevronRight, Flame, Loader2, Sparkles, Target, Zap } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  ChevronRight,
+  Flame,
+  Loader2,
+  MessageCircleQuestion,
+  Sparkles,
+  Target,
+  ThumbsUp,
+  Trophy,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { LevelBadge } from "@/components/level-badge";
 import { claimDailyCheckIn, getEngagementHub } from "@/lib/engagement.functions";
+import type { MissionStatus } from "@/lib/engagement.functions";
 import { useIdentity } from "@/lib/identity";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 
 const DEVICE_KEY = "syncpedia_device_key";
+
+const MISSION_ICONS: Record<string, LucideIcon> = {
+  quiz: Trophy,
+  ask: MessageCircleQuestion,
+  event: Calendar,
+  vote: ThumbsUp,
+};
+
+const MISSION_SHORT: Record<string, string> = {
+  quiz: "Quiz",
+  ask: "Ask",
+  event: "Event",
+  vote: "Vote",
+};
 
 export function DailyEngagementHub() {
   const identity = useIdentity();
@@ -35,12 +62,12 @@ export function DailyEngagementHub() {
     },
     onSuccess: (res) => {
       if (res.credited) {
-        const extra = res.levelUp ? ` Level up — Lv${res.newLevel}!` : "";
+        const extra = res.levelUp ? ` · Lv${res.newLevel}!` : "";
         setCelebration(`${res.message}${extra}`);
-        setTimeout(() => setCelebration(null), 4000);
+        setTimeout(() => setCelebration(null), 3500);
       } else {
         setCelebration(res.message);
-        setTimeout(() => setCelebration(null), 2500);
+        setTimeout(() => setCelebration(null), 2000);
       }
       void qc.invalidateQueries({ queryKey: ["engagement-hub"] });
       void qc.invalidateQueries({ queryKey: ["coins"] });
@@ -53,184 +80,163 @@ export function DailyEngagementHub() {
 
   if (hubQ.isLoading) {
     return (
-      <section className="px-5 pb-1">
-        <div className="flex items-center justify-center rounded-[22px] border border-hairline bg-surface/50 py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-ink-muted" />
+      <section className="px-5 pb-2 pt-0.5">
+        <div className="flex h-[72px] items-center justify-center rounded-2xl border border-hairline bg-surface/40">
+          <Loader2 className="h-4 w-4 animate-spin text-ink-muted" />
         </div>
       </section>
     );
   }
   if (!hub) return null;
 
-  const nextMission = hub.missions.find((m) => !m.done);
+  const dailyMissions = hub.missions.filter((m) => m.id !== "checkin");
 
   return (
-    <section className="px-5 pb-1">
+    <section className="px-5 pb-2 pt-0.5">
       {celebration ? (
-        <div className="mb-3 animate-in fade-in slide-in-from-top-2 rounded-2xl border border-forest/30 bg-gradient-to-r from-forest/10 to-orange/10 px-4 py-3 text-center">
-          <p className="text-[13px] font-semibold text-forest">{celebration}</p>
+        <div className="mb-2 rounded-xl border border-forest/25 bg-forest/5 px-3 py-2 text-center">
+          <p className="text-[12px] font-medium text-forest">{celebration}</p>
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-[22px] border border-hairline bg-gradient-to-br from-surface via-background to-surface shadow-sm">
-        <div className="border-b border-hairline/80 bg-foreground/[0.02] px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <LevelBadge level={hub.level} size="sm" />
-                <span className="text-[12px] font-medium text-ink-muted">{hub.levelTitle}</span>
-              </div>
-              <div className="mt-2 flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <Flame className="h-4 w-4 text-orange" strokeWidth={2} />
-                  <span className="text-[20px] font-bold tabular-nums text-foreground">{hub.streak}</span>
-                  <span className="text-[11px] text-ink-muted">day streak</span>
-                </div>
-                <span className="text-ink-muted/40">·</span>
-                <span className="text-[11px] text-ink-muted">
-                  {hub.missionsDone}/{hub.missionsTotal} today
-                </span>
-              </div>
-            </div>
-            {!hub.checkedInToday ? (
-              <button
-                onClick={() => claimM.mutate()}
-                disabled={claimM.isPending}
-                className="shrink-0 rounded-full bg-gradient-to-r from-orange to-amber-500 px-3.5 py-2 text-[12px] font-bold text-white shadow-md active:scale-95 disabled:opacity-60"
-              >
-                {claimM.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <span className="inline-flex items-center gap-1">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    +{hub.checkInReward}
-                    <img src={goldCoin} alt="" className="h-3.5 w-3.5" />
-                  </span>
-                )}
-              </button>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1.5 text-[11px] font-semibold text-forest">
-                <Check className="h-3.5 w-3.5" /> Claimed
+      <div className="overflow-hidden rounded-2xl border border-hairline bg-background">
+        {/* Compact header row */}
+        <div className="flex items-center gap-2.5 px-3 py-2.5">
+          <LevelBadge level={hub.level} size="xs" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-[12px] font-semibold text-foreground">{hub.levelTitle}</span>
+              <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] text-ink-muted">
+                <Flame className="h-3 w-3 text-orange" strokeWidth={2.5} />
+                <span className="font-semibold tabular-nums text-foreground">{hub.streak}</span>
               </span>
-            )}
+              <span className="text-[10px] text-ink-muted/60">·</span>
+              <span className="shrink-0 text-[10px] tabular-nums text-ink-muted">
+                {hub.missionsDone}/{hub.missionsTotal}
+              </span>
+            </div>
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-surface">
+                <div
+                  className="h-full rounded-full bg-forest transition-all duration-500"
+                  style={{ width: `${Math.max(hub.xpPct, 4)}%` }}
+                />
+              </div>
+              <span className="shrink-0 text-[9px] tabular-nums text-ink-muted">{hub.xp} XP</span>
+            </div>
           </div>
 
-          <div className="mt-3">
-            <div className="mb-1 flex justify-between text-[10px] text-ink-muted">
-              <span>{hub.xp.toLocaleString()} XP</span>
-              <span>{hub.xpToNext} to next level</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-surface">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-forest to-emerald-400 transition-all duration-500"
-                style={{ width: `${hub.xpPct}%` }}
-              />
-            </div>
-          </div>
+          {!hub.checkedInToday ? (
+            <button
+              onClick={() => claimM.mutate()}
+              disabled={claimM.isPending}
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-orange px-2.5 text-[11px] font-bold text-white active:scale-95 disabled:opacity-60"
+            >
+              {claimM.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <>
+                  <Sparkles className="h-3 w-3" strokeWidth={2.5} />
+                  +{hub.checkInReward}
+                  <img src={goldCoin} alt="" className="h-3 w-3" />
+                </>
+              )}
+            </button>
+          ) : (
+            <span className="inline-flex h-8 shrink-0 items-center gap-0.5 rounded-full bg-forest/10 px-2 text-[10px] font-semibold text-forest">
+              <Check className="h-3 w-3" strokeWidth={3} />
+              Done
+            </span>
+          )}
         </div>
 
         {hub.quizOfTheDay ? (
           <Link
             to="/quizzes/$id"
             params={{ id: hub.quizOfTheDay.id }}
-            className="flex items-center gap-3 border-b border-hairline/80 px-4 py-3 active:bg-surface/50"
+            className="flex items-center gap-2 border-t border-hairline px-3 py-2 active:bg-surface/50"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-orange/15 text-orange">
-              <Target className="h-4 w-4" strokeWidth={2} />
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-orange/10 text-orange">
+              <Target className="h-3.5 w-3.5" strokeWidth={2} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-orange">Challenge of the day</p>
-              <p className="truncate text-[14px] font-semibold text-foreground">{hub.quizOfTheDay.title}</p>
-              <p className="text-[11px] text-ink-muted">Up to {hub.quizOfTheDay.coins} coins + mission bonus</p>
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-orange">Today&apos;s quiz</p>
+              <p className="truncate text-[12px] font-medium leading-tight text-foreground">
+                {hub.quizOfTheDay.title}
+              </p>
             </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-ink-muted" />
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold text-orange">
+              {hub.quizOfTheDay.coins}
+              <img src={goldCoin} alt="" className="h-2.5 w-2.5" />
+            </span>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-muted" />
           </Link>
         ) : null}
 
-        <div className="px-4 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted">Daily missions</p>
-          <ul className="mt-2 space-y-1.5">
-            {hub.missions
-              .filter((m) => m.id !== "checkin")
-              .map((m) => (
-                <li key={m.id}>
-                  {m.href && !m.done ? (
-                    <Link
-                      to={m.href}
-                      className="flex items-center gap-2.5 rounded-xl px-2 py-2 active:bg-surface/60"
-                    >
-                      <MissionRow mission={m} />
-                    </Link>
-                  ) : (
-                    <div className="flex items-center gap-2.5 rounded-xl px-2 py-2">
-                      <MissionRow mission={m} />
-                    </div>
-                  )}
-                </li>
-              ))}
-          </ul>
-
-          {nextMission && nextMission.id !== "checkin" ? (
-            <p className="mt-2 flex items-center gap-1 text-[11px] text-ink-muted">
-              <Zap className="h-3 w-3 text-orange" />
-              Next: {nextMission.label} (+{nextMission.reward} coins)
-            </p>
-          ) : hub.missionsDone === hub.missionsTotal ? (
-            <p className="mt-2 text-[11px] font-medium text-forest">All missions complete today — legendary!</p>
-          ) : null}
+        {/* 2×2 mission grid — tight alignment */}
+        <div className="grid grid-cols-2 gap-1.5 border-t border-hairline p-2">
+          {dailyMissions.map((m) => (
+            <MissionCell key={m.id} mission={m} />
+          ))}
         </div>
 
         {hub.achievementsUnlocked > 0 ? (
-          <div className="border-t border-hairline/80 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted">Badges</p>
-              <Link to="/profile" className="text-[11px] text-forest">
-                {hub.achievementsUnlocked}/{hub.achievements.length}
-              </Link>
-            </div>
-            <div className="mt-2 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {hub.achievements
-                .filter((a) => a.unlocked)
-                .map((a) => (
-                  <span
-                    key={a.id}
-                    title={a.description}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-full border border-hairline bg-surface px-2.5 py-1 text-[11px]"
-                  >
-                    <span>{a.emoji}</span>
-                    <span className="font-medium text-foreground">{a.title}</span>
-                  </span>
-                ))}
-            </div>
-          </div>
+          <Link
+            to="/profile"
+            className="flex items-center justify-between border-t border-hairline px-3 py-2 text-[10px] text-ink-muted active:bg-surface/40"
+          >
+            <span>
+              {hub.achievementsUnlocked} badge{hub.achievementsUnlocked === 1 ? "" : "s"} unlocked
+            </span>
+            <span className="inline-flex items-center gap-0.5 font-medium text-forest">
+              Profile <ChevronRight className="h-3 w-3" />
+            </span>
+          </Link>
         ) : null}
       </div>
     </section>
   );
 }
 
-function MissionRow({
-  mission,
-}: {
-  mission: { label: string; reward: number; done: boolean };
-}) {
-  return (
+function MissionCell({ mission }: { mission: MissionStatus }) {
+  const Icon = MISSION_ICONS[mission.id] ?? Target;
+  const label = MISSION_SHORT[mission.id] ?? mission.label;
+  const inner = (
     <>
       <span
         className={
-          "grid h-5 w-5 shrink-0 place-items-center rounded-full border " +
-          (mission.done ? "border-forest bg-forest text-white" : "border-hairline bg-background text-transparent")
+          "grid h-6 w-6 shrink-0 place-items-center rounded-md " +
+          (mission.done ? "bg-forest/15 text-forest" : "bg-surface text-ink-muted")
         }
       >
-        {mission.done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+        {mission.done ? <Check className="h-3 w-3" strokeWidth={3} /> : <Icon className="h-3 w-3" strokeWidth={2} />}
       </span>
-      <span className={"min-w-0 flex-1 text-[13px] " + (mission.done ? "text-ink-muted line-through" : "text-foreground")}>
-        {mission.label}
+      <span
+        className={
+          "min-w-0 flex-1 truncate text-[11px] font-medium " +
+          (mission.done ? "text-ink-muted line-through" : "text-foreground")
+        }
+      >
+        {label}
       </span>
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-orange">
+      <span className="inline-flex shrink-0 items-center gap-px text-[10px] font-semibold text-orange">
         +{mission.reward}
-        <img src={goldCoin} alt="" className="h-3 w-3" />
+        <img src={goldCoin} alt="" className="h-2.5 w-2.5" />
       </span>
     </>
   );
+
+  const className =
+    "flex items-center gap-1.5 rounded-xl border border-hairline/80 bg-surface/30 px-2 py-1.5 " +
+    (mission.done ? "opacity-70" : "");
+
+  if (mission.href && !mission.done) {
+    return (
+      <Link to={mission.href} className={className + " active:bg-surface/60"}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{inner}</div>;
 }
