@@ -47,6 +47,7 @@ import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 import { Route as AdminCoinsRouteImport } from './routes/admin.coins'
 import { Route as ApiPublicSitemapRouteImport } from './routes/api/public/sitemap'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicClassVideoRouteImport } from './routes/api/public/class-video'
 import { Route as ApiPublicAppConfigRouteImport } from './routes/api/public/app-config'
 import { Route as ApiPublicCronRefreshHotRouteImport } from './routes/api/public/cron.refresh-hot'
@@ -241,6 +242,11 @@ const ApiPublicSitemapRoute = ApiPublicSitemapRouteImport.update({
   path: '/api/public/sitemap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicClassVideoRoute = ApiPublicClassVideoRouteImport.update({
   id: '/api/public/class-video',
   path: '/api/public/class-video',
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/quizzes/': typeof QuizzesIndexRoute
   '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/quizzes': typeof QuizzesIndexRoute
   '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -382,6 +390,7 @@ export interface FileRoutesById {
   '/quizzes/': typeof QuizzesIndexRoute
   '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
@@ -427,6 +436,7 @@ export interface FileRouteTypes {
     | '/quizzes/'
     | '/api/public/app-config'
     | '/api/public/class-video'
+    | '/api/public/health'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesByTo: FileRoutesByTo
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/quizzes'
     | '/api/public/app-config'
     | '/api/public/class-video'
+    | '/api/public/health'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   id:
@@ -511,6 +522,7 @@ export interface FileRouteTypes {
     | '/quizzes/'
     | '/api/public/app-config'
     | '/api/public/class-video'
+    | '/api/public/health'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
   fileRoutesById: FileRoutesById
@@ -537,6 +549,7 @@ export interface RootRouteChildren {
   CoursesIndexRoute: typeof CoursesIndexRoute
   ApiPublicAppConfigRoute: typeof ApiPublicAppConfigRoute
   ApiPublicClassVideoRoute: typeof ApiPublicClassVideoRoute
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
   ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
 }
@@ -809,6 +822,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitemapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/class-video': {
       id: '/api/public/class-video'
       path: '/api/public/class-video'
@@ -926,6 +946,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoursesIndexRoute: CoursesIndexRoute,
   ApiPublicAppConfigRoute: ApiPublicAppConfigRoute,
   ApiPublicClassVideoRoute: ApiPublicClassVideoRoute,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,
   ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,
 }

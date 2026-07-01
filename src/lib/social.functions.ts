@@ -11,10 +11,8 @@ import { QUIZ_BANK_LIST, quizMetaFromBank } from "./quiz-bank";
 const rid = (p: string) => `${p}_` + Math.random().toString(36).slice(2, 10);
 
 async function db() {
-  const { sql } = await import("./db.server");
-  const { ensureSchema } = await import("./db-ensure.server");
-  await ensureSchema();
-  return sql();
+  const { requireDb } = await import("./db-access.server");
+  return requireDb();
 }
 
 function clean(id: string) {

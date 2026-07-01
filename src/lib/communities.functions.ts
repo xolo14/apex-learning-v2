@@ -118,16 +118,16 @@ const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 40);
 
 async function db() {
-  const { sql } = await import("./db.server");
-  const { ensureSchema } = await import("./db-ensure.server");
-  await ensureSchema();
-  return sql();
+  const { requireDb } = await import("./db-access.server");
+  return requireDb();
 }
 
 // ---------------- Communities ----------------
 
 export const listCommunities = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await db();
+  const { getDb } = await import("./db-access.server");
+  const s = await getDb();
+  if (!s) return [] as DbCommunity[];
   const rows = (await s`
     SELECT id, slug, name, about, icon_key,
            COALESCE(image_url, '') AS image_url,
@@ -205,7 +205,9 @@ export const deleteCommunity = createServerFn({ method: "POST" })
 // ---------------- Courses (Certifications) ----------------
 
 export const listCourses = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await db();
+  const { getDb } = await import("./db-access.server");
+  const s = await getDb();
+  if (!s) return [...DEMO_COURSES];
   const rows = (await s`
     SELECT id, community_slug, title, description, url,
            COALESCE(price, 0)::float AS price,
@@ -746,7 +748,9 @@ export const deleteInternship = createServerFn({ method: "POST" })
 // ---------------- Events ----------------
 
 export const listEvents = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await db();
+  const { getDb } = await import("./db-access.server");
+  const s = await getDb();
+  if (!s) return [...DEMO_EVENTS];
   const rows = (await s`
     SELECT id, community_slug, title, description, image_url, location, starts_at,
            COALESCE(price, 0)::float AS price,
@@ -964,7 +968,9 @@ export const registerForEvent = createServerFn({ method: "POST" })
 // ---------------- Gigs ----------------
 
 export const listGigs = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await db();
+  const { getDb } = await import("./db-access.server");
+  const s = await getDb();
+  if (!s) return [...DEMO_GIGS];
   const rows = (await s`
     SELECT id, community_slug, title, poster, description, image_url, location, duration,
            COALESCE(pay, 0)::float AS pay,
@@ -1042,7 +1048,9 @@ export const deleteGig = createServerFn({ method: "POST" })
 // ---------------- Internship Postings ----------------
 
 export const listInternshipPostings = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await db();
+  const { getDb } = await import("./db-access.server");
+  const s = await getDb();
+  if (!s) return [...DEMO_INTERNSHIP_POSTINGS];
   const rows = (await s`
     SELECT id, community_slug, role, company, description, image_url, location, mode, duration,
            COALESCE(stipend, 0)::float AS stipend,

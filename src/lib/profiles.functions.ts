@@ -174,10 +174,10 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
     return d;
   })
   .handler(async ({ data }) => {
-    const { sql } = await import("./db.server");
-    const { ensureSchema } = await import("./db-ensure.server");
-    await ensureSchema();
-    const rows = (await sql()`
+    const { getDb } = await import("./db-access.server");
+    const s = await getDb();
+    if (!s) return null;
+    const rows = (await s`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
              COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color,
              COALESCE(google_sub, '') AS google_sub, created_at
@@ -186,7 +186,7 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
       ORDER BY created_at DESC
       LIMIT 1
     `) as DbProfile[];
-    if (rows[0]) await ensureSignupBonus(sql, rows[0].unique_id);
+    if (rows[0]) await ensureSignupBonus(s, rows[0].unique_id);
     return rows[0] ?? null;
   });
 

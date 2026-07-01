@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { statSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 function parseDotEnv(content: string): Record<string, string> {
@@ -22,20 +22,25 @@ function parseDotEnv(content: string): Record<string, string> {
 }
 
 let cachedFileEnv: Record<string, string> | null = null;
+let cachedMtime = 0;
 
-/** Read .env from app root — PM2 restart alone does not reload ecosystem env. */
+/** Read .env from app root — re-reads when the file changes (PM2 restart alone does not reload env). */
 export function dotEnvFromDisk(): Record<string, string> {
-  if (cachedFileEnv) return cachedFileEnv;
   try {
     const envPath = join(process.cwd(), ".env");
     if (!existsSync(envPath)) {
       cachedFileEnv = {};
+      cachedMtime = 0;
       return cachedFileEnv;
     }
+    const mtime = statSync(envPath).mtimeMs;
+    if (cachedFileEnv && mtime === cachedMtime) return cachedFileEnv;
     cachedFileEnv = parseDotEnv(readFileSync(envPath, "utf8"));
+    cachedMtime = mtime;
     return cachedFileEnv;
   } catch {
     cachedFileEnv = {};
+    cachedMtime = 0;
     return cachedFileEnv;
   }
 }

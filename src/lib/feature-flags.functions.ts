@@ -14,21 +14,25 @@ const KNOWN_KEYS: (keyof FeatureFlags)[] = ["earnings", "withdraw"];
 
 export const getFeatureFlags = createServerFn({ method: "GET" }).handler(
   async (): Promise<FeatureFlags> => {
-    const { sql } = await import("./db.server");
-    const { ensureSchema } = await import("./db-ensure.server");
-    await ensureSchema();
-    const rows = (await sql()`SELECT key, enabled FROM feature_flags`) as {
-      key: string;
-      enabled: boolean;
-    }[];
-    const out: FeatureFlags = { ...DEFAULT_FLAGS };
-    for (const r of rows) {
-      if ((KNOWN_KEYS as string[]).includes(r.key)) {
-        (out as Record<string, boolean>)[r.key] = !!r.enabled;
+    try {
+      const { getDb } = await import("./db-access.server");
+      const s = await getDb();
+      if (!s) return { ...DEFAULT_FLAGS };
+      const rows = (await s`SELECT key, enabled FROM feature_flags`) as {
+        key: string;
+        enabled: boolean;
+      }[];
+      const out: FeatureFlags = { ...DEFAULT_FLAGS };
+      for (const r of rows) {
+        if ((KNOWN_KEYS as string[]).includes(r.key)) {
+          (out as Record<string, boolean>)[r.key] = !!r.enabled;
+        }
       }
+      return out;
+    } catch {
+      return { ...DEFAULT_FLAGS };
     }
-    return out;
-  }
+  },
 );
 
 export const setFeatureFlag = createServerFn({ method: "POST" })

@@ -1,10 +1,12 @@
-import { sql } from "./db.server";
+import { getEnv } from "./env.server";
 
 let _ready: Promise<void> | null = null;
 
 export function ensureSchema() {
+  if (!getEnv("DATABASE_URL")) return Promise.resolve();
   if (_ready) return _ready;
   _ready = (async () => {
+    const { sql } = await import("./db.server");
     const s = sql();
     // Courses: add price/coins/image_url if missing
     await s`ALTER TABLE courses ADD COLUMN IF NOT EXISTS price numeric DEFAULT 0`;

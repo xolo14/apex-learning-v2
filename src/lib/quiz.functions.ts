@@ -31,10 +31,8 @@ export async function seedQuizBank(s: ReturnType<typeof import("./db.server").sq
 }
 
 async function db() {
-  const { sql } = await import("./db.server");
-  const { ensureSchema } = await import("./db-ensure.server");
-  await ensureSchema();
-  return sql();
+  const { requireDb } = await import("./db-access.server");
+  return requireDb();
 }
 
 function bankQuestions(quizId: string): QuizQuestionDef[] {

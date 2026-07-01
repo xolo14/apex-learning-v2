@@ -23,16 +23,20 @@ export const getCoinBalance = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const uid = normUid(data.uniqueId);
     if (!uid) return { balance: 0, entries: [] as CoinLedgerEntry[] };
-    const { sql } = await import("./db.server");
-    const { ensureSchema } = await import("./db-ensure.server");
-    await ensureSchema();
-    const rows = (await sql()`
-      SELECT action_key, amount, created_at
-      FROM coin_ledger WHERE user_unique_id = ${uid}
-      ORDER BY created_at DESC
-    `) as CoinLedgerEntry[];
-    const balance = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-    return { balance, entries: rows };
+    try {
+      const { getDb } = await import("./db-access.server");
+      const s = await getDb();
+      if (!s) return { balance: 0, entries: [] as CoinLedgerEntry[] };
+      const rows = (await s`
+        SELECT action_key, amount, created_at
+        FROM coin_ledger WHERE user_unique_id = ${uid}
+        ORDER BY created_at DESC
+      `) as CoinLedgerEntry[];
+      const balance = rows.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+      return { balance, entries: rows };
+    } catch {
+      return { balance: 0, entries: [] as CoinLedgerEntry[] };
+    }
   });
 
 export const awardCoin = createServerFn({ method: "POST" })
