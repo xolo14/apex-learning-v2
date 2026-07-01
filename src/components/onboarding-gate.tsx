@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Flame, Target, Trophy } from "lucide-react";
+import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import {
   authWithGoogle,
   createProfile,
@@ -577,84 +579,123 @@ function WelcomeScreen({
 }) {
   const googleEnabled = Boolean(useGoogleAuth().clientId);
 
+  const perks = [
+    {
+      key: "coins",
+      title: "50 coins",
+      subtitle: "Welcome bonus",
+      icon: (
+        <img src={goldCoin} alt="" className="h-[18px] w-[18px] object-contain" aria-hidden />
+      ),
+      accent: "from-amber-400/25 to-orange-500/10",
+    },
+    {
+      key: "streak",
+      title: "Daily streaks",
+      subtitle: "Grow rewards",
+      icon: <Flame className="h-[18px] w-[18px] text-orange" strokeWidth={2} />,
+      accent: "from-orange-400/20 to-red-500/10",
+    },
+    {
+      key: "quiz",
+      title: "Tech quizzes",
+      subtitle: "Learn & earn",
+      icon: <Target className="h-[18px] w-[18px] text-emerald-300" strokeWidth={2} />,
+      accent: "from-emerald-400/20 to-teal-500/10",
+    },
+    {
+      key: "rank",
+      title: "Rank up",
+      subtitle: "Leaderboard",
+      icon: <Trophy className="h-[18px] w-[18px] text-amber-200" strokeWidth={2} />,
+      accent: "from-yellow-300/15 to-amber-500/10",
+    },
+  ] as const;
+
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[#0c2420] text-white touch-pan-y">
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[#081a17] text-white touch-pan-y">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-20 -top-24 h-72 w-72 rounded-full bg-[#1a5c4a]/30 blur-3xl" />
-        <div className="absolute -right-16 top-1/3 h-64 w-64 rounded-full bg-[#f97316]/10 blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 h-80 w-80 rounded-full bg-[#1a3a34]/50 blur-3xl" />
+        <div className="absolute -left-24 -top-28 h-80 w-80 rounded-full bg-[#1a5c4a]/35 blur-3xl" />
+        <div className="absolute -right-20 top-[28%] h-72 w-72 rounded-full bg-[#f97316]/12 blur-3xl" />
+        <div className="absolute bottom-[-10%] left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-[#0f3d34]/60 blur-3xl" />
         <div
-          className="absolute inset-0 opacity-[0.07]"
+          className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-            backgroundSize: "28px 28px",
+            backgroundSize: "32px 32px",
           }}
         />
       </div>
 
-      <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-12">
-        <div className="w-full max-w-sm text-center">
-          <SyncpediaLogo size={96} className="mx-auto mb-6" />
+      <div className="relative flex flex-1 flex-col items-center justify-center px-6 py-10 sm:py-12">
+        <div className="w-full max-w-[340px]">
+          <div className="text-center">
+            <SyncpediaLogo size={88} className="mx-auto mb-5 shadow-[0_12px_40px_rgba(0,0,0,0.35)]" />
+            <SyncpediaWordmark className="text-[38px] sm:text-[42px]" />
+            <p className="mx-auto mt-4 max-w-[300px] text-[15px] leading-[1.55] text-white/70">
+              Learn tech, earn coins, and climb the leaderboard with your community.
+            </p>
+          </div>
 
-          <SyncpediaWordmark />
-          <p className="mx-auto mt-4 max-w-[280px] text-[15px] leading-relaxed text-white/75">
-            Learn tech, earn coins, build streaks, and climb the leaderboard — with your community.
-          </p>
-          <div className="mx-auto mt-5 flex max-w-[300px] flex-wrap justify-center gap-2">
-            {[
-              { emoji: "🪙", label: "50 coins on signup" },
-              { emoji: "🔥", label: "Daily streaks" },
-              { emoji: "🎯", label: "Quiz challenges" },
-              { emoji: "🏆", label: "Rank & level up" },
-            ].map((chip) => (
-              <span
-                key={chip.label}
-                className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] text-white/85"
+          <div className="mt-8 grid grid-cols-2 gap-2.5">
+            {perks.map((perk) => (
+              <div
+                key={perk.key}
+                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 backdrop-blur-md"
               >
-                <span>{chip.emoji}</span>
-                {chip.label}
-              </span>
+                <span
+                  className={
+                    "grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br ring-1 ring-white/10 " +
+                    perk.accent
+                  }
+                >
+                  {perk.icon}
+                </span>
+                <div className="min-w-0 text-left">
+                  <p className="truncate text-[13px] font-semibold leading-tight text-white">{perk.title}</p>
+                  <p className="truncate text-[11px] leading-tight text-white/45">{perk.subtitle}</p>
+                </div>
+              </div>
             ))}
           </div>
 
-          <div className="mt-10 space-y-3">
-            {googleEnabled && (
-              <div className="flex justify-center overflow-hidden rounded-xl bg-white shadow-md [&>div]:w-full [&_iframe]:!w-full">
-                <GoogleContinueButton
-                  disabled={submitting}
-                  onSuccess={onGoogle}
-                  onError={onGoogleError}
-                />
-              </div>
-            )}
+          <div className="mt-9 space-y-3">
+            {googleEnabled ? (
+              <GoogleContinueButton
+                variant="brand"
+                disabled={submitting}
+                onSuccess={onGoogle}
+                onError={onGoogleError}
+              />
+            ) : null}
 
-            <div className={`flex gap-3 ${googleEnabled ? "pt-1" : ""}`}>
+            <div className="grid grid-cols-2 gap-2.5">
               <button
                 type="button"
                 onClick={onLogin}
-                className="flex-1 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-[14px] font-medium text-white backdrop-blur-sm transition hover:bg-white/15"
+                className="h-[48px] rounded-full border border-white/20 bg-white/[0.06] px-4 text-[14px] font-medium text-white backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/10"
               >
                 Login
               </button>
               <button
                 type="button"
                 onClick={onEmailSignup}
-                className="flex-1 rounded-full border border-white/25 bg-white/10 px-4 py-3 text-[14px] font-medium text-white backdrop-blur-sm transition hover:bg-white/15"
+                className="h-[48px] rounded-full border border-white/20 bg-white/[0.06] px-4 text-[14px] font-medium text-white backdrop-blur-sm transition active:scale-[0.98] hover:bg-white/10"
               >
-                Sign up with email
+                Sign up
               </button>
             </div>
           </div>
 
-          {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
+          {error ? <p className="mt-4 text-center text-sm text-rose-300">{error}</p> : null}
 
-          <p className="mt-8 text-[11px] leading-relaxed text-white/50">
+          <p className="mt-8 text-center text-[11px] leading-relaxed text-white/45">
             By continuing you agree to Syncpedia&apos;s{" "}
-            <Link to="/terms" className="text-white/80 underline">
-              Terms of Service
+            <Link to="/terms" className="text-white/70 underline underline-offset-2">
+              Terms
             </Link>{" "}
             and{" "}
-            <Link to="/privacy" className="text-white/80 underline">
+            <Link to="/privacy" className="text-white/70 underline underline-offset-2">
               Privacy Policy
             </Link>
             .
@@ -662,7 +703,7 @@ function WelcomeScreen({
         </div>
       </div>
 
-      <footer className="relative pb-8 text-center text-[11px] text-white/40">
+      <footer className="relative pb-[max(env(safe-area-inset-bottom),24px)] text-center text-[11px] text-white/35">
         © Syncpedia Technologies Pvt Ltd {new Date().getFullYear()}
       </footer>
     </div>
