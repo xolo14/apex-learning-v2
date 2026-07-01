@@ -271,6 +271,10 @@ export function ensureSchema() {
     try {
       await s`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_icon text DEFAULT ''`;
       await s`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_color text DEFAULT ''`;
+      await s`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS google_sub text DEFAULT ''`;
+    } catch {}
+    try {
+      await s`CREATE UNIQUE INDEX IF NOT EXISTS profiles_google_sub_uniq ON profiles (google_sub) WHERE google_sub IS NOT NULL AND google_sub <> ''`;
     } catch {}
   })().catch((e) => {
     _ready = null;

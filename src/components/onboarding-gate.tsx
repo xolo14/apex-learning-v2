@@ -139,28 +139,39 @@ export function OnboardingGate() {
       return;
     }
 
-    const cached = readCachedProfile();
-    if (cached) {
-      setUniqueId(cached.unique_id);
-      const prefs = avatarPrefsFromProfile(cached);
-      applyAvatar(prefs.icon, prefs.color);
-      setProfile(cached);
-      return;
-    }
-
     let alive = true;
     const key = getOrCreateDeviceKey();
+
     fetchProfileRef
       .current({ data: { deviceKey: key } })
-      .then((p) => {
-        if (!alive || !p || isSignedOut()) return;
-        localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
-        setUniqueId(p.unique_id);
-        const prefs = avatarPrefsFromProfile(p);
-        applyAvatar(prefs.icon, prefs.color);
-        setProfile(p);
+      .then((serverProfile) => {
+        if (!alive || isSignedOut()) return;
+
+        if (serverProfile) {
+          localStorage.setItem(PROFILE_CACHE, JSON.stringify(serverProfile));
+          setUniqueId(serverProfile.unique_id);
+          const prefs = avatarPrefsFromProfile(serverProfile);
+          applyAvatar(prefs.icon, prefs.color);
+          setProfile(serverProfile);
+          return;
+        }
+
+        const cached = readCachedProfile();
+        if (cached) {
+          localStorage.removeItem(PROFILE_CACHE);
+        }
+        setProfile(null);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!alive || isSignedOut()) return;
+        const cached = readCachedProfile();
+        if (cached) {
+          setUniqueId(cached.unique_id);
+          const prefs = avatarPrefsFromProfile(cached);
+          applyAvatar(prefs.icon, prefs.color);
+          setProfile(cached);
+        }
+      });
 
     return () => {
       alive = false;

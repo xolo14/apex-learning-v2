@@ -25,6 +25,7 @@ export type DbProfile = {
   department: string | null;
   avatar_icon: string;
   avatar_color: string;
+  google_sub: string;
   created_at: string;
 };
 
@@ -46,6 +47,57 @@ async function ensureSignupBonus(sql: ReturnType<typeof import("./db.server").sq
     VALUES (${uniqueId}, 'signup', ${Math.max(0, Math.floor(SIGNUP_BONUS_COINS))})
     ON CONFLICT (user_unique_id, action_key) DO NOTHING
   `;
+}
+
+/** Unlink other profiles from this device, then attach the account. */
+async function claimDeviceKey(
+  sql: ReturnType<typeof import("./db.server").sql>,
+  profileId: string,
+  deviceKey: string,
+) {
+  const unlinked = `unlinked_${rid("dev")}`;
+  await sql`
+    UPDATE profiles SET device_key = ${unlinked}
+    WHERE device_key = ${deviceKey} AND id <> ${profileId}
+  `;
+  await sql`
+    UPDATE profiles SET device_key = ${deviceKey} WHERE id = ${profileId}
+  `;
+}
+
+async function loadProfileById(
+  sql: ReturnType<typeof import("./db.server").sql>,
+  id: string,
+): Promise<DbProfile | null> {
+  const rows = (await sql()`
+    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+           COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color,
+           COALESCE(google_sub, '') AS google_sub, created_at
+    FROM profiles WHERE id = ${id} LIMIT 1
+  `) as DbProfile[];
+  return rows[0] ?? null;
+}
+
+async function findProfileForGoogle(
+  sql: ReturnType<typeof import("./db.server").sql>,
+  googleSub: string,
+  emailNorm: string,
+): Promise<DbProfile | null> {
+  const bySub = (await sql()`
+    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+           COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color,
+           COALESCE(google_sub, '') AS google_sub, created_at
+    FROM profiles WHERE google_sub = ${googleSub} LIMIT 1
+  `) as DbProfile[];
+  if (bySub[0]) return bySub[0];
+
+  const byEmail = (await sql()`
+    SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
+           COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color,
+           COALESCE(google_sub, '') AS google_sub, created_at
+    FROM profiles WHERE lower(gmail) = ${emailNorm} LIMIT 1
+  `) as DbProfile[];
+  return byEmail[0] ?? null;
 }
 
 export type CreateProfileResult =
@@ -72,24 +124,22 @@ export const authWithGoogle = createServerFn({ method: "POST" })
     const claims = await verifyGoogleIdToken(data.credential);
     const emailNorm = normalizeEmail(claims.email);
 
-    const rows = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
-             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
-      FROM profiles WHERE lower(gmail) = ${emailNorm} LIMIT 1
-    `) as DbProfile[];
+    const found = await findProfileForGoogle(sql, claims.sub, emailNorm);
 
-    if (rows[0]) {
-      await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${rows[0].id}`;
-      if (!rows[0].name?.trim() && claims.name) {
-        await sql()`UPDATE profiles SET name = ${claims.name} WHERE id = ${rows[0].id}`;
+    if (found) {
+      await claimDeviceKey(sql, found.id, data.deviceKey);
+      await sql`
+        UPDATE profiles
+        SET google_sub = ${claims.sub}, gmail = ${emailNorm}
+        WHERE id = ${found.id}
+      `;
+      if (!found.name?.trim() && claims.name) {
+        await sql()`UPDATE profiles SET name = ${claims.name} WHERE id = ${found.id}`;
       }
-      await ensureSignupBonus(sql, rows[0].unique_id);
-      const refreshed = (await sql()`
-        SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
-               COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
-        FROM profiles WHERE id = ${rows[0].id} LIMIT 1
-      `) as DbProfile[];
-      return { status: "logged_in", profile: refreshed[0]! };
+      await ensureSignupBonus(sql, found.unique_id);
+      const profile = await loadProfileById(sql, found.id);
+      if (!profile) throw new Error("Could not load profile after sign-in.");
+      return { status: "logged_in", profile };
     }
 
     return { status: "needs_onboarding", gmail: emailNorm, name: claims.name };
@@ -129,8 +179,12 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
     await ensureSchema();
     const rows = (await sql()`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
-             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
-      FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color,
+             COALESCE(google_sub, '') AS google_sub, created_at
+      FROM profiles
+      WHERE device_key = ${data.deviceKey} AND device_key NOT LIKE 'unlinked_%'
+      ORDER BY created_at DESC
+      LIMIT 1
     `) as DbProfile[];
     if (rows[0]) await ensureSignupBonus(sql, rows[0].unique_id);
     return rows[0] ?? null;
@@ -267,14 +321,12 @@ export const loginProfile = createServerFn({ method: "POST" })
       throw new Error("We couldn't find a matching account. Check your email and mobile, or create a new account.");
     }
 
-    await sql()`UPDATE profiles SET device_key = ${data.deviceKey} WHERE id = ${rows[0].id}`;
+    await claimDeviceKey(sql, rows[0].id, data.deviceKey);
+    await sql()`UPDATE profiles SET gmail = ${emailNorm} WHERE id = ${rows[0].id}`;
     await ensureSignupBonus(sql, rows[0].unique_id);
-    const refreshed = (await sql()`
-      SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
-             COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color, created_at
-      FROM profiles WHERE id = ${rows[0].id} LIMIT 1
-    `) as DbProfile[];
-    return refreshed[0]!;
+    const profile = await loadProfileById(sql, rows[0].id);
+    if (!profile) throw new Error("Could not load profile after sign-in.");
+    return profile;
   });
 
 /** Sign out on this device — unlinks device_key so auto-login cannot restore the session. */
