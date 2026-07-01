@@ -2,11 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import {
   DEMO_FOLLOW_REQUESTS,
   DEMO_MESSAGE_THREADS,
-  DEMO_QUIZZES,
   DEMO_THREADS,
   isDemoThreadId,
   withDemoFallback,
 } from "./demo-data";
+import { QUIZ_BANK_LIST, quizMetaFromBank } from "./quiz-bank";
 
 const rid = (p: string) => `${p}_` + Math.random().toString(36).slice(2, 10);
 
@@ -293,6 +293,7 @@ export type DbQuiz = {
   community_slug: string | null;
   title: string;
   description: string;
+  difficulty?: "easy" | "medium" | "hard";
   questions_count: number;
   minutes: number;
   coins: number;
@@ -300,15 +301,8 @@ export type DbQuiz = {
 };
 
 export const listQuizzes = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await db();
-  const rows = (await s`
-    SELECT id, community_slug, title, description,
-           COALESCE(questions_count, 0)::int AS questions_count,
-           COALESCE(minutes, 0)::int AS minutes,
-           COALESCE(coins, 0)::int AS coins, created_at
-    FROM quizzes ORDER BY created_at DESC
-  `) as DbQuiz[];
-  return withDemoFallback(rows, DEMO_QUIZZES);
+  await db();
+  return QUIZ_BANK_LIST as DbQuiz[];
 });
 
 export const getQuiz = createServerFn({ method: "GET" })
@@ -317,16 +311,8 @@ export const getQuiz = createServerFn({ method: "GET" })
     return { id: d.id.trim().slice(0, 80) };
   })
   .handler(async ({ data }) => {
-    const s = await db();
-    const rows = (await s`
-      SELECT id, community_slug, title, description,
-             COALESCE(questions_count, 0)::int AS questions_count,
-             COALESCE(minutes, 0)::int AS minutes,
-             COALESCE(coins, 0)::int AS coins, created_at
-      FROM quizzes WHERE id = ${data.id} LIMIT 1
-    `) as DbQuiz[];
-    if (rows[0]) return rows[0];
-    return DEMO_QUIZZES.find((q) => q.id === data.id) ?? null;
+    await db();
+    return quizMetaFromBank(data.id) as DbQuiz | null;
   });
 
 export const createQuiz = createServerFn({ method: "POST" })

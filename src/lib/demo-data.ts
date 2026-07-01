@@ -220,39 +220,6 @@ export const DEMO_GIGS: DbGig[] = [
   },
 ];
 
-export const DEMO_QUIZZES = [
-  {
-    id: "demo-qz-1",
-    community_slug: "ai",
-    title: "Transformers Fundamentals",
-    description: "Attention, positional encodings, and fine-tuning basics.",
-    questions_count: 12,
-    minutes: 15,
-    coins: 50,
-    created_at: AT,
-  },
-  {
-    id: "demo-qz-2",
-    community_slug: "finance",
-    title: "Markets & Risk 101",
-    description: "Sharpe, drawdowns, and position sizing scenarios.",
-    questions_count: 10,
-    minutes: 12,
-    coins: 40,
-    created_at: AT,
-  },
-  {
-    id: "demo-qz-3",
-    community_slug: "cybersec",
-    title: "OWASP Top 10 Sprint",
-    description: "Identify vulns from short code snippets.",
-    questions_count: 15,
-    minutes: 20,
-    coins: 60,
-    created_at: AT,
-  },
-];
-
 export const DEMO_THREADS = [
   {
     id: "demo-thread-1",

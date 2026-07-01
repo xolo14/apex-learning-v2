@@ -16,6 +16,7 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
+import { QUIZ_DIFFICULTY_LABEL } from "@/lib/quiz-bank";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { pageHead } from "@/lib/seo";
@@ -169,8 +170,22 @@ function EarnPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-[11px] uppercase tracking-[0.12em] text-ink-muted">
-                      {q.community_slug ? `c/${q.community_slug}` : "Syncpedia"}
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-ink-muted">
+                      {q.difficulty ? (
+                        <span
+                          className={
+                            "rounded-full px-2 py-0.5 font-semibold normal-case tracking-normal " +
+                            (q.difficulty === "easy"
+                              ? "bg-forest/10 text-forest"
+                              : q.difficulty === "hard"
+                                ? "bg-red-500/10 text-red-600"
+                                : "bg-orange/10 text-orange")
+                          }
+                        >
+                          {QUIZ_DIFFICULTY_LABEL[q.difficulty]}
+                        </span>
+                      ) : null}
+                      <span>{q.community_slug ? `c/${q.community_slug}` : "Syncpedia"}</span>
                     </div>
                     <h3 className="mt-1.5 text-[17px] font-semibold tracking-tight text-foreground">{q.title}</h3>
                   </div>

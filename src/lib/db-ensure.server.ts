@@ -140,6 +140,31 @@ export function ensureSchema() {
         created_at timestamptz DEFAULT now()
       )
     `;
+    await s`ALTER TABLE quizzes ADD COLUMN IF NOT EXISTS questions_json text DEFAULT '[]'`;
+
+    await s`
+      CREATE TABLE IF NOT EXISTS quiz_attempts (
+        id text PRIMARY KEY,
+        quiz_id text NOT NULL,
+        user_unique_id text NOT NULL,
+        device_key text NOT NULL,
+        score integer NOT NULL DEFAULT 0,
+        max_score integer NOT NULL DEFAULT 0,
+        answers_json text DEFAULT '{}',
+        duration_sec integer DEFAULT 0,
+        created_at timestamptz DEFAULT now(),
+        UNIQUE(quiz_id, user_unique_id)
+      )
+    `;
+    await s`CREATE INDEX IF NOT EXISTS quiz_attempts_quiz_idx ON quiz_attempts(quiz_id)`;
+    await s`CREATE INDEX IF NOT EXISTS quiz_attempts_score_idx ON quiz_attempts(quiz_id, score DESC)`;
+
+    try {
+      const { seedQuizBank } = await import("./quiz.functions");
+      await seedQuizBank(s);
+    } catch (e) {
+      console.error("quiz bank seed:", e);
+    }
 
     // -------- Coin ledger (one row per (user, action_key); enforces one-time awards) --------
     await s`

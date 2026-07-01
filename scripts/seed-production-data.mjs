@@ -368,12 +368,7 @@ const COURSES = [
   },
 ];
 
-const QUIZZES = [
-  { id: "seed_qz_01", community_slug: "startup", title: "Syncpedia Platform Basics", description: "Communities, coins, gigs, and events.", questions_count: 10, minutes: 5, coins: 25 },
-  { id: "seed_qz_02", community_slug: "ai", title: "LLM Safety Quick Check", description: "Guardrails, hallucinations, and eval basics.", questions_count: 8, minutes: 4, coins: 30 },
-  { id: "seed_qz_03", community_slug: "programming", title: "TypeScript Types Quiz", description: "Generics, unions, and narrowing.", questions_count: 12, minutes: 6, coins: 35 },
-  { id: "seed_qz_04", community_slug: "marketing", title: "LinkedIn Growth for Students", description: "Posts, certificates, and networking.", questions_count: 10, minutes: 5, coins: 20 },
-];
+// Quizzes: see src/lib/quiz-bank.ts (10 real tech quizzes, synced via seedQuizBank on app start).
 
 const SAMPLE_POSTS = [
   { student: 0, slug: "ai", title: "Best free resources to start with LLMs in 2026?", body: "I'm a 3rd year CSE student at IIIT-H. What courses or repos would you recommend before attempting a RAG project?" },
@@ -652,17 +647,8 @@ async function seedCourses() {
 }
 
 async function seedQuizzes() {
-  for (const q of QUIZZES) {
-    await sql`
-      INSERT INTO quizzes (id, community_slug, title, description, questions_count, minutes, coins, created_at)
-      VALUES (${q.id}, ${q.community_slug}, ${q.title}, ${q.description}, ${q.questions_count}, ${q.minutes}, ${q.coins}, ${NOW})
-      ON CONFLICT (id) DO UPDATE SET
-        title = EXCLUDED.title,
-        description = EXCLUDED.description,
-        coins = EXCLUDED.coins
-    `;
-  }
-  return QUIZZES.length;
+  // Quizzes are owned by src/lib/quiz-bank.ts and synced on app startup (seedQuizBank).
+  return 0;
 }
 
 async function seedPosts() {

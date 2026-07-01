@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -47,8 +48,14 @@ import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities
 import { Route as AdminCoinsRouteImport } from './routes/admin.coins'
 import { Route as ApiPublicSitemapRouteImport } from './routes/api/public/sitemap'
 import { Route as ApiPublicClassVideoRouteImport } from './routes/api/public/class-video'
+import { Route as ApiPublicAppConfigRouteImport } from './routes/api/public/app-config'
 import { Route as ApiPublicCronRefreshHotRouteImport } from './routes/api/public/cron.refresh-hot'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -239,6 +246,11 @@ const ApiPublicClassVideoRoute = ApiPublicClassVideoRouteImport.update({
   path: '/api/public/class-video',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAppConfigRoute = ApiPublicAppConfigRouteImport.update({
+  id: '/api/public/app-config',
+  path: '/api/public/app-config',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronRefreshHotRoute = ApiPublicCronRefreshHotRouteImport.update({
   id: '/api/public/cron/refresh-hot',
   path: '/api/public/cron/refresh-hot',
@@ -257,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/terms': typeof TermsRoute
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -282,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/quizzes/': typeof QuizzesIndexRoute
+  '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
@@ -296,6 +310,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
+  '/terms': typeof TermsRoute
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -321,6 +336,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/courses': typeof CoursesIndexRoute
   '/quizzes': typeof QuizzesIndexRoute
+  '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
@@ -338,6 +354,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/quizzes': typeof QuizzesRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/terms': typeof TermsRoute
   '/admin/coins': typeof AdminCoinsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/courses': typeof AdminCoursesRoute
@@ -363,6 +380,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/quizzes/': typeof QuizzesIndexRoute
+  '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
@@ -381,6 +399,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/quizzes'
     | '/settings'
+    | '/terms'
     | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
@@ -406,6 +425,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/courses/'
     | '/quizzes/'
+    | '/api/public/app-config'
     | '/api/public/class-video'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
@@ -420,6 +440,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/settings'
+    | '/terms'
     | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
@@ -445,6 +466,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/courses'
     | '/quizzes'
+    | '/api/public/app-config'
     | '/api/public/class-video'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
@@ -461,6 +483,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/quizzes'
     | '/settings'
+    | '/terms'
     | '/admin/coins'
     | '/admin/communities'
     | '/admin/courses'
@@ -486,6 +509,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/courses/'
     | '/quizzes/'
+    | '/api/public/app-config'
     | '/api/public/class-video'
     | '/api/public/sitemap'
     | '/api/public/cron/refresh-hot'
@@ -503,6 +527,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   QuizzesRoute: typeof QuizzesRouteWithChildren
   SettingsRoute: typeof SettingsRoute
+  TermsRoute: typeof TermsRoute
   CSlugRoute: typeof CSlugRoute
   CoursesIdRoute: typeof CoursesIdRoute
   EventsIdRoute: typeof EventsIdRoute
@@ -510,6 +535,7 @@ export interface RootRouteChildren {
   PIdRoute: typeof PIdRoute
   UIdRoute: typeof UIdRoute
   CoursesIndexRoute: typeof CoursesIndexRoute
+  ApiPublicAppConfigRoute: typeof ApiPublicAppConfigRoute
   ApiPublicClassVideoRoute: typeof ApiPublicClassVideoRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
   ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
@@ -517,6 +543,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -783,6 +816,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicClassVideoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/app-config': {
+      id: '/api/public/app-config'
+      path: '/api/public/app-config'
+      fullPath: '/api/public/app-config'
+      preLoaderRoute: typeof ApiPublicAppConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/refresh-hot': {
       id: '/api/public/cron/refresh-hot'
       path: '/api/public/cron/refresh-hot'
@@ -876,6 +916,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   QuizzesRoute: QuizzesRouteWithChildren,
   SettingsRoute: SettingsRoute,
+  TermsRoute: TermsRoute,
   CSlugRoute: CSlugRoute,
   CoursesIdRoute: CoursesIdRoute,
   EventsIdRoute: EventsIdRoute,
@@ -883,6 +924,7 @@ const rootRouteChildren: RootRouteChildren = {
   PIdRoute: PIdRoute,
   UIdRoute: UIdRoute,
   CoursesIndexRoute: CoursesIndexRoute,
+  ApiPublicAppConfigRoute: ApiPublicAppConfigRoute,
   ApiPublicClassVideoRoute: ApiPublicClassVideoRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,
   ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,
