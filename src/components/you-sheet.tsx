@@ -18,6 +18,7 @@ import { listMyQuestions } from "@/lib/questions.functions";
 import { useSavedIds } from "@/lib/saved";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { useCoinBalance } from "@/lib/use-coin-balance";
+import { DEVICE_KEY } from "@/lib/session";
 import { getEngagementHub } from "@/lib/engagement.functions";
 import { LevelBadge } from "@/components/level-badge";
 
@@ -99,7 +100,10 @@ function YouPanel({ onClose }: { onClose: () => void }) {
   const fetchHub = useServerFn(getEngagementHub);
   const hubQ = useQuery({
     queryKey: ["engagement-hub", uniqueId],
-    queryFn: () => fetchHub({ data: { uniqueId } }),
+    queryFn: () => {
+      const deviceKey = typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
+      return fetchHub({ data: { deviceKey } });
+    },
     enabled: !!uniqueId && earningsEnabled,
     staleTime: 30_000,
   });

@@ -56,8 +56,66 @@ export async function hasMissionToday(s: NonNullable<Sql>, uid: string, mission:
     SELECT 1 FROM coin_ledger
     WHERE user_unique_id = ${uid} AND action_key = ${`mission:${mission}:${day}`}
     LIMIT 1
-  `) as { "?column?": number }[];
+  `) as unknown[];
   return rows.length > 0;
+}
+
+export async function missionEligible(
+  s: NonNullable<Sql>,
+  uid: string,
+  mission: MissionId,
+): Promise<boolean> {
+  const id = normUid(uid);
+  if (!id) return false;
+  const day = todayKeyUtc();
+
+  switch (mission) {
+    case "quiz": {
+      const rows = (await s`
+        SELECT 1 FROM quiz_attempts
+        WHERE user_unique_id = ${id} AND created_at >= ${day}::date
+        LIMIT 1
+      `) as unknown[];
+      return rows.length > 0;
+    }
+    case "ask": {
+      const rows = (await s`
+        SELECT 1 FROM questions
+        WHERE unique_id = ${id} AND hidden = false AND created_at >= ${day}::date
+        LIMIT 1
+      `) as unknown[];
+      return rows.length > 0;
+    }
+    case "event": {
+      const rows = (await s`
+        SELECT 1 FROM event_registrations
+        WHERE user_unique_id = ${id} AND created_at >= ${day}::date
+        LIMIT 1
+      `) as unknown[];
+      return rows.length > 0;
+    }
+    case "vote": {
+      const rows = (await s`
+        SELECT 1 FROM post_votes pv
+        INNER JOIN profiles p ON p.device_key = pv.device_key
+        WHERE p.unique_id = ${id} AND pv.value = 1 AND pv.updated_at >= ${day}::date
+        LIMIT 1
+      `) as unknown[];
+      return rows.length > 0;
+    }
+    default:
+      return false;
+  }
+}
+
+/** Grant any missions the user earned but did not receive (heals sync glitches). */
+export async function syncDailyMissions(s: NonNullable<Sql>, uid: string) {
+  const missions: MissionId[] = ["quiz", "ask", "event", "vote"];
+  for (const mission of missions) {
+    if (await hasMissionToday(s, uid, mission)) continue;
+    if (!(await missionEligible(s, uid, mission))) continue;
+    await tryDailyMission(s, uid, mission);
+  }
 }
 
 export async function tryDailyMission(
@@ -65,6 +123,13 @@ export async function tryDailyMission(
   uid: string,
   mission: MissionId,
 ): Promise<{ coins: number; xp: number; label: string }> {
+  if (await hasMissionToday(s, uid, mission)) {
+    return { coins: 0, xp: 0, label: "" };
+  }
+  if (!(await missionEligible(s, uid, mission))) {
+    return { coins: 0, xp: 0, label: "" };
+  }
+
   const day = todayKeyUtc();
   const actionKey = `mission:${mission}:${day}`;
   const coins = await creditOnceCoin(s, uid, actionKey, MISSION_REWARDS[mission]);
@@ -139,7 +204,7 @@ export async function claimDailyCheckInForUser(
   else if (last === today) streak = eng[0]?.current_streak ?? 1;
 
   const longest = Math.max(eng[0]?.longest_streak ?? 0, streak);
-  const coins = streakCoins(streak);
+  const coins = streakCoins(Math.min(streak, 365));
   const credited = await creditOnceCoin(s, id, dailyKey, coins);
   const xp = credited > 0 ? XP_REWARDS.checkin : 0;
   if (xp > 0) await addXp(s, id, xp);

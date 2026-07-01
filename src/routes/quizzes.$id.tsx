@@ -22,6 +22,7 @@ import { useIdentity } from "@/lib/identity";
 import { getQuizPlay, getQuizLeaderboard, submitQuizAttempt, type QuizSubmitResult } from "@/lib/quiz.functions";
 import type { QuizAttemptAnswer } from "@/lib/quiz.types";
 import { useCoinBalance } from "@/lib/use-coin-balance";
+import { invalidateEngagementWallet } from "@/lib/engagement-sync";
 import { pageHead } from "@/lib/seo";
 
 const DEVICE_KEY = "syncpedia_device_key";
@@ -86,9 +87,9 @@ function QuizDetailPage() {
       setResult(res);
       setPhase("results");
       refetchCoins();
+      invalidateEngagementWallet(qc, identity.uniqueId ?? "");
       qc.invalidateQueries({ queryKey: ["quiz-play", id] });
       qc.invalidateQueries({ queryKey: ["quiz-leaderboard", id] });
-      qc.invalidateQueries({ queryKey: ["engagement-hub"] });
     },
     onError: (err) => {
       setToast(err instanceof Error ? err.message : "Could not submit quiz.");

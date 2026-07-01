@@ -45,6 +45,7 @@ type Interest = { id: string; label: string; emoji: string; gradient: string };
 
 export function OnboardingGate() {
   const [mounted, setMounted] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [profile, setProfile] = useState<DbProfile | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +78,7 @@ export function OnboardingGate() {
     setMounted(true);
   }, []);
 
-  const gateOpen = mounted && !profile;
+  const gateOpen = authReady && !profile;
 
   useEffect(() => {
     if (!gateOpen) {
@@ -138,10 +139,20 @@ export function OnboardingGate() {
 
     if (isSignedOut()) {
       setProfile(null);
+      setAuthReady(true);
       return;
     }
 
+    const cached = readCachedProfile();
+    if (cached) {
+      setUniqueId(cached.unique_id);
+      const prefs = avatarPrefsFromProfile(cached);
+      applyAvatar(prefs.icon, prefs.color);
+      setProfile(cached);
+    }
+
     let alive = true;
+    setAuthReady(false);
     const key = getOrCreateDeviceKey();
 
     fetchProfileRef
@@ -158,20 +169,24 @@ export function OnboardingGate() {
           return;
         }
 
-        const cached = readCachedProfile();
         if (cached) {
           localStorage.removeItem(PROFILE_CACHE);
+          setProfile(null);
         }
-        setProfile(null);
       })
       .catch(() => {
         if (!alive || isSignedOut()) return;
-        const cached = readCachedProfile();
         if (cached) {
           setUniqueId(cached.unique_id);
           const prefs = avatarPrefsFromProfile(cached);
           applyAvatar(prefs.icon, prefs.color);
           setProfile(cached);
+        }
+      })
+      .finally(() => {
+        if (alive) {
+          setAuthReady(true);
+          document.documentElement.removeAttribute("data-auth-resolving");
         }
       });
 
@@ -182,6 +197,10 @@ export function OnboardingGate() {
   }, [mounted]);
 
   if (!mounted) return null;
+
+  if (!authReady && !profile) {
+    return <AuthResolvingSplash />;
+  }
 
   if (profile) return null;
 
@@ -559,6 +578,23 @@ export function OnboardingGate() {
         </button>
       </form>
     </OnboardingShell>
+  );
+}
+
+function AuthResolvingSplash() {
+  return (
+    <div
+      className="fixed inset-0 z-[100] grid place-items-center bg-background"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="flex flex-col items-center gap-4">
+        <SyncpediaLogo size={64} />
+        <div className="h-1 w-24 overflow-hidden rounded-full bg-surface">
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-forest" />
+        </div>
+      </div>
+    </div>
   );
 }
 

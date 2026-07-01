@@ -55,9 +55,11 @@ function normUid(u: string) {
 }
 
 export const getEngagementHub = createServerFn({ method: "GET" })
-  .inputValidator((d: { uniqueId: string }) => d)
+  .inputValidator((d: { deviceKey: string }) => {
+    const deviceKey = String(d.deviceKey ?? "").trim();
+    return { deviceKey };
+  })
   .handler(async ({ data }): Promise<EngagementHub> => {
-    const uid = normUid(data.uniqueId);
     const emptyHub: EngagementHub = {
       streak: 0,
       longestStreak: 0,
@@ -76,13 +78,24 @@ export const getEngagementHub = createServerFn({ method: "GET" })
       quizOfTheDay: null,
       stats: { quizzesCompleted: 0, questionsAsked: 0, eventsAttended: 0, coinBalance: 0 },
     };
-    if (!uid) return emptyHub;
 
     try {
+      const { isValidDeviceKey, rateLimit } = await import("./security.server");
+      if (!isValidDeviceKey(data.deviceKey)) return emptyHub;
+      rateLimit(`engagement-hub:${data.deviceKey}`, 45, 60_000);
+
+      const { tryProfileFromDevice } = await import("./profile-auth.server");
+      const profile = await tryProfileFromDevice(data.deviceKey);
+      if (!profile) return emptyHub;
+
+      const uid = normUid(profile.unique_id);
       const { getDb } = await import("./db-access.server");
       const { QUIZ_BANK_LIST } = await import("./quiz-bank");
+      const { syncDailyMissions } = await import("./engagement.server");
       const s = await getDb();
       if (!s) return emptyHub;
+
+      await syncDailyMissions(s, uid);
 
       const day = todayKeyUtc();
       const qotd = QUIZ_BANK_LIST[quizOfTheDayIndex(QUIZ_BANK_LIST.length)] ?? null;
@@ -112,30 +125,6 @@ export const getEngagementHub = createServerFn({ method: "GET" })
       const xp = engRows[0]?.total_xp ?? 0;
       const prog = xpProgress(xp);
 
-      const quizToday = (await s`
-        SELECT 1 FROM quiz_attempts
-        WHERE user_unique_id = ${uid}
-          AND created_at >= ${day}::date
-        LIMIT 1
-      `) as unknown[];
-
-      const askToday = (await s`
-        SELECT 1 FROM questions
-        WHERE unique_id = ${uid}
-          AND created_at >= ${day}::date
-          AND hidden = false
-        LIMIT 1
-      `) as unknown[];
-
-      const eventToday = (await s`
-        SELECT 1 FROM event_registrations
-        WHERE user_unique_id = ${uid}
-          AND created_at >= ${day}::date
-        LIMIT 1
-      `) as unknown[];
-
-      const voteToday = keys.has(`mission:vote:${day}`);
-
       const missions: MissionStatus[] = [
         {
           id: "checkin",
@@ -147,28 +136,28 @@ export const getEngagementHub = createServerFn({ method: "GET" })
           id: "quiz",
           label: "Complete a quiz",
           reward: MISSION_REWARDS.quiz,
-          done: keys.has(`mission:quiz:${day}`) || quizToday.length > 0,
+          done: keys.has(`mission:quiz:${day}`),
           href: "/quizzes",
         },
         {
           id: "ask",
           label: "Ask a question",
           reward: MISSION_REWARDS.ask,
-          done: keys.has(`mission:ask:${day}`) || askToday.length > 0,
+          done: keys.has(`mission:ask:${day}`),
           href: "/ask",
         },
         {
           id: "event",
           label: "RSVP to an event",
           reward: MISSION_REWARDS.event,
-          done: keys.has(`mission:event:${day}`) || eventToday.length > 0,
+          done: keys.has(`mission:event:${day}`),
           href: "/communities",
         },
         {
           id: "vote",
           label: "Upvote a question",
           reward: MISSION_REWARDS.vote,
-          done: voteToday,
+          done: keys.has(`mission:vote:${day}`),
           href: "/",
         },
       ];
@@ -259,34 +248,42 @@ export const getEngagementHub = createServerFn({ method: "GET" })
 export const claimDailyCheckIn = createServerFn({ method: "POST" })
   .inputValidator((d: { deviceKey: string }) => d)
   .handler(async ({ data }) => {
-    const { isValidDeviceKey } = await import("./security.server");
-    if (!isValidDeviceKey(data.deviceKey)) throw new Error("Sign in to claim your daily reward.");
+    const { rateLimit, rateLimitAuth } = await import("./security.server");
+    rateLimitAuth("engagement-checkin");
+    rateLimit(`engagement-checkin:${data.deviceKey}`, 6, 60_000);
+
+    const { requireProfileFromDevice } = await import("./profile-auth.server");
+    const profile = await requireProfileFromDevice(data.deviceKey, {
+      rateKey: `engagement-hub:${data.deviceKey}`,
+    });
+    const uid = profile.unique_id;
 
     const { getDb } = await import("./db-access.server");
     const s = await getDb();
     if (!s) throw new Error("Database unavailable — try again shortly.");
 
-    const profiles = (await s`
-      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
-    `) as { unique_id: string }[];
-    const uid = profiles[0]?.unique_id;
-    if (!uid) throw new Error("Create your profile first.");
-
-    const { claimDailyCheckInForUser } = await import("./engagement.server");
+    const { claimDailyCheckInForUser, syncDailyMissions } = await import("./engagement.server");
     const beforeXp = (await s`
       SELECT total_xp FROM user_engagement WHERE user_unique_id = ${uid} LIMIT 1
     `) as { total_xp: number }[];
     const oldLevel = levelFromXp(beforeXp[0]?.total_xp ?? 0);
 
     const result = await claimDailyCheckInForUser(s, uid);
+    await syncDailyMissions(s, uid);
+
     const afterXp = (await s`
       SELECT total_xp FROM user_engagement WHERE user_unique_id = ${uid} LIMIT 1
     `) as { total_xp: number }[];
     const newLevel = levelFromXp(afterXp[0]?.total_xp ?? 0);
 
+    const coinRows = (await s`
+      SELECT COALESCE(SUM(amount), 0)::int AS balance FROM coin_ledger WHERE user_unique_id = ${uid}
+    `) as { balance: number }[];
+
     return {
       ...result,
       levelUp: newLevel > oldLevel,
       newLevel,
+      balance: coinRows[0]?.balance ?? 0,
     };
   });

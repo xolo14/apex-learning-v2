@@ -18,11 +18,11 @@ import type { LucideIcon } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { LevelBadge } from "@/components/level-badge";
 import { claimDailyCheckIn, getEngagementHub } from "@/lib/engagement.functions";
+import { invalidateEngagementWallet, setWalletBalance } from "@/lib/engagement-sync";
 import type { MissionStatus } from "@/lib/engagement.functions";
 import { useIdentity } from "@/lib/identity";
 import { useCoinBalance } from "@/lib/use-coin-balance";
-
-const DEVICE_KEY = "syncpedia_device_key";
+import { DEVICE_KEY } from "@/lib/session";
 
 const MISSION_ICONS: Record<string, LucideIcon> = {
   quiz: Trophy,
@@ -43,15 +43,16 @@ export function DailyEngagementHub() {
   const qc = useQueryClient();
   const { refetch: refetchCoins } = useCoinBalance();
   const [celebration, setCelebration] = useState<string | null>(null);
-
-  const fetchHub = useServerFn(getEngagementHub);
   const claimFn = useServerFn(claimDailyCheckIn);
 
   const hubQ = useQuery({
     queryKey: ["engagement-hub", identity.uniqueId],
-    queryFn: () => fetchHub({ data: { uniqueId: identity.uniqueId ?? "" } }),
+    queryFn: () => {
+      const deviceKey = typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
+      return fetchHub({ data: { deviceKey } });
+    },
     enabled: !!identity.uniqueId,
-    staleTime: 20_000,
+    staleTime: 15_000,
     refetchOnWindowFocus: true,
   });
 
@@ -69,9 +70,10 @@ export function DailyEngagementHub() {
         setCelebration(res.message);
         setTimeout(() => setCelebration(null), 2000);
       }
-      void qc.invalidateQueries({ queryKey: ["engagement-hub"] });
-      void qc.invalidateQueries({ queryKey: ["coins"] });
-      void refetchCoins();
+      if (identity.uniqueId && typeof res.balance === "number") {
+        setWalletBalance(qc, identity.uniqueId, res.balance);
+      }
+      invalidateEngagementWallet(qc, identity.uniqueId ?? "");
     },
   });
 

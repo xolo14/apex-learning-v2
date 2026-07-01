@@ -12,6 +12,7 @@ import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
+import { DEVICE_KEY } from "@/lib/session";
 import { getEngagementHub } from "@/lib/engagement.functions";
 import { LevelBadge } from "@/components/level-badge";
 import { pageHead } from "@/lib/seo";
@@ -112,7 +113,10 @@ function ProfilePage() {
   const fetchHub = useServerFn(getEngagementHub);
   const hubQ = useQuery({
     queryKey: ["engagement-hub", uniqueId],
-    queryFn: () => fetchHub({ data: { uniqueId } }),
+    queryFn: () => {
+      const deviceKey = typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
+      return fetchHub({ data: { deviceKey } });
+    },
     enabled: !!uniqueId && earningsEnabled,
     staleTime: 30_000,
   });

@@ -19,9 +19,15 @@ function nnInt(n: unknown) {
 }
 
 export const getCoinBalance = createServerFn({ method: "GET" })
-  .inputValidator((d: { uniqueId: string }) => d)
+  .inputValidator((d: { deviceKey: string }) => ({ deviceKey: String(d.deviceKey ?? "").trim() }))
   .handler(async ({ data }) => {
-    const uid = normUid(data.uniqueId);
+    const { tryProfileFromDevice } = await import("./profile-auth.server");
+    const { rateLimit } = await import("./security.server");
+    if (!data.deviceKey) return { balance: 0, entries: [] as CoinLedgerEntry[] };
+    rateLimit(`coins-balance:${data.deviceKey}`, 40, 60_000);
+
+    const profile = await tryProfileFromDevice(data.deviceKey);
+    const uid = profile?.unique_id ? normUid(profile.unique_id) : "";
     if (!uid) return { balance: 0, entries: [] as CoinLedgerEntry[] };
     try {
       const { getDb } = await import("./db-access.server");
