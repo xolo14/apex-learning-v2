@@ -9,6 +9,7 @@ import {
   createProfile,
   getProfileByDevice,
   loginProfile,
+  resumeProfileSession,
   type DbProfile,
 } from "@/lib/profiles.functions";
 import { useIdentity, avatarPrefsFromProfile } from "@/lib/identity";
@@ -78,6 +79,7 @@ export function OnboardingGate() {
   });
 
   const fetchProfile = useServerFn(getProfileByDevice);
+  const resumeProfile = useServerFn(resumeProfileSession);
   const submitProfile = useServerFn(createProfile);
   const submitLogin = useServerFn(loginProfile);
   const submitGoogle = useServerFn(authWithGoogle);
@@ -86,6 +88,8 @@ export function OnboardingGate() {
   const { setUniqueId, applyAvatar } = useIdentity();
   const fetchProfileRef = useRef(fetchProfile);
   fetchProfileRef.current = fetchProfile;
+  const resumeProfileRef = useRef(resumeProfile);
+  resumeProfileRef.current = resumeProfile;
 
   useEffect(() => {
     setMounted(true);
@@ -121,7 +125,7 @@ export function OnboardingGate() {
     };
   }, [gateOpen]);
 
-  function saveProfile(p: DbProfile) {
+  function applyProfile(p: DbProfile) {
     clearSignedOutFlag();
     localStorage.setItem(PROFILE_CACHE, JSON.stringify(p));
     setUniqueId(p.unique_id);
@@ -130,6 +134,8 @@ export function OnboardingGate() {
     setProfile(p);
     prefetchEngagementHub(qc, p.unique_id, fetchHub);
   }
+
+  const saveProfile = applyProfile;
 
   function isProfile(p: unknown): p is DbProfile {
     return !!p && typeof p === "object" && "unique_id" in p && "device_key" in p;
@@ -184,32 +190,35 @@ export function OnboardingGate() {
 
     fetchProfileRef
       .current({ data: { deviceKey: key } })
-      .then((serverProfile) => {
+      .then(async (serverProfile) => {
         if (!alive || isSignedOut()) return;
 
         if (serverProfile) {
-          localStorage.setItem(PROFILE_CACHE, JSON.stringify(serverProfile));
-          setUniqueId(serverProfile.unique_id);
-          const prefs = avatarPrefsFromProfile(serverProfile);
-          applyAvatar(prefs.icon, prefs.color);
-          setProfile(serverProfile);
-          prefetchEngagementHub(qc, serverProfile.unique_id, fetchHub);
+          applyProfile(serverProfile);
           return;
         }
 
-        if (cached) {
-          localStorage.removeItem(PROFILE_CACHE);
-          setProfile(null);
+        if (!cached) return;
+
+        try {
+          const restored = await resumeProfileRef.current({
+            data: { deviceKey: key, uniqueId: cached.unique_id },
+          });
+          if (!alive || isSignedOut()) return;
+          if (restored) {
+            applyProfile(restored);
+            return;
+          }
+        } catch {
+          /* transient — keep cached session below */
         }
+
+        if (!alive || isSignedOut()) return;
+        applyProfile(cached);
       })
       .catch(() => {
         if (!alive || isSignedOut()) return;
-        if (cached) {
-          setUniqueId(cached.unique_id);
-          const prefs = avatarPrefsFromProfile(cached);
-          applyAvatar(prefs.icon, prefs.color);
-          setProfile(cached);
-        }
+        if (cached) applyProfile(cached);
       })
       .finally(() => {
         if (alive) {

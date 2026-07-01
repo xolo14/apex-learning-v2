@@ -176,7 +176,7 @@ export const getProfileByDevice = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { getDb } = await import("./db-access.server");
     const s = await getDb();
-    if (!s) return null;
+    if (!s) throw new Error("Database unavailable — try again shortly.");
     const rows = (await s`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
              COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color,
@@ -326,6 +326,33 @@ export const loginProfile = createServerFn({ method: "POST" })
     await ensureSignupBonus(sql, rows[0].unique_id);
     const profile = await loadProfileById(sql, rows[0].id);
     if (!profile) throw new Error("Could not load profile after sign-in.");
+    return profile;
+  });
+
+/** Re-link this device to a profile the user already had on this browser (fixes refresh logouts). */
+export const resumeProfileSession = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string; uniqueId: string }) => {
+    if (!isValidDeviceKey(d.deviceKey)) throw new Error("Device key required");
+    const uniqueId = String(d.uniqueId ?? "").trim().toUpperCase();
+    if (!/^SP-[A-Z0-9]{6}$/.test(uniqueId)) throw new Error("Invalid profile id");
+    return { deviceKey: d.deviceKey, uniqueId };
+  })
+  .handler(async ({ data }) => {
+    const { rateLimit } = await import("./security.server");
+    rateLimit(`resume-session:${data.deviceKey}`, 24, 60_000);
+
+    const { sql } = await import("./db.server");
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+
+    const rows = (await sql()`
+      SELECT id FROM profiles WHERE unique_id = ${data.uniqueId} LIMIT 1
+    `) as { id: string }[];
+    if (!rows[0]) return null;
+
+    await claimDeviceKey(sql, rows[0].id, data.deviceKey);
+    const profile = await loadProfileById(sql, rows[0].id);
+    if (profile) await ensureSignupBonus(sql, profile.unique_id);
     return profile;
   });
 
