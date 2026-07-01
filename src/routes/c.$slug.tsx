@@ -14,11 +14,11 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { MobileShell } from "@/components/mobile-shell";
+import { CommunityIcon } from "@/components/community-icon";
 import { PostCard } from "@/components/post-card";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
 import {
   communityBySlug,
-  communities as staticCommunities,
   posts,
   type Post,
   type PostKind,
@@ -27,7 +27,7 @@ import {
   isCommunityJoined,
   toggleCommunityJoin,
 } from "@/lib/community-join";
-import { iconFromKey } from "@/lib/community-icons";
+import { displayCommunityForSlug } from "@/lib/community-display";
 import {
   listCommunities,
   listCourses,
@@ -131,13 +131,8 @@ function CommunityPage() {
   });
 
   const dbRow = (comQ.data ?? []).find((c) => c.slug === slug && c.status === "approved");
-  const meta = staticCommunities.find((c) => c.slug === slug);
-  const Icon = dbRow ? iconFromKey(dbRow.icon_key) : staticCommunity.icon;
-  const name = dbRow?.name ?? staticCommunity.name;
-  const about = dbRow?.about ?? staticCommunity.about;
-  const imageUrl = dbRow?.image_url || meta?.image_url;
-  const members = meta?.members ?? staticCommunity.members;
-  const online = meta?.online ?? staticCommunity.online;
+  const display = displayCommunityForSlug(slug, dbRow);
+  const { icon: Icon, name, about, image_url: imageUrl, members, online, tint } = display;
 
   const communityPosts = useMemo(() => {
     const fromDb = (questionsQ.data ?? []).map(questionToPost);
@@ -239,9 +234,7 @@ function CommunityPage() {
           ) : null}
           <div className="px-5 py-5">
             <div className="flex items-start gap-4">
-              <span className="grid h-16 w-16 shrink-0 place-items-center rounded-[20px] bg-forest text-white shadow-md">
-                <Icon strokeWidth={1.75} className="h-7 w-7" />
-              </span>
+              <CommunityIcon icon={Icon} tint={tint} imageUrl={imageUrl} size="xl" strokeWidth={1.75} />
               <div className="min-w-0 flex-1 pt-1">
                 <h1 className="text-[22px] font-semibold leading-tight tracking-tight">{name}</h1>
                 <p className="mt-1 flex items-center gap-1.5 text-[12px] text-ink-muted">

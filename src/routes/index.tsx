@@ -1,16 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X, MapPin, Trophy } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/mobile-shell";
+import { CommunityIcon } from "@/components/community-icon";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { PostCard } from "@/components/post-card";
-import { posts, communities, balancedFeed } from "@/lib/feed-data";
+import { posts, balancedFeed } from "@/lib/feed-data";
+import { buildCommunityList } from "@/lib/community-display";
 import { useDensity } from "@/lib/density";
 import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
-import { listEvents } from "@/lib/communities.functions";
+import { listEvents, listCommunities } from "@/lib/communities.functions";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
@@ -48,12 +50,22 @@ function Home() {
     setSortState(v);
     setHomeTab(v);
   };
-  const featured = communities.slice(0, 8);
   const { density } = useDensity();
   const compact = density === "compact";
   const feed = balancedFeed(posts);
   const fHot = useServerFn(listHot);
   const fEvents = useServerFn(listEvents);
+  const fCommunities = useServerFn(listCommunities);
+  const comQ = useQuery({
+    queryKey: ["public", "communities"],
+    queryFn: () => fCommunities(),
+    staleTime: 60_000,
+  });
+  const communityList = useMemo(
+    () => buildCommunityList((comQ.data ?? []).filter((c) => c.status === "approved")),
+    [comQ.data],
+  );
+  const featured = communityList.slice(0, 8);
   const hotQ = useQuery({
     queryKey: ["feed", "hot"],
     queryFn: () => fHot(),
@@ -205,15 +217,13 @@ function Home() {
                   : "group flex w-[112px] shrink-0 flex-col items-start gap-2 rounded-[18px] border border-hairline bg-background p-3 active:bg-surface/50"
               }
             >
-              <span
-                className={
-                  compact
-                    ? "grid h-6 w-6 place-items-center rounded-[8px] bg-forest text-white"
-                    : "grid h-9 w-9 place-items-center rounded-[12px] bg-forest text-white"
-                }
-              >
-                <c.icon strokeWidth={1.75} className={compact ? "h-[12px] w-[12px]" : "h-[16px] w-[16px]"} />
-              </span>
+              <CommunityIcon
+                icon={c.icon}
+                tint={c.tint}
+                imageUrl={c.image_url}
+                size={compact ? "xs" : "md"}
+                strokeWidth={1.75}
+              />
               <span
                 className={
                   compact

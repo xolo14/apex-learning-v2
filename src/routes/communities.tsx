@@ -5,41 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
-import { communities as staticCommunities, posts } from "@/lib/feed-data";
+import { posts } from "@/lib/feed-data";
 import { listCommunities, listEvents } from "@/lib/communities.functions";
-import { iconFromKey } from "@/lib/community-icons";
-import type { LucideIcon } from "lucide-react";
+import { buildCommunityList, type DisplayCommunity } from "@/lib/community-display";
+import { CommunityIcon } from "@/components/community-icon";
 import { pageHead } from "@/lib/seo";
-
-type DisplayCommunity = {
-  slug: string;
-  name: string;
-  icon: LucideIcon;
-  tint?: string;
-  members: string;
-  online: number;
-  about: string;
-  image_url?: string;
-};
-
-function buildCommunityList(
-  approved: { slug: string; name: string; about: string; icon_key: string; image_url: string }[],
-): DisplayCommunity[] {
-  if (approved.length === 0) return staticCommunities;
-  return approved.map((c) => {
-    const meta = staticCommunities.find((x) => x.slug === c.slug);
-    return {
-      slug: c.slug,
-      name: c.name,
-      about: c.about,
-      icon: iconFromKey(c.icon_key),
-      tint: meta?.tint ?? "#111827",
-      members: meta?.members ?? "2k+",
-      online: meta?.online ?? 120,
-      image_url: c.image_url || meta?.image_url,
-    };
-  });
-}
 
 export const Route = createFileRoute("/communities")({
   head: () =>
@@ -260,20 +230,13 @@ function CommunitiesView({
               params={{ slug: c.slug }}
               className="flex items-center gap-3.5 border-b border-hairline px-5 py-3.5 active:bg-surface/60"
             >
-              {c.image_url ? (
-                <img
-                  src={c.image_url}
-                  alt=""
-                  className="h-11 w-11 shrink-0 rounded-[14px] object-cover"
-                />
-              ) : (
-                <span
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] text-white"
-                  style={{ backgroundColor: c.tint ?? "#111827" }}
-                >
-                  <c.icon strokeWidth={2} className="h-[18px] w-[18px]" />
-                </span>
-              )}
+              <CommunityIcon
+                icon={c.icon}
+                tint={c.tint}
+                imageUrl={c.image_url}
+                size="lg"
+                strokeWidth={2}
+              />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5 truncate text-[15px] font-medium text-foreground">
                   c/{c.slug}

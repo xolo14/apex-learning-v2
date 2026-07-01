@@ -64,3 +64,7 @@ export const SLUG_ICON_KEY: Record<string, string> = {
 export function iconFromKey(key: string): LucideIcon {
   return COMMUNITY_ICON_MAP[key] ?? Sparkles;
 }
+
+export function iconKeyFromSlug(slug: string): string {
+  return SLUG_ICON_KEY[slug] ?? "sparkles";
+}
