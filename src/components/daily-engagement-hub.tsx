@@ -54,7 +54,7 @@ export function DailyEngagementHub() {
     queryFn: async () => {
       const deviceKey = typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
       const hub = await fetchHub({ data: { deviceKey, full: false } });
-      if (uid) writeCachedEngagementHub(uid, hub);
+      if (uid && hub.missions?.length) writeCachedEngagementHub(uid, hub);
       return hub;
     },
     enabled: !!uid,
@@ -114,52 +114,54 @@ export function DailyEngagementHub() {
   const streakHot = hub.streak >= 3;
 
   return (
-    <section className="px-5 pb-2 pt-0.5">
+    <section className="pb-3 pt-2">
       {celebration ? (
-        <div className="mb-2 rounded-xl border border-forest/25 bg-forest/5 px-3 py-2 text-center">
-          <p className="text-[12px] font-medium text-forest">{celebration}</p>
+        <div className="mx-5 mb-2 rounded-xl border border-forest/25 bg-forest/5 px-3 py-2 text-center">
+          <p className="text-[13px] font-medium text-forest">{celebration}</p>
         </div>
       ) : null}
 
-      <div className={`overflow-hidden rounded-2xl border border-hairline bg-background transition-opacity ${hubRefreshing ? "opacity-80" : ""}`}>
+      <div
+        className={`border-y border-hairline bg-gradient-to-b from-surface/50 to-background transition-opacity ${hubRefreshing ? "opacity-85" : ""}`}
+      >
         {/* Header + daily progress */}
-        <div className="px-3 py-2.5">
-          <div className="flex items-center gap-2.5">
-            <div className="relative grid h-11 w-11 shrink-0 place-items-center">
-              <svg className="absolute inset-0 h-11 w-11 -rotate-90" viewBox="0 0 44 44" aria-hidden>
-                <circle cx="22" cy="22" r="18" fill="none" stroke="currentColor" className="text-surface" strokeWidth="3" />
+        <div className="px-5 py-4">
+          <div className="flex items-center gap-3.5">
+            <div className="relative grid h-14 w-14 shrink-0 place-items-center">
+              <svg className="absolute inset-0 h-14 w-14 -rotate-90" viewBox="0 0 56 56" aria-hidden>
+                <circle cx="28" cy="28" r="22" fill="none" stroke="currentColor" className="text-surface" strokeWidth="3.5" />
                 <circle
-                  cx="22"
-                  cy="22"
-                  r="18"
+                  cx="28"
+                  cy="28"
+                  r="22"
                   fill="none"
                   stroke="currentColor"
                   className={hub.allMissionsComplete ? "text-forest" : "text-orange"}
-                  strokeWidth="3"
+                  strokeWidth="3.5"
                   strokeLinecap="round"
-                  strokeDasharray={`${(progressPct / 100) * 113} 113`}
+                  strokeDasharray={`${(progressPct / 100) * 138} 138`}
                 />
               </svg>
-              <Flame className={`h-4 w-4 ${streakHot ? "text-orange" : "text-ink-muted"}`} strokeWidth={2.5} />
+              <Flame className={`h-5 w-5 ${streakHot ? "text-orange" : "text-ink-muted"}`} strokeWidth={2.5} />
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <LevelBadge level={hub.level} size="xs" />
-                <span className="truncate text-[12px] font-semibold text-foreground">{hub.levelTitle}</span>
-                <span className="font-bold tabular-nums text-orange">{hub.streak}🔥</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <LevelBadge level={hub.level} size="sm" />
+                <span className="text-[15px] font-semibold text-foreground">{hub.levelTitle}</span>
+                <span className="text-[15px] font-bold tabular-nums text-orange">{hub.streak}🔥</span>
               </div>
-              <p className="mt-0.5 text-[10px] text-ink-muted">
+              <p className="mt-1 text-[12px] text-ink-muted">
                 {hub.allMissionsComplete ? (
                   <span className="font-semibold text-forest">Perfect day — all missions done!</span>
                 ) : (
                   <>
                     <span className="font-semibold text-foreground">{hub.coinsLeftToday}</span> coins left today ·{" "}
-                    {hub.missionsDone}/{hub.missionsTotal} done
+                    {hub.missionsDone}/{hub.missionsTotal} missions done
                   </>
                 )}
               </p>
-              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-surface">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-forest to-emerald-400 transition-all"
                   style={{ width: `${Math.max(hub.xpPct, 4)}%` }}
@@ -172,23 +174,23 @@ export function DailyEngagementHub() {
                 onClick={() => claimM.mutate()}
                 disabled={claimM.isPending}
                 className={
-                  "inline-flex h-9 shrink-0 animate-pulse items-center gap-1 rounded-full px-2.5 text-[11px] font-bold text-white active:scale-95 disabled:opacity-60 " +
-                  (streakHot ? "bg-gradient-to-r from-orange to-red-500" : "bg-orange")
+                  "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[12px] font-bold text-white active:scale-95 disabled:opacity-60 " +
+                  (streakHot ? "animate-pulse bg-gradient-to-r from-orange to-red-500" : "bg-orange")
                 }
               >
                 {claimM.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    <Sparkles className="h-3 w-3" />
+                    <Sparkles className="h-3.5 w-3.5" />
                     +{hub.checkInReward}
-                    <img src={goldCoin} alt="" className="h-3 w-3" />
+                    <img src={goldCoin} alt="" className="h-3.5 w-3.5" />
                   </>
                 )}
               </button>
             ) : (
-              <span className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-full bg-forest/10 px-2 text-[10px] font-semibold text-forest">
-                <Check className="h-3 w-3" strokeWidth={3} />
+              <span className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-forest/10 px-3 text-[11px] font-semibold text-forest">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
                 Claimed
               </span>
             )}
@@ -196,56 +198,60 @@ export function DailyEngagementHub() {
         </div>
 
         {/* Today's picks — quiz + cert */}
-        <div className="border-t border-hairline">
-          {hub.quizOfTheDay ? (
-            <SpotlightRow
-              to="/quizzes/$id"
-              params={{ id: hub.quizOfTheDay.id }}
-              label="Quiz pick"
-              title={hub.quizOfTheDay.title}
-              coins={hub.quizOfTheDay.coins}
-              icon={Target}
-              accent="orange"
-            />
-          ) : null}
-          {hub.certOfTheDay ? (
-            <SpotlightRow
-              to="/courses/$id"
-              params={{ id: hub.certOfTheDay.id }}
-              label="Cert pick"
-              title={hub.certOfTheDay.title}
-              coins={hub.certOfTheDay.coins}
-              icon={GraduationCap}
-              accent="forest"
-            />
-          ) : null}
-        </div>
+        {hub.quizOfTheDay || hub.certOfTheDay ? (
+          <div className="border-t border-hairline">
+            {hub.quizOfTheDay ? (
+              <SpotlightRow
+                to="/quizzes/$id"
+                params={{ id: hub.quizOfTheDay.id }}
+                label="Quiz pick"
+                title={hub.quizOfTheDay.title}
+                coins={hub.quizOfTheDay.coins}
+                icon={Target}
+                accent="orange"
+              />
+            ) : null}
+            {hub.certOfTheDay ? (
+              <SpotlightRow
+                to="/courses/$id"
+                params={{ id: hub.certOfTheDay.id }}
+                label="Cert pick"
+                title={hub.certOfTheDay.title}
+                coins={hub.certOfTheDay.coins}
+                icon={GraduationCap}
+                accent="forest"
+              />
+            ) : null}
+          </div>
+        ) : null}
 
         {/* Missions grid */}
-        <div className="grid grid-cols-2 gap-1.5 border-t border-hairline p-2">
-          {dailyMissions.map((m) => (
-            <MissionCell key={m.id} mission={m} />
-          ))}
-        </div>
+        {dailyMissions.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 border-t border-hairline p-4">
+            {dailyMissions.map((m) => (
+              <MissionCell key={m.id} mission={m} />
+            ))}
+          </div>
+        ) : null}
 
         {/* Perfect day bonus */}
         {!hub.perfectDayClaimed && hub.missionsDone >= hub.missionsTotal - 1 ? (
-          <div className="flex items-center gap-2 border-t border-hairline bg-gradient-to-r from-amber-50/80 to-orange-50/50 px-3 py-2 dark:from-orange/10 dark:to-amber/5">
+          <div className="flex items-center gap-2.5 border-t border-hairline bg-gradient-to-r from-amber-50/80 to-orange-50/50 px-5 py-3 dark:from-orange/10 dark:to-amber/5">
             <Star className="h-4 w-4 shrink-0 text-orange" fill="currentColor" />
-            <p className="min-w-0 flex-1 text-[11px] text-foreground">
+            <p className="min-w-0 flex-1 text-[12px] text-foreground">
               Finish all missions for <span className="font-bold text-orange">+{hub.dailyCompleteBonus} bonus coins</span>
             </p>
-            <Zap className="h-3.5 w-3.5 shrink-0 text-orange" />
+            <Zap className="h-4 w-4 shrink-0 text-orange" />
           </div>
         ) : hub.perfectDayClaimed && hub.allMissionsComplete ? (
-          <div className="flex items-center gap-2 border-t border-hairline bg-forest/5 px-3 py-2">
+          <div className="flex items-center gap-2.5 border-t border-hairline bg-forest/5 px-5 py-3">
             <Star className="h-4 w-4 shrink-0 text-forest" fill="currentColor" />
-            <p className="text-[11px] font-semibold text-forest">Perfect day! +{hub.dailyCompleteBonus} bonus earned</p>
+            <p className="text-[12px] font-semibold text-forest">Perfect day! +{hub.dailyCompleteBonus} bonus earned</p>
           </div>
         ) : null}
 
         {hub.streak > 0 && !hub.checkedInToday ? (
-          <p className="border-t border-hairline px-3 py-1.5 text-center text-[10px] font-medium text-orange">
+          <p className="border-t border-hairline px-5 py-2 text-center text-[11px] font-medium text-orange">
             Don&apos;t lose your {hub.streak}-day streak — claim now!
           </p>
         ) : null}
@@ -253,7 +259,7 @@ export function DailyEngagementHub() {
         {hub.achievementsUnlocked > 0 ? (
           <Link
             to="/profile"
-            className="flex items-center justify-between border-t border-hairline px-3 py-2 text-[10px] text-ink-muted active:bg-surface/40"
+            className="flex items-center justify-between border-t border-hairline px-5 py-2.5 text-[11px] text-ink-muted active:bg-surface/40"
           >
             <span className="inline-flex items-center gap-1">
               <Award className="h-3 w-3" />
@@ -292,22 +298,22 @@ function SpotlightRow({
     <Link
       to={to}
       params={params}
-      className="flex items-center gap-2 border-b border-hairline/60 px-3 py-2 last:border-b-0 active:bg-surface/50"
+      className="flex items-center gap-3 border-b border-hairline/60 px-5 py-3 last:border-b-0 active:bg-surface/50"
     >
-      <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ${bg}`}>
-        <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${bg}`}>
+        <Icon className="h-4 w-4" strokeWidth={2} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className={`text-[9px] font-semibold uppercase tracking-[0.14em] ${tag}`}>{label}</p>
-        <p className="truncate text-[12px] font-medium leading-tight text-foreground">{title}</p>
+        <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${tag}`}>{label}</p>
+        <p className="line-clamp-2 text-[13px] font-medium leading-snug text-foreground">{title}</p>
       </div>
       {coins > 0 ? (
-        <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] font-semibold text-orange">
+        <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-orange">
           {coins}
-          <img src={goldCoin} alt="" className="h-2.5 w-2.5" />
+          <img src={goldCoin} alt="" className="h-3 w-3" />
         </span>
       ) : null}
-      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-muted" />
+      <ChevronRight className="h-4 w-4 shrink-0 text-ink-muted" />
     </Link>
   );
 }
@@ -324,29 +330,29 @@ function MissionCell({ mission }: { mission: MissionStatus }) {
     <>
       <span
         className={
-          "grid h-6 w-6 shrink-0 place-items-center rounded-md " +
+          "grid h-8 w-8 shrink-0 place-items-center rounded-lg " +
           (mission.done ? "bg-forest/15 text-forest" : "bg-surface text-ink-muted")
         }
       >
-        {mission.done ? <Check className="h-3 w-3" strokeWidth={3} /> : <Icon className="h-3 w-3" strokeWidth={2} />}
+        {mission.done ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : <Icon className="h-3.5 w-3.5" strokeWidth={2} />}
       </span>
       <span
         className={
-          "min-w-0 flex-1 truncate text-[11px] font-medium " +
+          "min-w-0 flex-1 truncate text-[12px] font-medium " +
           (mission.done ? "text-ink-muted line-through" : "text-foreground")
         }
       >
         {label}
       </span>
-      <span className="inline-flex shrink-0 items-center gap-px text-[10px] font-semibold text-orange">
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-semibold text-orange">
         +{mission.reward}
-        <img src={goldCoin} alt="" className="h-2.5 w-2.5" />
+        <img src={goldCoin} alt="" className="h-3 w-3" />
       </span>
     </>
   );
 
   const className =
-    "flex items-center gap-1.5 rounded-xl border border-hairline/80 bg-surface/30 px-2 py-1.5 " +
+    "flex min-h-[52px] items-center gap-2 rounded-xl border border-hairline/80 bg-background px-3 py-2.5 " +
     (mission.done ? "opacity-70" : "");
 
   if (href && !mission.done) {

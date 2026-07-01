@@ -3,10 +3,12 @@ import {
   ACHIEVEMENTS,
   DAILY_COMPLETE_BONUS_COINS,
   MISSION_REWARDS,
+  pickOfTheDayIndex,
   todayKeyUtc,
   streakCoins,
   xpProgress,
 } from "./engagement.constants";
+import { QUIZ_BANK_LIST } from "./quiz-bank";
 
 const PREFIX = "syncpedia:engagement-hub:";
 
@@ -15,6 +17,7 @@ type Cached = { hub: EngagementHub; day: string };
 /** Instant placeholder so the home card never blocks on a server round-trip. */
 export function optimisticEngagementHub(): EngagementHub {
   const prog = xpProgress(0);
+  const qotd = QUIZ_BANK_LIST[pickOfTheDayIndex(QUIZ_BANK_LIST.length)] ?? null;
   return {
     streak: 0,
     longestStreak: 0,
@@ -36,7 +39,7 @@ export function optimisticEngagementHub(): EngagementHub {
     missionsTotal: 5,
     achievements: ACHIEVEMENTS.map((a) => ({ ...a, unlocked: false })),
     achievementsUnlocked: 0,
-    quizOfTheDay: null,
+    quizOfTheDay: qotd ? { id: qotd.id, title: qotd.title, coins: qotd.coins } : null,
     certOfTheDay: null,
     dailyCompleteBonus: DAILY_COMPLETE_BONUS_COINS,
     allMissionsComplete: false,
@@ -53,14 +56,19 @@ export function readCachedEngagementHub(uniqueId: string): EngagementHub | undef
     if (!raw) return undefined;
     const parsed = JSON.parse(raw) as Cached;
     if (parsed.day !== todayKeyUtc()) return undefined;
-    return parsed.hub;
+    const hub = parsed.hub;
+    if (!hub.missions?.length) {
+      const fallback = optimisticEngagementHub();
+      return { ...fallback, ...hub, missions: fallback.missions, quizOfTheDay: hub.quizOfTheDay ?? fallback.quizOfTheDay };
+    }
+    return hub;
   } catch {
     return undefined;
   }
 }
 
 export function writeCachedEngagementHub(uniqueId: string, hub: EngagementHub) {
-  if (typeof window === "undefined" || !uniqueId) return;
+  if (typeof window === "undefined" || !uniqueId || !hub.missions?.length) return;
   try {
     const payload: Cached = { hub, day: todayKeyUtc() };
     localStorage.setItem(`${PREFIX}${uniqueId}`, JSON.stringify(payload));
