@@ -15,6 +15,7 @@ import { Route as QuizzesRouteImport } from './routes/quizzes'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MessagesRouteImport } from './routes/messages'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as GigsRouteImport } from './routes/gigs'
 import { Route as CommunitiesRouteImport } from './routes/communities'
 import { Route as CoinsRouteImport } from './routes/coins'
@@ -80,6 +81,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const MessagesRoute = MessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GigsRoute = GigsRouteImport.update({
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
   '/gigs': typeof GigsRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByTo {
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
   '/gigs': typeof GigsRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -357,6 +365,7 @@ export interface FileRoutesById {
   '/coins': typeof CoinsRoute
   '/communities': typeof CommunitiesRoute
   '/gigs': typeof GigsRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
   '/messages': typeof MessagesRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -403,6 +412,7 @@ export interface FileRouteTypes {
     | '/coins'
     | '/communities'
     | '/gigs'
+    | '/leaderboard'
     | '/messages'
     | '/privacy'
     | '/profile'
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/coins'
     | '/communities'
     | '/gigs'
+    | '/leaderboard'
     | '/messages'
     | '/privacy'
     | '/profile'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/coins'
     | '/communities'
     | '/gigs'
+    | '/leaderboard'
     | '/messages'
     | '/privacy'
     | '/profile'
@@ -534,6 +546,7 @@ export interface RootRouteChildren {
   CoinsRoute: typeof CoinsRoute
   CommunitiesRoute: typeof CommunitiesRoute
   GigsRoute: typeof GigsRouteWithChildren
+  LeaderboardRoute: typeof LeaderboardRoute
   MessagesRoute: typeof MessagesRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
@@ -596,6 +609,13 @@ declare module '@tanstack/react-router' {
       path: '/messages'
       fullPath: '/messages'
       preLoaderRoute: typeof MessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gigs': {
@@ -931,6 +951,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoinsRoute: CoinsRoute,
   CommunitiesRoute: CommunitiesRoute,
   GigsRoute: GigsRouteWithChildren,
+  LeaderboardRoute: LeaderboardRoute,
   MessagesRoute: MessagesRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,

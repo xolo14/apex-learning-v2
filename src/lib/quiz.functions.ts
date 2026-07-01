@@ -238,3 +238,83 @@ export const getQuizLeaderboard = createServerFn({ method: "GET" })
       return [];
     }
   });
+
+export const getAllQuizLeaderboards = createServerFn({ method: "GET" }).handler(async () => {
+  const { QUIZ_BANK_LIST } = await import("./quiz-bank");
+  const empty: import("./quiz.types").QuizLeaderboardBundle = {
+    global: [],
+    byQuiz: QUIZ_BANK_LIST.map((q) => ({ quizId: q.id, title: q.title, rows: [] })),
+  };
+
+  try {
+    const { getDb } = await import("./db-access.server");
+    const s = await getDb();
+    if (!s) return empty;
+
+    const globalRaw = (await s`
+      SELECT qa.user_unique_id,
+             COALESCE(p.name, qa.user_unique_id) AS display_name,
+             COUNT(*)::int AS quizzes_completed,
+             SUM(qa.score)::int AS total_score,
+             SUM(qa.max_score)::int AS total_max_score
+      FROM quiz_attempts qa
+      LEFT JOIN profiles p ON p.unique_id = qa.user_unique_id
+      GROUP BY qa.user_unique_id, p.name
+      ORDER BY total_score DESC, quizzes_completed DESC
+      LIMIT 50
+    `) as {
+      user_unique_id: string;
+      display_name: string;
+      quizzes_completed: number;
+      total_score: number;
+      total_max_score: number;
+    }[];
+
+    const global = globalRaw.map((r, i): import("./quiz.types").GlobalQuizLeaderboardRow => ({
+      rank: i + 1,
+      user_unique_id: r.user_unique_id,
+      display_name: r.display_name,
+      quizzes_completed: r.quizzes_completed,
+      total_score: r.total_score,
+      total_max_score: r.total_max_score,
+      avg_pct: r.total_max_score > 0 ? Math.round((r.total_score / r.total_max_score) * 100) : 0,
+    }));
+
+    const byQuiz: import("./quiz.types").QuizLeaderboardBundle["byQuiz"] = [];
+    for (const quiz of QUIZ_BANK_LIST) {
+      const rows = (await s`
+        SELECT qa.user_unique_id, qa.score, qa.max_score, qa.created_at,
+               COALESCE(p.name, qa.user_unique_id) AS display_name
+        FROM quiz_attempts qa
+        LEFT JOIN profiles p ON p.unique_id = qa.user_unique_id
+        WHERE qa.quiz_id = ${quiz.id}
+        ORDER BY qa.score DESC, qa.created_at ASC
+        LIMIT 10
+      `) as {
+        user_unique_id: string;
+        score: number;
+        max_score: number;
+        created_at: string;
+        display_name: string;
+      }[];
+
+      byQuiz.push({
+        quizId: quiz.id,
+        title: quiz.title,
+        rows: rows.map((r, i): QuizLeaderboardRow => ({
+          rank: i + 1,
+          user_unique_id: r.user_unique_id,
+          display_name: r.display_name,
+          score: r.score,
+          max_score: r.max_score,
+          pct: r.max_score > 0 ? Math.round((r.score / r.max_score) * 100) : 0,
+          created_at: r.created_at,
+        })),
+      });
+    }
+
+    return { global, byQuiz };
+  } catch {
+    return empty;
+  }
+});

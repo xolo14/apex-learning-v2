@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X, MapPin } from "lucide-react";
+import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X, MapPin, Trophy } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -101,6 +101,15 @@ function Home() {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {earningsEnabled ? (
+              <Link
+                to="/leaderboard"
+                aria-label="Quiz leaderboard"
+                className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95"
+              >
+                <Trophy strokeWidth={1.75} className="h-[18px] w-[18px]" />
+              </Link>
+            ) : null}
             <button aria-label="Search" className="grid h-9 w-9 place-items-center rounded-full bg-surface text-foreground active:scale-95">
               <Search strokeWidth={1.75} className="h-[18px] w-[18px]" />
             </button>

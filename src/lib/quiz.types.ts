@@ -44,3 +44,22 @@ export type QuizLeaderboardRow = {
   pct: number;
   created_at: string;
 };
+
+export type GlobalQuizLeaderboardRow = {
+  rank: number;
+  user_unique_id: string;
+  display_name: string;
+  quizzes_completed: number;
+  total_score: number;
+  total_max_score: number;
+  avg_pct: number;
+};
+
+export type QuizLeaderboardBundle = {
+  global: GlobalQuizLeaderboardRow[];
+  byQuiz: {
+    quizId: string;
+    title: string;
+    rows: QuizLeaderboardRow[];
+  }[];
+};
