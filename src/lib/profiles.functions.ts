@@ -41,12 +41,8 @@ function genUniqueId() {
 
 /** One-time 50-coin signup bonus; safe to call on every login/load. */
 async function ensureSignupBonus(sql: ReturnType<typeof import("./db.server").sql>, uniqueId: string) {
-  const { SIGNUP_BONUS_COINS } = await import("./coin-rewards");
-  await sql()`
-    INSERT INTO coin_ledger (user_unique_id, action_key, amount)
-    VALUES (${uniqueId}, 'signup', ${Math.max(0, Math.floor(SIGNUP_BONUS_COINS))})
-    ON CONFLICT (user_unique_id, action_key) DO NOTHING
-  `;
+  const { ensureSignupBonus: ensure } = await import("./coins.server");
+  await ensure(sql, uniqueId);
 }
 
 /** Unlink other profiles from this device, then attach the account. */
@@ -509,12 +505,29 @@ export const updateUniqueId = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
-    const existing = (await sql()`
+    const { ensureSchema } = await import("./db-ensure.server");
+    await ensureSchema();
+
+    const current = (await sql()`
+      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+    `) as { unique_id: string }[];
+    const oldId = current[0]?.unique_id;
+    if (!oldId) throw new Error("Profile not found");
+
+    const taken = (await sql()`
       SELECT device_key FROM profiles WHERE unique_id = ${data.uniqueId} LIMIT 1
     `) as { device_key: string }[];
-    if (existing[0] && existing[0].device_key !== data.deviceKey) {
+    if (taken[0] && taken[0].device_key !== data.deviceKey) {
       throw new Error("This ID is already used. Try a different one.");
     }
+
+    if (oldId !== data.uniqueId) {
+      const { getDb } = await import("./db-access.server");
+      const { migrateUserWalletId } = await import("./coins.server");
+      const s = await getDb();
+      if (s) await migrateUserWalletId(s, oldId, data.uniqueId);
+    }
+
     await sql()`
       UPDATE profiles SET unique_id = ${data.uniqueId} WHERE device_key = ${data.deviceKey}
     `;

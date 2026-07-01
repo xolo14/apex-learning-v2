@@ -131,9 +131,11 @@ export const getEngagementHub = createServerFn({ method: "GET" })
       let questionCount = 0;
       let eventCount = 0;
       let certCount = 0;
-      let coinBalance = 0;
       let top10: unknown[] = [];
       let perfectDayEver: unknown[] = [];
+
+      const { getCoinBalanceForUser } = await import("./coins.server");
+      const coinBalance = await getCoinBalanceForUser(s, uid);
 
       if (data.full) {
         const [counts, top10Rows, perfectRows, courseRows] = await Promise.all([
@@ -142,14 +144,12 @@ export const getEngagementHub = createServerFn({ method: "GET" })
               (SELECT COUNT(*)::int FROM quiz_attempts WHERE user_unique_id = ${uid}) AS quiz_count,
               (SELECT COUNT(*)::int FROM questions WHERE unique_id = ${uid} AND hidden = false) AS question_count,
               (SELECT COUNT(*)::int FROM event_registrations WHERE user_unique_id = ${uid}) AS event_count,
-              (SELECT COUNT(*)::int FROM course_enrollments WHERE user_unique_id = ${uid} AND status = 'confirmed') AS cert_count,
-              (SELECT COALESCE(SUM(amount), 0)::int FROM coin_ledger WHERE user_unique_id = ${uid}) AS balance
+              (SELECT COUNT(*)::int FROM course_enrollments WHERE user_unique_id = ${uid} AND status = 'confirmed') AS cert_count
           ` as Promise<{
             quiz_count: number;
             question_count: number;
             event_count: number;
             cert_count: number;
-            balance: number;
           }[]>,
           s`
             SELECT 1 FROM quiz_attempts qa
@@ -174,7 +174,6 @@ export const getEngagementHub = createServerFn({ method: "GET" })
         questionCount = counts[0]?.question_count ?? 0;
         eventCount = counts[0]?.event_count ?? 0;
         certCount = counts[0]?.cert_count ?? 0;
-        coinBalance = counts[0]?.balance ?? 0;
         top10 = top10Rows;
         perfectDayEver = perfectRows;
         certPick = courseRows[pickOfTheDayIndex(courseRows.length)] ?? null;
@@ -337,13 +336,14 @@ export const claimDailyCheckIn = createServerFn({ method: "POST" })
     const profile = await requireProfileFromDevice(data.deviceKey, {
       rateKey: `engagement-hub:${data.deviceKey}`,
     });
-    const uid = profile.unique_id;
+    const uid = normUid(profile.unique_id);
 
     const { getDb } = await import("./db-access.server");
     const s = await getDb();
     if (!s) throw new Error("Database unavailable — try again shortly.");
 
     const { claimDailyCheckInForUser, syncDailyMissions, tryDailyCompleteBonus } = await import("./engagement.server");
+    const { getCoinBalanceForUser } = await import("./coins.server");
     const beforeXp = (await s`
       SELECT total_xp FROM user_engagement WHERE user_unique_id = ${uid} LIMIT 1
     `) as { total_xp: number }[];
@@ -358,14 +358,12 @@ export const claimDailyCheckIn = createServerFn({ method: "POST" })
     `) as { total_xp: number }[];
     const newLevel = levelFromXp(afterXp[0]?.total_xp ?? 0);
 
-    const coinRows = (await s`
-      SELECT COALESCE(SUM(amount), 0)::int AS balance FROM coin_ledger WHERE user_unique_id = ${uid}
-    `) as { balance: number }[];
+    const balance = await getCoinBalanceForUser(s, uid);
 
     return {
       ...result,
       levelUp: newLevel > oldLevel,
       newLevel,
-      balance: coinRows[0]?.balance ?? 0,
+      balance,
     };
   });

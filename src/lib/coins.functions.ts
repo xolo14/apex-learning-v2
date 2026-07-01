@@ -33,11 +33,9 @@ export const getCoinBalance = createServerFn({ method: "GET" })
       const { getDb } = await import("./db-access.server");
       const s = await getDb();
       if (!s) return { balance: 0, entries: [] as CoinLedgerEntry[] };
-      const [sumRow, rows] = await Promise.all([
-        s`
-          SELECT COALESCE(SUM(amount), 0)::int AS balance
-          FROM coin_ledger WHERE user_unique_id = ${uid}
-        ` as Promise<{ balance: number }[]>,
+      const { getCoinBalanceForUser } = await import("./coins.server");
+      const [balance, rows] = await Promise.all([
+        getCoinBalanceForUser(s, uid),
         s`
           SELECT action_key, amount, created_at
           FROM coin_ledger WHERE user_unique_id = ${uid}
@@ -45,7 +43,7 @@ export const getCoinBalance = createServerFn({ method: "GET" })
           LIMIT 25
         ` as Promise<CoinLedgerEntry[]>,
       ]);
-      return { balance: sumRow[0]?.balance ?? 0, entries: rows };
+      return { balance, entries: rows };
     } catch {
       return { balance: 0, entries: [] as CoinLedgerEntry[] };
     }

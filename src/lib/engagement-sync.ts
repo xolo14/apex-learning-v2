@@ -37,8 +37,8 @@ export function prefetchEngagementHub(
 
 /** Keep wallet + engagement card in sync after any reward. */
 export function invalidateEngagementWallet(qc: QueryClient, uniqueId: string) {
-  void qc.invalidateQueries({ queryKey: engagementQueryKeys.hub(uniqueId) });
-  void qc.invalidateQueries({ queryKey: engagementQueryKeys.coins(uniqueId) });
+  void qc.invalidateQueries({ queryKey: engagementQueryKeys.hub(uniqueId), refetchType: "active" });
+  void qc.invalidateQueries({ queryKey: engagementQueryKeys.coins(uniqueId), refetchType: "active" });
 }
 
 export function setWalletBalance(qc: QueryClient, uniqueId: string, balance: number) {

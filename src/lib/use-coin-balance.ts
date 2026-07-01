@@ -4,25 +4,39 @@ import { getCoinBalance } from "@/lib/coins.functions";
 import { engagementQueryKeys } from "@/lib/engagement-sync";
 import { useResolvedUniqueId } from "@/lib/identity";
 import { DEVICE_KEY } from "@/lib/session";
-import { readCachedEngagementHub } from "@/lib/engagement-hub-cache";
+import { readCachedEngagementHub, writeCachedEngagementHub } from "@/lib/engagement-hub-cache";
 
 export function useCoinBalance() {
   const uid = useResolvedUniqueId();
   const fn = useServerFn(getCoinBalance);
   const q = useQuery({
     queryKey: engagementQueryKeys.coins(uid ?? "anon"),
-    queryFn: () => {
+    queryFn: async () => {
       const deviceKey = typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
-      return fn({ data: { deviceKey } });
+      const result = await fn({ data: { deviceKey } });
+      if (uid) {
+        const hub = readCachedEngagementHub(uid);
+        if (hub) {
+          writeCachedEngagementHub(uid, {
+            ...hub,
+            stats: { ...hub.stats, coinBalance: result.balance },
+          });
+        }
+      }
+      return result;
     },
     enabled: !!uid,
-    initialData: () => {
+    placeholderData: (prev) => {
+      if (prev) return prev;
       if (!uid) return undefined;
       const hub = readCachedEngagementHub(uid);
-      if (!hub) return undefined;
-      return { balance: hub.stats.coinBalance, entries: [] as { action_key: string; amount: number; created_at: string }[] };
+      if (hub?.stats?.coinBalance != null && hub.stats.coinBalance > 0) {
+        return { balance: hub.stats.coinBalance, entries: [] as { action_key: string; amount: number; created_at: string }[] };
+      }
+      return undefined;
     },
-    staleTime: 60_000,
+    staleTime: 15_000,
+    refetchOnMount: "always",
     refetchOnWindowFocus: false,
   });
   return {
