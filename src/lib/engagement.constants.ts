@@ -6,19 +6,23 @@ export const DAILY_CHECKIN_MAX = 30;
 
 export const MISSION_REWARDS = {
   quiz: 10,
-  ask: 8,
+  ask: 5,
   event: 12,
-  vote: 5,
+  certify: 15,
 } as const;
 
 export const XP_REWARDS = {
   checkin: 15,
   quiz: 25,
-  ask: 20,
+  ask: 15,
   event: 20,
-  vote: 10,
+  certify: 25,
   missionBonus: 5,
+  dailyComplete: 40,
 } as const;
+
+/** Bonus when all daily missions + check-in are completed. */
+export const DAILY_COMPLETE_BONUS_COINS = 25;
 
 export type MissionId = keyof typeof MISSION_REWARDS;
 
@@ -85,11 +89,16 @@ export function xpProgress(xp: number) {
   };
 }
 
-export function quizOfTheDayIndex(quizCount: number, day = todayKeyUtc()) {
-  if (quizCount <= 0) return 0;
+export function pickOfTheDayIndex(count: number, day = todayKeyUtc()) {
+  if (count <= 0) return 0;
   let hash = 0;
   for (let i = 0; i < day.length; i++) hash = (hash * 31 + day.charCodeAt(i)) >>> 0;
-  return hash % quizCount;
+  return hash % count;
+}
+
+/** @deprecated use pickOfTheDayIndex */
+export function quizOfTheDayIndex(quizCount: number, day = todayKeyUtc()) {
+  return pickOfTheDayIndex(quizCount, day);
 }
 
 export type AchievementDef = {
@@ -106,6 +115,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: "streak_7", title: "Week Warrior", emoji: "⚡", description: "7-day check-in streak" },
   { id: "coins_100", title: "Coin Collector", emoji: "🪙", description: "Earn 100+ coins" },
   { id: "asker", title: "Curious Mind", emoji: "💬", description: "Ask your first question" },
+  { id: "certified", title: "Certified", emoji: "🎓", description: "Enroll in a certification" },
   { id: "event_goer", title: "Event Goer", emoji: "📅", description: "RSVP to an event" },
+  { id: "perfect_day", title: "Perfect Day", emoji: "✨", description: "Complete all daily missions" },
   { id: "top_10", title: "Top 10", emoji: "🏆", description: "Reach top 10 on a quiz leaderboard" },
 ];

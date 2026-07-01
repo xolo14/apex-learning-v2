@@ -179,25 +179,6 @@ export const votePost = createServerFn({ method: "POST" })
         DO UPDATE SET value = EXCLUDED.value, updated_at = now()
       `;
       await sql()`UPDATE questions SET votes = votes + ${delta} WHERE id = ${data.postId}`;
-
-      if (newValue === 1) {
-        try {
-          const profiles = (await sql()`
-            SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
-          `) as { unique_id: string }[];
-          const uid = profiles[0]?.unique_id;
-          if (uid) {
-            const { getDb } = await import("./db-access.server");
-            const s = await getDb();
-            if (s) {
-              const { tryDailyMission } = await import("./engagement.server");
-              await tryDailyMission(s, uid, "vote");
-            }
-          }
-        } catch {
-          /* optional */
-        }
-      }
     }
     const rows = (await sql()`SELECT votes FROM questions WHERE id = ${data.postId} LIMIT 1`) as { votes: number }[];
     return { value: newValue, votes: rows[0]?.votes ?? 0 };

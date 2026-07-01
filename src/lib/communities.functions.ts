@@ -388,6 +388,15 @@ export const enrollInCourse = createServerFn({ method: "POST" })
       VALUES (${regId}, ${data.courseId}, ${profile.unique_id}, ${data.deviceKey}, 0, 'confirmed', ${coinsCredited})
     `;
 
+    try {
+      const { tryDailyMission, syncDailyMissions, tryDailyCompleteBonus } = await import("./engagement.server");
+      await tryDailyMission(s, profile.unique_id, "certify");
+      await syncDailyMissions(s, profile.unique_id);
+      await tryDailyCompleteBonus(s, profile.unique_id);
+    } catch {
+      /* optional */
+    }
+
     return {
       alreadyEnrolled: false as const,
       enrollment: {
@@ -458,6 +467,15 @@ export const confirmCoursePayment = createServerFn({ method: "POST" })
       SET status = 'confirmed', coins_credited = ${coinsCredited}
       WHERE id = ${enrollment.id}
     `;
+
+    try {
+      const { tryDailyMission, syncDailyMissions, tryDailyCompleteBonus } = await import("./engagement.server");
+      await tryDailyMission(s, profile.unique_id, "certify");
+      await syncDailyMissions(s, profile.unique_id);
+      await tryDailyCompleteBonus(s, profile.unique_id);
+    } catch {
+      /* optional */
+    }
 
     return {
       ok: true as const,

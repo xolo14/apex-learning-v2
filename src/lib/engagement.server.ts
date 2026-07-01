@@ -94,11 +94,12 @@ export async function missionEligible(
       `) as unknown[];
       return rows.length > 0;
     }
-    case "vote": {
+    case "certify": {
       const rows = (await s`
-        SELECT 1 FROM post_votes pv
-        INNER JOIN profiles p ON p.device_key = pv.device_key
-        WHERE p.unique_id = ${id} AND pv.value = 1 AND pv.updated_at >= ${day}::date
+        SELECT 1 FROM course_enrollments
+        WHERE user_unique_id = ${id}
+          AND status = 'confirmed'
+          AND created_at >= ${day}::date
         LIMIT 1
       `) as unknown[];
       return rows.length > 0;
@@ -108,14 +109,53 @@ export async function missionEligible(
   }
 }
 
+export async function hasCheckedInToday(s: NonNullable<Sql>, uid: string) {
+  const day = todayKeyUtc();
+  const rows = (await s`
+    SELECT 1 FROM coin_ledger
+    WHERE user_unique_id = ${normUid(uid)} AND action_key = ${`daily:${day}`}
+    LIMIT 1
+  `) as unknown[];
+  return rows.length > 0;
+}
+
+export async function tryDailyCompleteBonus(
+  s: NonNullable<Sql>,
+  uid: string,
+): Promise<{ coins: number; xp: number }> {
+  const day = todayKeyUtc();
+  const bonusKey = `mission:all-complete:${day}`;
+  const id = normUid(uid);
+  if (!id) return { coins: 0, xp: 0 };
+
+  const already = (await s`
+    SELECT 1 FROM coin_ledger WHERE user_unique_id = ${id} AND action_key = ${bonusKey} LIMIT 1
+  `) as unknown[];
+  if (already.length) return { coins: 0, xp: 0 };
+
+  if (!(await hasCheckedInToday(s, id))) return { coins: 0, xp: 0 };
+
+  const missions: MissionId[] = ["quiz", "ask", "event", "certify"];
+  for (const mission of missions) {
+    if (!(await hasMissionToday(s, id, mission))) return { coins: 0, xp: 0 };
+  }
+
+  const { DAILY_COMPLETE_BONUS_COINS, XP_REWARDS } = await import("./engagement.constants");
+  const coins = await creditOnceCoin(s, id, bonusKey, DAILY_COMPLETE_BONUS_COINS);
+  if (coins <= 0) return { coins: 0, xp: 0 };
+  await addXp(s, id, XP_REWARDS.dailyComplete);
+  return { coins, xp: XP_REWARDS.dailyComplete };
+}
+
 /** Grant any missions the user earned but did not receive (heals sync glitches). */
 export async function syncDailyMissions(s: NonNullable<Sql>, uid: string) {
-  const missions: MissionId[] = ["quiz", "ask", "event", "vote"];
+  const missions: MissionId[] = ["quiz", "ask", "event", "certify"];
   for (const mission of missions) {
     if (await hasMissionToday(s, uid, mission)) continue;
     if (!(await missionEligible(s, uid, mission))) continue;
     await tryDailyMission(s, uid, mission);
   }
+  await tryDailyCompleteBonus(s, uid);
 }
 
 export async function tryDailyMission(
@@ -139,7 +179,7 @@ export async function tryDailyMission(
     quiz: XP_REWARDS.quiz,
     ask: XP_REWARDS.ask,
     event: XP_REWARDS.event,
-    vote: XP_REWARDS.vote,
+    certify: XP_REWARDS.certify,
   };
   const xp = xpMap[mission] + XP_REWARDS.missionBonus;
   await addXp(s, uid, xp);
@@ -148,7 +188,7 @@ export async function tryDailyMission(
     quiz: "Daily quiz mission",
     ask: "Daily question mission",
     event: "Daily event mission",
-    vote: "Daily vote mission",
+    certify: "Daily certification mission",
   };
   return { coins, xp, label: labels[mission] };
 }

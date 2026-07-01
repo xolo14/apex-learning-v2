@@ -1,9 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
   ACHIEVEMENTS,
+  DAILY_COMPLETE_BONUS_COINS,
   MISSION_REWARDS,
   levelFromXp,
-  quizOfTheDayIndex,
+  pickOfTheDayIndex,
   streakCoins,
   todayKeyUtc,
   xpProgress,
@@ -42,6 +43,11 @@ export type EngagementHub = {
   achievements: AchievementStatus[];
   achievementsUnlocked: number;
   quizOfTheDay: { id: string; title: string; coins: number } | null;
+  certOfTheDay: { id: string; title: string; coins: number } | null;
+  dailyCompleteBonus: number;
+  allMissionsComplete: boolean;
+  perfectDayClaimed: boolean;
+  coinsLeftToday: number;
   stats: {
     quizzesCompleted: number;
     questionsAsked: number;
@@ -76,6 +82,11 @@ export const getEngagementHub = createServerFn({ method: "GET" })
       achievements: ACHIEVEMENTS.map((a) => ({ ...a, unlocked: false })),
       achievementsUnlocked: 0,
       quizOfTheDay: null,
+      certOfTheDay: null,
+      dailyCompleteBonus: DAILY_COMPLETE_BONUS_COINS,
+      allMissionsComplete: false,
+      perfectDayClaimed: false,
+      coinsLeftToday: 0,
       stats: { quizzesCompleted: 0, questionsAsked: 0, eventsAttended: 0, coinBalance: 0 },
     };
 
@@ -98,7 +109,13 @@ export const getEngagementHub = createServerFn({ method: "GET" })
       await syncDailyMissions(s, uid);
 
       const day = todayKeyUtc();
-      const qotd = QUIZ_BANK_LIST[quizOfTheDayIndex(QUIZ_BANK_LIST.length)] ?? null;
+      const qotd = QUIZ_BANK_LIST[pickOfTheDayIndex(QUIZ_BANK_LIST.length)] ?? null;
+
+      const courseRows = (await s`
+        SELECT id, title, COALESCE(coins, 0)::int AS coins
+        FROM courses ORDER BY created_at DESC LIMIT 50
+      `) as { id: string; title: string; coins: number }[];
+      const certPick = courseRows[pickOfTheDayIndex(courseRows.length)] ?? null;
 
       const engRows = (await s`
         SELECT current_streak, longest_streak, total_xp,
@@ -154,13 +171,19 @@ export const getEngagementHub = createServerFn({ method: "GET" })
           href: "/communities",
         },
         {
-          id: "vote",
-          label: "Upvote a question",
-          reward: MISSION_REWARDS.vote,
-          done: keys.has(`mission:vote:${day}`),
-          href: "/",
+          id: "certify",
+          label: "Enroll in certification",
+          reward: MISSION_REWARDS.certify,
+          done: keys.has(`mission:certify:${day}`),
+          href: "/courses",
         },
       ];
+
+      const perfectDayClaimed = keys.has(`mission:all-complete:${day}`);
+      const allMissionsComplete = missions.every((m) => m.done);
+      const coinsLeftToday = missions
+        .filter((m) => !m.done)
+        .reduce((sum, m) => sum + m.reward, 0) + (perfectDayClaimed || !allMissionsComplete ? 0 : DAILY_COMPLETE_BONUS_COINS);
 
       const quizCount = (await s`
         SELECT COUNT(*)::int AS c FROM quiz_attempts WHERE user_unique_id = ${uid}
@@ -170,6 +193,9 @@ export const getEngagementHub = createServerFn({ method: "GET" })
       `) as { c: number }[];
       const eventCount = (await s`
         SELECT COUNT(*)::int AS c FROM event_registrations WHERE user_unique_id = ${uid}
+      `) as { c: number }[];
+      const certCount = (await s`
+        SELECT COUNT(*)::int AS c FROM course_enrollments WHERE user_unique_id = ${uid} AND status = 'confirmed'
       `) as { c: number }[];
       const coinRows = (await s`
         SELECT COALESCE(SUM(amount), 0)::int AS balance FROM coin_ledger WHERE user_unique_id = ${uid}
@@ -181,6 +207,12 @@ export const getEngagementHub = createServerFn({ method: "GET" })
           FROM quiz_attempts
         ) ranked
         WHERE user_unique_id = ${uid} AND rn <= 10
+        LIMIT 1
+      `) as unknown[];
+
+      const perfectDayEver = (await s`
+        SELECT 1 FROM coin_ledger
+        WHERE user_unique_id = ${uid} AND action_key LIKE 'mission:all-complete:%'
         LIMIT 1
       `) as unknown[];
 
@@ -205,8 +237,14 @@ export const getEngagementHub = createServerFn({ method: "GET" })
           case "asker":
             unlocked = (questionCount[0]?.c ?? 0) >= 1;
             break;
+          case "certified":
+            unlocked = (certCount[0]?.c ?? 0) >= 1;
+            break;
           case "event_goer":
             unlocked = (eventCount[0]?.c ?? 0) >= 1;
+            break;
+          case "perfect_day":
+            unlocked = perfectDayEver.length > 0;
             break;
           case "top_10":
             unlocked = top10.length > 0;
@@ -233,6 +271,13 @@ export const getEngagementHub = createServerFn({ method: "GET" })
         quizOfTheDay: qotd
           ? { id: qotd.id, title: qotd.title, coins: qotd.coins }
           : null,
+        certOfTheDay: certPick
+          ? { id: certPick.id, title: certPick.title, coins: certPick.coins }
+          : null,
+        dailyCompleteBonus: DAILY_COMPLETE_BONUS_COINS,
+        allMissionsComplete,
+        perfectDayClaimed,
+        coinsLeftToday,
         stats: {
           quizzesCompleted: quizCount[0]?.c ?? 0,
           questionsAsked: questionCount[0]?.c ?? 0,
@@ -262,7 +307,7 @@ export const claimDailyCheckIn = createServerFn({ method: "POST" })
     const s = await getDb();
     if (!s) throw new Error("Database unavailable — try again shortly.");
 
-    const { claimDailyCheckInForUser, syncDailyMissions } = await import("./engagement.server");
+    const { claimDailyCheckInForUser, syncDailyMissions, tryDailyCompleteBonus } = await import("./engagement.server");
     const beforeXp = (await s`
       SELECT total_xp FROM user_engagement WHERE user_unique_id = ${uid} LIMIT 1
     `) as { total_xp: number }[];
@@ -270,6 +315,7 @@ export const claimDailyCheckIn = createServerFn({ method: "POST" })
 
     const result = await claimDailyCheckInForUser(s, uid);
     await syncDailyMissions(s, uid);
+    await tryDailyCompleteBonus(s, uid);
 
     const afterXp = (await s`
       SELECT total_xp FROM user_engagement WHERE user_unique_id = ${uid} LIMIT 1
