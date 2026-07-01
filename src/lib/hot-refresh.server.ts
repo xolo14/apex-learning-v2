@@ -1,4 +1,5 @@
 import { sql } from "./db.server";
+import { normalizeHotTitle, normalizeHotUrl } from "./hot-dedupe";
 
 type GdeltArticle = {
   url: string;
@@ -62,23 +63,26 @@ export async function refreshHotCache(): Promise<{ inserted: number; total: numb
     }),
   );
   const all = results.flat();
-  // Dedupe by URL, prefer entries with images.
+  // Dedupe by normalized title (syndicated copies) and URL; prefer entries with images.
   const map = new Map<string, { a: GdeltArticle; category: string }>();
   for (const item of all) {
-    const ex = map.get(item.a.url);
-    if (!ex || (!ex.a.socialimage && item.a.socialimage)) map.set(item.a.url, item);
+    const titleKey = normalizeHotTitle(item.a.title);
+    const key = titleKey.length >= 18 ? `t:${titleKey}` : `u:${normalizeHotUrl(item.a.url)}`;
+    const ex = map.get(key);
+    if (!ex || (!ex.a.socialimage && item.a.socialimage)) map.set(key, item);
   }
-  // Keep items with images first; then top up with imageless ones to guarantee a high daily volume (target 500+).
+  // Image-first; only a small tail without thumbnails.
   const withImg = [...map.values()].filter((x) => x.a.socialimage);
   const withoutImg = [...map.values()].filter((x) => !x.a.socialimage);
-  const items = [...withImg, ...withoutImg].slice(0, 800);
+  const items = [...withImg, ...withoutImg.slice(0, Math.max(8, Math.floor(withImg.length * 0.08)))].slice(0, 400);
 
   let inserted = 0;
   for (const { a, category } of items) {
     const publishedAt = parseSeenDate(a.seendate).toISOString();
+    const canonicalUrl = normalizeHotUrl(a.url);
     const r = await sql()`
       INSERT INTO hot_cache (url, title, image_url, source, source_country, category, published_at, fetched_at)
-      VALUES (${a.url}, ${a.title.trim()}, ${a.socialimage || null}, ${a.domain || null}, ${a.sourcecountry || null}, ${category}, ${publishedAt}, now())
+      VALUES (${canonicalUrl}, ${a.title.trim()}, ${a.socialimage || null}, ${a.domain || null}, ${a.sourcecountry || null}, ${category}, ${publishedAt}, now())
       ON CONFLICT (url) DO UPDATE SET
         title = EXCLUDED.title,
         image_url = COALESCE(EXCLUDED.image_url, hot_cache.image_url),
@@ -91,10 +95,38 @@ export async function refreshHotCache(): Promise<{ inserted: number; total: numb
     `;
     if ((r as { is_insert: boolean }[])[0]?.is_insert) inserted++;
   }
-  // Keep history: only prune very old items (90 days) so yesterday/older stays visible below today's.
-  await sql()`DELETE FROM hot_cache WHERE published_at < now() - interval '90 days'`;
+  // Remove stale rows and near-duplicate titles (keep newest with image).
+  await sql()`DELETE FROM hot_cache WHERE published_at < now() - interval '21 days'`;
+  await pruneDuplicateHotTitles();
   const [{ c }] = (await sql()`SELECT count(*)::int AS c FROM hot_cache`) as { c: number }[];
   return { inserted, total: c };
+}
+
+/** Delete older rows when multiple URLs share the same normalized headline. */
+async function pruneDuplicateHotTitles() {
+  const rows = (await sql()`
+    SELECT id::text AS id, title, image_url, published_at
+    FROM hot_cache
+    ORDER BY published_at DESC
+    LIMIT 2000
+  `) as { id: string; title: string; image_url: string | null; published_at: string }[];
+
+  const keep = new Set<string>();
+  const drop: string[] = [];
+
+  for (const row of rows) {
+    const key = normalizeHotTitle(row.title);
+    if (key.length < 18) continue;
+    if (keep.has(key)) {
+      drop.push(row.id);
+      continue;
+    }
+    keep.add(key);
+  }
+
+  if (drop.length) {
+    await sql()`DELETE FROM hot_cache WHERE id = ANY(${drop})`;
+  }
 }
 
 export async function refreshIfStale(maxAgeHours = 6): Promise<boolean> {

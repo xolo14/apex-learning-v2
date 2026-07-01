@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { DEMO_HOT } from "./demo-data";
+import { dedupeHotFeed, prioritizeHotWithImages } from "./hot-dedupe";
 
 export type HotItem = {
   id: string;
@@ -151,12 +152,12 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
     };
   });
 
-  // Pins first (newest-pinned first), then live news newest-first (today on top, yesterday/older stays below).
+  // Pins first, then live — dedupe syndicated copies, prefer stories with images.
   pins.sort((a, b) => b.createdAt - a.createdAt);
   live.sort((a, b) => b.createdAt - a.createdAt);
-  const merged = [...pins, ...live];
+  const merged = dedupeHotFeed([...pins, ...live]);
   if (merged.length === 0) return DEMO_HOT;
-  return merged.slice(0, 800);
+  return prioritizeHotWithImages(merged, 180);
 });
 
 export const refreshHotNow = createServerFn({ method: "POST" }).handler(async () => {

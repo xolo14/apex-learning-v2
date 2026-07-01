@@ -427,9 +427,27 @@ function HotRow({ h, compact, onOpen }: { h: HotItem; compact: boolean; onOpen: 
             alt={h.title}
             loading="lazy"
             className="aspect-[16/9] w-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
           />
         </div>
-      ) : null}
+      ) : (
+        <div
+          className={
+            "mt-3 flex aspect-[16/9] w-full items-end rounded-2xl p-4 " +
+            (h.bucket === "politics"
+              ? "bg-foreground/[0.08]"
+              : h.bucket === "memes"
+                ? "bg-orange/15"
+                : h.bucket === "tech"
+                  ? "bg-forest/12"
+                  : "bg-surface")
+          }
+        >
+          <span className="text-[11px] font-medium uppercase tracking-wider text-ink-muted">{h.source}</span>
+        </div>
+      )}
       <p
         className="mt-2 font-semibold tracking-tight text-foreground"
         style={{ fontSize: compact ? 15 : 17, lineHeight: 1.3 }}
