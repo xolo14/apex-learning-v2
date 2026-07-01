@@ -209,9 +209,4 @@
   html[data-auth-gate="open"] .app-mobile-chrome {
     display: none !important;
   }
-
-  html[data-auth-resolving="1"] .app-bottom-nav,
-  html[data-auth-resolving="1"] .app-mobile-chrome {
-    visibility: hidden;
-  }
 }

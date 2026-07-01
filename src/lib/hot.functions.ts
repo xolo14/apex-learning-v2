@@ -72,7 +72,7 @@ export const listHot = createServerFn({ method: "GET" }).handler(async () => {
                  extract(epoch from published_at)*1000 AS published
           FROM hot_cache
           ORDER BY published_at DESC
-          LIMIT 800
+          LIMIT 120
         `) as {
           id: string;
           title: string;

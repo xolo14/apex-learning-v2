@@ -7,8 +7,8 @@ export function useFeatureFlags(): FeatureFlags {
   const q = useQuery({
     queryKey: ["feature-flags"],
     queryFn: () => fn(),
-    staleTime: 60_000,
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
   });
   return q.data ?? DEFAULT_FLAGS;
 }

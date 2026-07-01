@@ -14,6 +14,8 @@ import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { DEVICE_KEY } from "@/lib/session";
 import { getEngagementHub } from "@/lib/engagement.functions";
+import { engagementQueryKeys } from "@/lib/engagement-sync";
+import { readCachedEngagementHub, writeCachedEngagementHub } from "@/lib/engagement-hub-cache";
 import { LevelBadge } from "@/components/level-badge";
 import { pageHead } from "@/lib/seo";
 
@@ -112,13 +114,17 @@ function ProfilePage() {
   const earningsEnabled = useEarningsEnabled();
   const fetchHub = useServerFn(getEngagementHub);
   const hubQ = useQuery({
-    queryKey: ["engagement-hub", uniqueId],
-    queryFn: () => {
+    queryKey: engagementQueryKeys.hub(uniqueId ?? ""),
+    queryFn: async () => {
       const deviceKey = typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
-      return fetchHub({ data: { deviceKey } });
+      const hub = await fetchHub({ data: { deviceKey, full: true } });
+      if (uniqueId) writeCachedEngagementHub(uniqueId, hub);
+      return hub;
     },
     enabled: !!uniqueId && earningsEnabled,
-    staleTime: 30_000,
+    initialData: () => (uniqueId ? readCachedEngagementHub(uniqueId) : undefined),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const hub = hubQ.data;
 

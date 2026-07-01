@@ -132,7 +132,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=location.pathname;if(/^\\/(events|courses|internships|gigs|quizzes)\\/[^/]+/.test(p)||p.indexOf("/admin")===0){document.documentElement.setAttribute("data-immersive","true");}if(localStorage.getItem("syncpedia_signed_out")!=="1"&&localStorage.getItem("syncpedia_profile")){document.documentElement.setAttribute("data-auth-resolving","1");}}catch(e){}})();`,
+            __html: `(function(){try{var p=location.pathname;if(/^\\/(events|courses|internships|gigs|quizzes)\\/[^/]+/.test(p)||p.indexOf("/admin")===0){document.documentElement.setAttribute("data-immersive","true");}}catch(e){}})();`,
           }}
         />
       </head>

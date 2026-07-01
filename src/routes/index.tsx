@@ -52,7 +52,7 @@ function Home() {
   };
   const { density } = useDensity();
   const compact = density === "compact";
-  const feed = balancedFeed(posts);
+  const feed = useMemo(() => balancedFeed(posts), []);
   const fHot = useServerFn(listHot);
   const fEvents = useServerFn(listEvents);
   const fCommunities = useServerFn(listCommunities);
@@ -69,16 +69,17 @@ function Home() {
   const hotQ = useQuery({
     queryKey: ["feed", "hot"],
     queryFn: () => fHot(),
+    enabled: sort === "hot",
     staleTime: 60 * 60_000,
-    refetchInterval: 60 * 60_000,
-    refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    refetchInterval: sort === "hot" ? 60 * 60_000 : false,
+    refetchOnWindowFocus: false,
   });
   const eventsQ = useQuery({
     queryKey: ["public", "events"],
     queryFn: () => fEvents(),
+    enabled: sort === "events",
     staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
   const savedIds = useSavedIds();
   const savedPosts = feed.filter((p) => savedIds.includes(p.id));

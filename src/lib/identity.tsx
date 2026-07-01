@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { DbProfile } from "./profiles.functions";
-import { isSignedOut } from "./session";
+import { isSignedOut, readCachedProfile } from "./session";
 
 export const AVATAR_COLORS = [
   "#1f6f54",
@@ -121,8 +121,45 @@ const defaultIdentity = (): Identity => ({
   uniqueId: null,
 });
 
+function readInitialIdentity(): Identity {
+  if (typeof window === "undefined") return defaultIdentity();
+  try {
+    if (isSignedOut()) return defaultIdentity();
+    const profileRaw = localStorage.getItem("syncpedia_profile");
+    if (profileRaw) {
+      const p = JSON.parse(profileRaw) as DbProfile;
+      if (p?.unique_id) {
+        const prefs = avatarPrefsFromProfile(p);
+        const raw = localStorage.getItem(STORAGE_KEY);
+        let base: Identity = defaultIdentity();
+        if (raw) base = { ...base, ...JSON.parse(raw) };
+        const icon =
+          base.uniqueId === p.unique_id && isAvatarIcon(base.icon) ? base.icon : prefs.icon;
+        const color =
+          base.uniqueId === p.unique_id && AVATAR_COLORS.includes(base.color)
+            ? base.color
+            : prefs.color;
+        return { uniqueId: p.unique_id, icon, color };
+      }
+    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return { ...defaultIdentity(), ...JSON.parse(raw) };
+  } catch {
+    /* ignore */
+  }
+  return defaultIdentity();
+}
+
+/** Profile unique id from context or local cache — instant on repeat visits. */
+export function useResolvedUniqueId(): string | null {
+  const { uniqueId } = useIdentity();
+  if (uniqueId) return uniqueId;
+  if (typeof window === "undefined" || isSignedOut()) return null;
+  return readCachedProfile()?.unique_id ?? null;
+}
+
 export function IdentityProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Identity>(defaultIdentity);
+  const [state, setState] = useState<Identity>(readInitialIdentity);
 
   useEffect(() => {
     try {

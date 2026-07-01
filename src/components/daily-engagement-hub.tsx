@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -20,12 +20,12 @@ import {
 import type { LucideIcon } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { LevelBadge } from "@/components/level-badge";
-import { claimDailyCheckIn, getEngagementHub } from "@/lib/engagement.functions";
-import { invalidateEngagementWallet, setWalletBalance } from "@/lib/engagement-sync";
+import { claimDailyCheckIn, getEngagementHub, syncEngagementMissions } from "@/lib/engagement.functions";
+import { engagementQueryKeys, invalidateEngagementWallet, setWalletBalance } from "@/lib/engagement-sync";
+import { readCachedEngagementHub, writeCachedEngagementHub, optimisticEngagementHub } from "@/lib/engagement-hub-cache";
 import type { MissionStatus } from "@/lib/engagement.functions";
-import { useIdentity } from "@/lib/identity";
-import { useCoinBalance } from "@/lib/use-coin-balance";
-import { DEVICE_KEY } from "@/lib/session";
+import { useResolvedUniqueId } from "@/lib/identity";
+import { DEVICE_KEY, hasCachedProfile, isSignedOut } from "@/lib/session";
 
 const MISSION_ICONS: Record<string, LucideIcon> = {
   quiz: Trophy,
@@ -42,22 +42,46 @@ const MISSION_SHORT: Record<string, string> = {
 };
 
 export function DailyEngagementHub() {
-  const identity = useIdentity();
+  const uid = useResolvedUniqueId();
   const qc = useQueryClient();
   const [celebration, setCelebration] = useState<string | null>(null);
   const fetchHub = useServerFn(getEngagementHub);
   const claimFn = useServerFn(claimDailyCheckIn);
+  const syncFn = useServerFn(syncEngagementMissions);
 
   const hubQ = useQuery({
-    queryKey: ["engagement-hub", identity.uniqueId],
-    queryFn: () => {
+    queryKey: engagementQueryKeys.hub(uid ?? ""),
+    queryFn: async () => {
       const deviceKey = typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
-      return fetchHub({ data: { deviceKey } });
+      const hub = await fetchHub({ data: { deviceKey, full: false } });
+      if (uid) writeCachedEngagementHub(uid, hub);
+      return hub;
     },
-    enabled: !!identity.uniqueId,
-    staleTime: 15_000,
-    refetchOnWindowFocus: true,
+    enabled: !!uid,
+    initialData: () => (uid ? readCachedEngagementHub(uid) : undefined),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev,
   });
+
+  useEffect(() => {
+    if (!uid || hubQ.isFetching) return;
+    const day = new Date().toISOString().slice(0, 10);
+    const syncKey = `syncpedia:missions-sync:${day}`;
+    if (sessionStorage.getItem(syncKey)) return;
+
+    const timer = window.setTimeout(() => {
+      sessionStorage.setItem(syncKey, "1");
+      const deviceKey = localStorage.getItem(DEVICE_KEY) ?? "";
+      syncFn({ data: { deviceKey } })
+        .then((res) => {
+          if (res.synced) void hubQ.refetch();
+        })
+        .catch(() => sessionStorage.removeItem(syncKey));
+    }, 2500);
+
+    return () => window.clearTimeout(timer);
+  }, [uid, hubQ.isFetching, hubQ.refetch, syncFn]);
 
   const claimM = useMutation({
     mutationFn: () => {
@@ -73,26 +97,17 @@ export function DailyEngagementHub() {
         setCelebration(res.message);
         setTimeout(() => setCelebration(null), 2000);
       }
-      if (identity.uniqueId && typeof res.balance === "number") {
-        setWalletBalance(qc, identity.uniqueId, res.balance);
+      if (uid && typeof res.balance === "number") {
+        setWalletBalance(qc, uid, res.balance);
       }
-      invalidateEngagementWallet(qc, identity.uniqueId ?? "");
+      invalidateEngagementWallet(qc, uid ?? "");
     },
   });
 
-  const hub = hubQ.data;
-  if (!identity.uniqueId) return null;
-
-  if (hubQ.isLoading) {
-    return (
-      <section className="px-5 pb-2 pt-0.5">
-        <div className="flex h-[72px] items-center justify-center rounded-2xl border border-hairline bg-surface/40">
-          <Loader2 className="h-4 w-4 animate-spin text-ink-muted" />
-        </div>
-      </section>
-    );
-  }
-  if (!hub) return null;
+  const hub =
+    hubQ.data ?? (uid ? readCachedEngagementHub(uid) : undefined) ?? optimisticEngagementHub();
+  const hubRefreshing = hubQ.isFetching && !hubQ.data;
+  if (isSignedOut() || (!uid && !hasCachedProfile())) return null;
 
   const dailyMissions = hub.missions.filter((m) => m.id !== "checkin");
   const progressPct = hub.missionsTotal > 0 ? Math.round((hub.missionsDone / hub.missionsTotal) * 100) : 0;
@@ -106,7 +121,7 @@ export function DailyEngagementHub() {
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-2xl border border-hairline bg-background">
+      <div className={`overflow-hidden rounded-2xl border border-hairline bg-background transition-opacity ${hubRefreshing ? "opacity-80" : ""}`}>
         {/* Header + daily progress */}
         <div className="px-3 py-2.5">
           <div className="flex items-center gap-2.5">

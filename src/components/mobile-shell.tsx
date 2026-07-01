@@ -86,8 +86,10 @@ export function ImmersiveHtmlSync() {
  * Client-only so SSR never injects the tab bar into detail-page HTML.
  */
 export function AppMobileChrome() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const [mounted, setMounted] = useState(() => typeof document !== "undefined");
+  useLayoutEffect(() => {
+    setMounted(true);
+  }, []);
   const hideNav = useHideBottomNav();
   if (!mounted || hideNav) return null;
   return (

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Flame, Target, Trophy } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
@@ -23,6 +24,8 @@ import {
   clearSignedOutFlag,
   readCachedProfile,
 } from "@/lib/session";
+import { getEngagementHub } from "@/lib/engagement.functions";
+import { prefetchEngagementHub } from "@/lib/engagement-sync";
 
 const INTERESTS: Interest[] = [
   { id: "tech", label: "Technology", emoji: "💻", gradient: "from-sky-400 to-indigo-500" },
@@ -43,10 +46,18 @@ type Screen = "welcome" | "login" | "signup";
 type Step = 0 | 1 | 2;
 type Interest = { id: string; label: string; emoji: string; gradient: string };
 
+function readInitialAuth(): { profile: DbProfile | null; authReady: boolean } {
+  if (typeof window === "undefined") return { profile: null, authReady: false };
+  if (isSignedOut()) return { profile: null, authReady: true };
+  const cached = readCachedProfile();
+  if (cached) return { profile: cached, authReady: true };
+  return { profile: null, authReady: false };
+}
+
 export function OnboardingGate() {
   const [mounted, setMounted] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
-  const [profile, setProfile] = useState<DbProfile | null>(null);
+  const [authReady, setAuthReady] = useState(() => readInitialAuth().authReady);
+  const [profile, setProfile] = useState<DbProfile | null>(() => readInitialAuth().profile);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [screen, setScreen] = useState<Screen>("welcome");
@@ -70,12 +81,25 @@ export function OnboardingGate() {
   const submitProfile = useServerFn(createProfile);
   const submitLogin = useServerFn(loginProfile);
   const submitGoogle = useServerFn(authWithGoogle);
+  const fetchHub = useServerFn(getEngagementHub);
+  const qc = useQueryClient();
   const { setUniqueId, applyAvatar } = useIdentity();
   const fetchProfileRef = useRef(fetchProfile);
   fetchProfileRef.current = fetchProfile;
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isSignedOut()) {
+      document.documentElement.removeAttribute("data-auth-resolving");
+      return;
+    }
+    if (readCachedProfile()) {
+      document.documentElement.removeAttribute("data-auth-resolving");
+    }
   }, []);
 
   const gateOpen = authReady && !profile;
@@ -104,6 +128,7 @@ export function OnboardingGate() {
     const prefs = avatarPrefsFromProfile(p);
     applyAvatar(prefs.icon, prefs.color);
     setProfile(p);
+    prefetchEngagementHub(qc, p.unique_id, fetchHub);
   }
 
   function isProfile(p: unknown): p is DbProfile {
@@ -149,10 +174,12 @@ export function OnboardingGate() {
       const prefs = avatarPrefsFromProfile(cached);
       applyAvatar(prefs.icon, prefs.color);
       setProfile(cached);
+      prefetchEngagementHub(qc, cached.unique_id, fetchHub);
+    } else {
+      setAuthReady(false);
     }
 
     let alive = true;
-    setAuthReady(false);
     const key = getOrCreateDeviceKey();
 
     fetchProfileRef
@@ -166,6 +193,7 @@ export function OnboardingGate() {
           const prefs = avatarPrefsFromProfile(serverProfile);
           applyAvatar(prefs.icon, prefs.color);
           setProfile(serverProfile);
+          prefetchEngagementHub(qc, serverProfile.unique_id, fetchHub);
           return;
         }
 
