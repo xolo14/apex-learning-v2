@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { createFileRoute, notFound, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowLeft,
   ArrowBigUp,
@@ -9,101 +11,132 @@ import {
   Bookmark,
   BadgeCheck,
   Send,
+  Loader2,
 } from "lucide-react";
 import { MobileShell } from "@/components/mobile-shell";
 import { communityBySlug, posts } from "@/lib/feed-data";
+import { questionToPost, timeAgo } from "@/lib/post-display";
+import { getQuestionById } from "@/lib/questions.functions";
+import { createPostComment, listPostComments } from "@/lib/comments.functions";
+import { UserAvatar, useResolvedUniqueId } from "@/lib/identity";
+import { DEVICE_KEY } from "@/lib/session";
+import type { Post } from "@/lib/feed-data";
 
 export const Route = createFileRoute("/p/$id")({
-  loader: ({ params }) => {
-    const post = posts.find((p) => p.id === params.id);
-    if (!post) throw notFound();
-    return { post };
-  },
-  head: ({ loaderData }) =>
-    loaderData ? { meta: [{ title: `${loaderData.post.title} — Syncpedia` }] } : {},
-  notFoundComponent: () => (
-    <MobileShell>
-      <div className="px-6 pt-20 text-center text-ink-muted">Post not found.</div>
-    </MobileShell>
-  ),
   component: PostPage,
 });
 
 type Reply = {
+  id: string;
   unique_id: string;
   role: string;
   mentor: boolean;
   time: string;
   body: string;
   votes: number;
-  children?: Reply[];
-};
-
-const replies: Reply[] = [
-  {
-    unique_id: "SP-SOFI01",
-    role: "ML Eng, Anthropic",
-    mentor: true,
-    time: "1h",
-    votes: 412,
-    body: "Start with a value-aligned eval set tied to a single business outcome. Anything trace-level becomes noise without that anchor. Then layer drift detection — most teams skip step two and pay for it.",
-    children: [
-      {
-        unique_id: "SP-DANP02",
-        role: "Self-taught",
-        mentor: false,
-        time: "42m",
-        votes: 31,
-        body: "How do you decide what counts as 'value-aligned' before you have outcome data?",
-      },
-    ],
-  },
-  {
-    unique_id: "SP-RAVB03",
-    role: "Eval lead, fintech",
-    mentor: false,
-    time: "2h",
-    votes: 188,
-    body: "We sample 1% of traces daily and rotate reviewers. Boring, but it's the only thing that caught silent regressions for us.",
-  },
-  {
-    unique_id: "SP-HANL04",
-    role: "Researcher",
-    mentor: true,
-    time: "3h",
-    votes: 296,
-    body: "Static benchmarks are a sanity check, never a verdict. The moment you ship, your eval set is yesterday's distribution.",
-  },
-];
-
-const currentUser = {
-  unique_id: "SP-YOU",
-  role: "Student",
-  mentor: false,
-  time: "now",
-  votes: 0,
 };
 
 function PostPage() {
-  const { post } = Route.useLoaderData();
-  const community = communityBySlug(post.communitySlug);
-  const [replyText, setReplyText] = useState("");
-  const [messages, setMessages] = useState<Reply[]>(replies);
+  const { id } = Route.useParams();
+  const qc = useQueryClient();
+  const myUid = useResolvedUniqueId();
+  const fetchQ = useServerFn(getQuestionById);
+  const fetchComments = useServerFn(listPostComments);
+  const submitComment = useServerFn(createPostComment);
 
+  const staticPost = useMemo(() => posts.find((p) => p.id === id) ?? null, [id]);
+
+  const postQ = useQuery({
+    queryKey: ["post", id],
+    queryFn: () => fetchQ({ data: { id } }),
+    staleTime: 30_000,
+  });
+
+  const post: Post | null = useMemo(() => {
+    if (postQ.data) return questionToPost(postQ.data);
+    return staticPost;
+  }, [postQ.data, staticPost]);
+
+  const commentsQ = useQuery({
+    queryKey: ["post-comments", id],
+    queryFn: () => fetchComments({ data: { postId: id } }),
+    enabled: !!postQ.data,
+    staleTime: 30_000,
+  });
+
+  const [replyText, setReplyText] = useState("");
+  const [localReplies, setLocalReplies] = useState<Reply[]>([]);
+
+  const messages: Reply[] = useMemo(() => {
+    const fromDb = (commentsQ.data ?? []).map((c) => ({
+      id: c.id,
+      unique_id: c.unique_id,
+      role: c.role_label,
+      mentor: c.mentor,
+      time: timeAgo(c.created_at),
+      body: c.body,
+      votes: c.votes,
+    }));
+    return [...fromDb, ...localReplies];
+  }, [commentsQ.data, localReplies]);
+
+  if (postQ.isLoading && !staticPost) {
+    return (
+      <MobileShell>
+        <div className="grid min-h-[40vh] place-items-center">
+          <Loader2 className="h-6 w-6 animate-spin text-ink-muted" />
+        </div>
+      </MobileShell>
+    );
+  }
+
+  if (!post) {
+    return (
+      <MobileShell>
+        <div className="px-6 pt-20 text-center text-ink-muted">Post not found.</div>
+      </MobileShell>
+    );
+  }
+
+  const community = communityBySlug(post.communitySlug);
   const canSend = replyText.trim().length > 0;
 
-  function sendReply() {
+  async function sendReply() {
     const text = replyText.trim();
     if (!text) return;
-    setMessages((prev) => [
+
+    if (postQ.data) {
+      const deviceKey = localStorage.getItem(DEVICE_KEY) ?? "";
+      if (!deviceKey) return;
+      try {
+        await submitComment({ data: { deviceKey, postId: id, body: text } });
+        setReplyText("");
+        void qc.invalidateQueries({ queryKey: ["post-comments", id] });
+        void qc.invalidateQueries({ queryKey: ["feed", "new"] });
+        void qc.invalidateQueries({ queryKey: ["post", id] });
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
+    setLocalReplies((prev) => [
       ...prev,
-      { ...currentUser, body: text, children: [] },
+      {
+        id: `local_${Date.now()}`,
+        unique_id: myUid ?? "You",
+        role: "Community member",
+        mentor: false,
+        time: "now",
+        body: text,
+        votes: 0,
+      },
     ]);
     setReplyText("");
   }
 
   return (
-    <MobileShell>
+    <MobileShell immersive>
       <header className="sticky top-0 z-40 border-b border-hairline bg-background/85 backdrop-blur-xl">
         <div className="flex items-center gap-2 px-4 pb-3 pt-[max(env(safe-area-inset-top),14px)]">
           <button
@@ -127,17 +160,12 @@ function PostPage() {
               </span>
             </Link>
           ) : null}
-          <button className="ml-auto rounded-full bg-foreground px-3.5 py-1.5 text-[12px] font-medium text-background">
-            Join
-          </button>
         </div>
       </header>
 
       <article className="border-b-[6px] border-surface px-5 py-5">
         <div className="flex items-center gap-2 text-[12px] text-ink-muted">
-          <span className="grid h-7 w-7 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
-            ID
-          </span>
+          <UserAvatar uniqueId={post.unique_id || post.author} className="h-7 w-7 shrink-0" />
           <span className="font-medium text-foreground">{post.unique_id}</span>
           {post.mentor ? <BadgeCheck strokeWidth={2} className="h-3.5 w-3.5 text-forest" /> : null}
           <span>·</span>
@@ -152,25 +180,19 @@ function PostPage() {
 
         <div className="mt-5 flex items-center gap-1.5 text-[12px] text-ink-muted">
           <div className="flex items-center gap-0.5 rounded-full bg-surface px-1.5 py-1">
-            <button
-              aria-label="Upvote"
-              className="grid h-7 w-7 place-items-center rounded-full active:text-orange"
-            >
+            <button aria-label="Upvote" className="grid h-7 w-7 place-items-center rounded-full active:text-orange">
               <ArrowBigUp strokeWidth={1.75} className="h-[18px] w-[18px]" />
             </button>
             <span className="min-w-[28px] text-center text-[12px] font-medium text-foreground tabular-nums">
               {post.votes >= 1000 ? (post.votes / 1000).toFixed(1) + "k" : post.votes}
             </span>
-            <button
-              aria-label="Downvote"
-              className="grid h-7 w-7 place-items-center rounded-full active:text-forest"
-            >
+            <button aria-label="Downvote" className="grid h-7 w-7 place-items-center rounded-full active:text-forest">
               <ArrowBigDown strokeWidth={1.75} className="h-[18px] w-[18px]" />
             </button>
           </div>
           <button className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-2">
             <MessageCircle strokeWidth={1.75} className="h-[15px] w-[15px]" />
-            {post.comments}
+            {Math.max(post.comments, messages.length)}
           </button>
           <button className="ml-auto grid h-9 w-9 place-items-center rounded-full bg-surface">
             <Share2 strokeWidth={1.75} className="h-[15px] w-[15px]" />
@@ -181,25 +203,30 @@ function PostPage() {
         </div>
       </article>
 
-      <div className="px-5 pb-6 pt-4">
+      <div className="px-5 pb-28 pt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[14px] font-medium text-foreground">{messages.length} messages</h2>
-          <button className="text-[12px] text-ink-muted">Newest ▾</button>
+          <h2 className="text-[14px] font-medium text-foreground">{messages.length} replies</h2>
         </div>
-        <ul className="mt-4 space-y-4">
-          {flattenReplies(messages).map((r, i) => (
-          <ChatBubble key={i} reply={r} isMe={r.unique_id === currentUser.unique_id} />
-          ))}
-        </ul>
+        {commentsQ.isLoading && postQ.data ? (
+          <div className="mt-6 grid place-items-center">
+            <Loader2 className="h-5 w-5 animate-spin text-ink-muted" />
+          </div>
+        ) : (
+          <ul className="mt-4 space-y-4">
+            {messages.map((r) => (
+              <ChatBubble key={r.id} reply={r} isMe={!!myUid && r.unique_id === myUid} />
+            ))}
+          </ul>
+        )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-24 z-40 mx-auto max-w-[480px] px-4">
-        <div className="flex items-center gap-2 rounded-2xl border border-hairline bg-background/95 px-4 py-2 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[480px] border-t border-hairline bg-background/95 px-4 pb-[max(env(safe-area-inset-bottom),12px)] pt-2 backdrop-blur-xl">
+        <div className="flex items-center gap-2 rounded-2xl border border-hairline bg-surface/50 px-4 py-2">
           <input
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && canSend) sendReply();
+              if (e.key === "Enter" && canSend) void sendReply();
             }}
             placeholder="Add a reply…"
             className="h-9 flex-1 bg-transparent text-[14px] placeholder:text-ink-muted focus:outline-none"
@@ -207,7 +234,7 @@ function PostPage() {
           {canSend ? (
             <button
               aria-label="Send"
-              onClick={sendReply}
+              onClick={() => void sendReply()}
               className="grid h-9 w-9 place-items-center rounded-full bg-forest text-white"
             >
               <Send strokeWidth={2} className="h-[16px] w-[16px]" />
@@ -219,32 +246,25 @@ function PostPage() {
   );
 }
 
-function flattenReplies(list: Reply[]): Reply[] {
-  const out: Reply[] = [];
-  for (const r of list) {
-    out.push(r);
-    if (r.children?.length) out.push(...flattenReplies(r.children));
-  }
-  return out;
-}
-
 function ChatBubble({ reply, isMe }: { reply: Reply; isMe: boolean }) {
   return (
     <li>
       <div className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface text-[10px] font-medium text-foreground">
-          ID
-        </div>
+        <UserAvatar uniqueId={reply.unique_id} className="h-7 w-7 shrink-0" />
         <div className="min-w-0 max-w-[80%]">
-          <div className={`mb-1 flex items-center gap-1.5 px-1 text-[11px] text-ink-muted ${isMe ? "justify-end" : ""}`}>
+          <div className={`mb-1 flex flex-wrap items-center gap-1.5 px-1 text-[11px] text-ink-muted ${isMe ? "justify-end" : ""}`}>
             <span className="font-medium text-foreground">{reply.unique_id}</span>
-            {reply.mentor ? (
-              <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" />
-            ) : null}
+            {reply.mentor ? <BadgeCheck strokeWidth={2.25} className="h-3 w-3 text-forest" /> : null}
+            <span>·</span>
+            <span className="truncate">{reply.role}</span>
             <span>·</span>
             <span>{reply.time}</span>
           </div>
-          <div className={`rounded-[18px] px-3.5 py-2.5 text-[14px] leading-[1.5] ${isMe ? "rounded-br-[6px] bg-primary text-primary-foreground" : "rounded-bl-[6px] bg-surface text-foreground"}`}>
+          <div
+            className={`rounded-[18px] px-3.5 py-2.5 text-[14px] leading-[1.5] ${
+              isMe ? "rounded-br-[6px] bg-primary text-primary-foreground" : "rounded-bl-[6px] bg-surface text-foreground"
+            }`}
+          >
             {reply.body}
           </div>
         </div>

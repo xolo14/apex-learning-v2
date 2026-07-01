@@ -22,7 +22,6 @@ export type MissionStatus = {
 export type AchievementStatus = {
   id: string;
   title: string;
-  emoji: string;
   description: string;
   unlocked: boolean;
 };

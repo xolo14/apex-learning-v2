@@ -17,6 +17,7 @@ import { getEngagementHub } from "@/lib/engagement.functions";
 import { engagementQueryKeys } from "@/lib/engagement-sync";
 import { readCachedEngagementHub, writeCachedEngagementHub } from "@/lib/engagement-hub-cache";
 import { LevelBadge } from "@/components/level-badge";
+import { AchievementBadgeIcon } from "@/components/achievement-badge-icon";
 import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/profile")({
@@ -223,20 +224,27 @@ function ProfilePage() {
             <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
               Badges · {hub.achievementsUnlocked}/{hub.achievements.length}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {hub.achievements.map((a) => (
                 <span
                   key={a.id}
                   title={a.description}
                   className={
-                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] " +
+                    "inline-flex items-center gap-2 rounded-2xl border px-2.5 py-2 text-[11px] transition-colors " +
                     (a.unlocked
-                      ? "border-forest/30 bg-forest/5 text-foreground"
-                      : "border-hairline bg-surface/40 text-ink-muted opacity-60")
+                      ? "border-hairline bg-white shadow-sm"
+                      : "border-hairline/80 bg-surface/30")
                   }
                 >
-                  <span>{a.emoji}</span>
-                  <span className="font-medium">{a.title}</span>
+                  <AchievementBadgeIcon id={a.id} unlocked={a.unlocked} />
+                  <span
+                    className={
+                      "min-w-0 font-medium leading-tight " +
+                      (a.unlocked ? "text-foreground" : "text-ink-muted")
+                    }
+                  >
+                    {a.title}
+                  </span>
                 </span>
               ))}
             </div>

@@ -104,19 +104,18 @@ export function quizOfTheDayIndex(quizCount: number, day = todayKeyUtc()) {
 export type AchievementDef = {
   id: string;
   title: string;
-  emoji: string;
   description: string;
 };
 
 export const ACHIEVEMENTS: AchievementDef[] = [
-  { id: "first_quiz", title: "First Quiz", emoji: "🎯", description: "Complete your first quiz" },
-  { id: "quiz_5", title: "Quiz Pro", emoji: "🧠", description: "Complete 5 quizzes" },
-  { id: "streak_3", title: "On Fire", emoji: "🔥", description: "3-day check-in streak" },
-  { id: "streak_7", title: "Week Warrior", emoji: "⚡", description: "7-day check-in streak" },
-  { id: "coins_100", title: "Coin Collector", emoji: "🪙", description: "Earn 100+ coins" },
-  { id: "asker", title: "Curious Mind", emoji: "💬", description: "Ask your first question" },
-  { id: "certified", title: "Certified", emoji: "🎓", description: "Enroll in a certification" },
-  { id: "event_goer", title: "Event Goer", emoji: "📅", description: "RSVP to an event" },
-  { id: "perfect_day", title: "Perfect Day", emoji: "✨", description: "Complete all daily missions" },
-  { id: "top_10", title: "Top 10", emoji: "🏆", description: "Reach top 10 on a quiz leaderboard" },
+  { id: "first_quiz", title: "First Quiz", description: "Complete your first quiz" },
+  { id: "quiz_5", title: "Quiz Pro", description: "Complete 5 quizzes" },
+  { id: "streak_3", title: "On Fire", description: "3-day check-in streak" },
+  { id: "streak_7", title: "Week Warrior", description: "7-day check-in streak" },
+  { id: "coins_100", title: "Coin Collector", description: "Earn 100+ coins" },
+  { id: "asker", title: "Curious Mind", description: "Ask your first question" },
+  { id: "certified", title: "Certified", description: "Enroll in a certification" },
+  { id: "event_goer", title: "Event Goer", description: "RSVP to an event" },
+  { id: "perfect_day", title: "Perfect Day", description: "Complete all daily missions" },
+  { id: "top_10", title: "Top 10", description: "Reach top 10 on a quiz leaderboard" },
 ];

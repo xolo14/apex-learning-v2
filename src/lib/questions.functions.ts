@@ -21,16 +21,45 @@ function randomId() {
 }
 
 export const listNewQuestions = createServerFn({ method: "GET" }).handler(async () => {
-  const { sql } = await import("./db.server");
-  const rows = (await sql()`
+  const { getDb } = await import("./db-access.server");
+  const s = await getDb();
+  if (!s) return [] as DbQuestion[];
+
+  try {
+    const { runDailyVirtualCommunity } = await import("./virtual-community.server");
+    await runDailyVirtualCommunity(s);
+  } catch (e) {
+    console.error("[syncpedia] virtual community:", e instanceof Error ? e.message : e);
+  }
+
+  const rows = (await s`
     SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
     FROM questions
     WHERE hidden = false
     ORDER BY created_at DESC
-    LIMIT 50
+    LIMIT 150
   `) as DbQuestion[];
   return rows;
 });
+
+export const getQuestionById = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => {
+    const id = String(d.id ?? "").trim().slice(0, 80);
+    if (!id) throw new Error("id required");
+    return { id };
+  })
+  .handler(async ({ data }) => {
+    const { getDb } = await import("./db-access.server");
+    const s = await getDb();
+    if (!s) return null;
+    const rows = (await s`
+      SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
+      FROM questions
+      WHERE id = ${data.id} AND hidden = false
+      LIMIT 1
+    `) as DbQuestion[];
+    return rows[0] ?? null;
+  });
 
 export const listCommunityQuestions = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => {
@@ -147,6 +176,9 @@ export const setQuestionHidden = createServerFn({ method: "POST" })
 export const deleteQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
+    if (data.id.startsWith("virt_") || data.id.startsWith("seed_")) {
+      throw new Error("Community posts cannot be deleted");
+    }
     const { requireAdmin } = await import("./security.server");
     await requireAdmin();
     const { sql } = await import("./db.server");

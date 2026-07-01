@@ -15,6 +15,7 @@ import {
   Pencil,
   X,
   Save,
+  Users,
 } from "lucide-react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { useDensity } from "@/lib/density";
@@ -26,8 +27,10 @@ import {
   type AvatarIcon,
 } from "@/lib/identity";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { checkUniqueIdAvailable, logoutDevice, updateAvatarPreferences, updateUniqueId } from "@/lib/profiles.functions";
+import { getVirtualCommunityStatus } from "@/lib/virtual-community.functions";
 import {
   enablePushNotifications,
   disablePushNotifications,
@@ -39,7 +42,7 @@ import { DEVICE_KEY, signOutLocally } from "@/lib/session";
 const BLOCKED_KEY = "syncpedia_blocked";
 const LANGUAGE_KEY = "syncpedia_language";
 
-type Panel = "main" | "blocked" | "language" | "help";
+type Panel = "main" | "blocked" | "language" | "help" | "community";
 
 export const Route = createFileRoute("/settings")({
   head: () =>
@@ -75,6 +78,12 @@ function SettingsPage() {
   const saveIdFn = useServerFn(updateUniqueId);
   const saveAvatarFn = useServerFn(updateAvatarPreferences);
   const logoutDeviceFn = useServerFn(logoutDevice);
+  const fetchCommunityStatus = useServerFn(getVirtualCommunityStatus);
+  const communityQ = useQuery({
+    queryKey: ["virtual-community-status"],
+    queryFn: () => fetchCommunityStatus(),
+    staleTime: 60_000,
+  });
 
   const [suffix, setSuffix] = useState(() =>
     identity.uniqueId?.startsWith("SP-26") ? identity.uniqueId.slice(5) : "",
@@ -238,9 +247,11 @@ function SettingsPage() {
       ? "Blocked accounts"
       : panel === "language"
         ? "Language"
-        : panel === "help"
-          ? "Help center"
-          : "Settings";
+        : panel === "community"
+          ? "Community activity"
+          : panel === "help"
+            ? "Help center"
+            : "Settings";
 
   return (
     <MobileShell>
@@ -485,6 +496,7 @@ function SettingsPage() {
                 <span className="block truncate text-[12px] text-ink-muted">How we handle your data</span>
               </span>
             </Link>
+            <RowButton icon={Users} label="Community activity" hint="Daily questions & mentor replies" onClick={() => setPanel("community")} />
             <RowButton icon={Eye} label="Blocked accounts" hint="Manage your block list" onClick={() => setPanel("blocked")} />
             <RowButton icon={Globe} label="Language" hint={language === "hi" ? "Hindi" : "English (US)"} onClick={() => setPanel("language")} />
             <RowButton icon={HelpCircle} label="Help center" hint="Guides and FAQs" onClick={() => setPanel("help")} />
@@ -549,6 +561,32 @@ function SettingsPage() {
         </section>
       ) : null}
 
+      {panel === "community" ? (
+        <section className="px-5 pt-5 pb-8">
+          <div className="rounded-2xl border border-hairline bg-surface/30 p-4">
+            <p className="text-[15px] font-semibold text-foreground">Live community feed</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-ink-muted">
+              Virtual students and working professionals post and reply daily so Questions never feels empty.
+              Your posts stay in the feed permanently alongside theirs.
+            </p>
+          </div>
+          <div className="mt-4 overflow-hidden rounded-2xl border border-hairline">
+            <StatRow label="Active since" value={communityQ.data?.startedOn ?? "—"} />
+            <StatRow label="Today (virtual questions)" value={String(communityQ.data?.todayVirtualQuestions ?? 0)} />
+            <StatRow label="Today (mentor replies)" value={String(communityQ.data?.todayVirtualComments ?? 0)} />
+            <StatRow label="Your questions today" value={String(communityQ.data?.todayUserQuestions ?? 0)} />
+            <StatRow
+              label="Students posting daily"
+              value={`${communityQ.data?.students ?? 20} × ${communityQ.data?.postsPerStudent ?? 2} questions`}
+            />
+            <StatRow label="Total virtual posts" value={String(communityQ.data?.totalVirtualQuestions ?? 0)} />
+          </div>
+          <p className="mt-3 text-[12px] text-ink-muted">
+            Posts are never auto-deleted. Use Ask to add yours — they appear in Questions immediately.
+          </p>
+        </section>
+      ) : null}
+
       {panel === "help" ? (
         <section className="space-y-3 px-5 pt-5 pb-8 text-[13px] leading-relaxed text-ink-muted">
           <div className="rounded-2xl border border-hairline p-4">
@@ -566,6 +604,15 @@ function SettingsPage() {
         </section>
       ) : null}
     </MobileShell>
+  );
+}
+
+function StatRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-3.5 last:border-b-0">
+      <span className="text-[13px] text-ink-muted">{label}</span>
+      <span className="text-right text-[13px] font-medium text-foreground">{value}</span>
+    </div>
   );
 }
 

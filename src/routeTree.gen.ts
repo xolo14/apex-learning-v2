@@ -52,6 +52,7 @@ import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicClassVideoRouteImport } from './routes/api/public/class-video'
 import { Route as ApiPublicAppConfigRouteImport } from './routes/api/public/app-config'
 import { Route as ApiPublicCronRefreshHotRouteImport } from './routes/api/public/cron.refresh-hot'
+import { Route as ApiPublicCronDailyCommunityRouteImport } from './routes/api/public/cron.daily-community'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -268,6 +269,12 @@ const ApiPublicCronRefreshHotRoute = ApiPublicCronRefreshHotRouteImport.update({
   path: '/api/public/cron/refresh-hot',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronDailyCommunityRoute =
+  ApiPublicCronDailyCommunityRouteImport.update({
+    id: '/api/public/cron/daily-community',
+    path: '/api/public/cron/daily-community',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
+  '/api/public/cron/daily-community': typeof ApiPublicCronDailyCommunityRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRoutesByTo {
@@ -355,6 +363,7 @@ export interface FileRoutesByTo {
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
+  '/api/public/cron/daily-community': typeof ApiPublicCronDailyCommunityRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRoutesById {
@@ -401,6 +410,7 @@ export interface FileRoutesById {
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/health': typeof ApiPublicHealthRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
+  '/api/public/cron/daily-community': typeof ApiPublicCronDailyCommunityRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
 }
 export interface FileRouteTypes {
@@ -448,6 +458,7 @@ export interface FileRouteTypes {
     | '/api/public/class-video'
     | '/api/public/health'
     | '/api/public/sitemap'
+    | '/api/public/cron/daily-community'
     | '/api/public/cron/refresh-hot'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/api/public/class-video'
     | '/api/public/health'
     | '/api/public/sitemap'
+    | '/api/public/cron/daily-community'
     | '/api/public/cron/refresh-hot'
   id:
     | '__root__'
@@ -536,6 +548,7 @@ export interface FileRouteTypes {
     | '/api/public/class-video'
     | '/api/public/health'
     | '/api/public/sitemap'
+    | '/api/public/cron/daily-community'
     | '/api/public/cron/refresh-hot'
   fileRoutesById: FileRoutesById
 }
@@ -564,6 +577,7 @@ export interface RootRouteChildren {
   ApiPublicClassVideoRoute: typeof ApiPublicClassVideoRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
+  ApiPublicCronDailyCommunityRoute: typeof ApiPublicCronDailyCommunityRoute
   ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
 }
 
@@ -870,6 +884,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronRefreshHotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/daily-community': {
+      id: '/api/public/cron/daily-community'
+      path: '/api/public/cron/daily-community'
+      fullPath: '/api/public/cron/daily-community'
+      preLoaderRoute: typeof ApiPublicCronDailyCommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -969,6 +990,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicClassVideoRoute: ApiPublicClassVideoRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,
+  ApiPublicCronDailyCommunityRoute: ApiPublicCronDailyCommunityRoute,
   ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,
 }
 export const routeTree = rootRouteImport

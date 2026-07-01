@@ -28,6 +28,7 @@ import {
   toggleCommunityJoin,
 } from "@/lib/community-join";
 import { displayCommunityForSlug } from "@/lib/community-display";
+import { questionToPost } from "@/lib/post-display";
 import {
   listCommunities,
   listCourses,
@@ -63,42 +64,6 @@ const tabs = [
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "now";
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
-}
-
-function questionToPost(q: DbQuestion): Post {
-  const tag = (q.tag || "question").toLowerCase();
-  const kind: PostKind = (
-    [
-      "tutorial", "project", "mentor", "discussion", "question", "resource",
-      "challenge", "news", "case-study", "career", "launch", "meme", "poll", "quiz",
-    ].includes(tag) ? tag : "question"
-  ) as PostKind;
-  return {
-    id: q.id,
-    author: q.author,
-    initials: q.initials,
-    unique_id: q.unique_id,
-    role: "Member",
-    mentor: false,
-    communitySlug: q.community_slug,
-    time: timeAgo(q.created_at),
-    title: q.title,
-    body: q.body,
-    votes: q.votes,
-    comments: q.comments,
-    tag: q.tag ?? undefined,
-    kind,
-  };
-}
 
 function CommunityPage() {
   const { slug } = Route.useParams();

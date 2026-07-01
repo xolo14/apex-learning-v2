@@ -13,6 +13,8 @@ import { buildCommunityList } from "@/lib/community-display";
 import { useDensity } from "@/lib/density";
 import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
 import { listEvents, listCommunities } from "@/lib/communities.functions";
+import { listNewQuestions } from "@/lib/questions.functions";
+import { mergeQuestionFeeds, questionToPost } from "@/lib/post-display";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
@@ -56,6 +58,18 @@ function Home() {
   const fHot = useServerFn(listHot);
   const fEvents = useServerFn(listEvents);
   const fCommunities = useServerFn(listCommunities);
+  const fQuestions = useServerFn(listNewQuestions);
+  const questionsQ = useQuery({
+    queryKey: ["feed", "new"],
+    queryFn: () => fQuestions(),
+    enabled: sort === "questions" || sort === "following",
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const homeFeed = useMemo(() => {
+    const fromDb = (questionsQ.data ?? []).map(questionToPost);
+    return mergeQuestionFeeds(fromDb, feed);
+  }, [questionsQ.data, feed]);
   const comQ = useQuery({
     queryKey: ["public", "communities"],
     queryFn: () => fCommunities(),
@@ -272,7 +286,7 @@ function Home() {
           savedPosts.length === 0 && savedHot.length === 0 ? (
             <>
               <p className="px-5 pb-2 text-[11px] text-ink-muted">Demo saved posts</p>
-              {feed.slice(0, 3).map((p) => <PostCard key={`demo-saved-${p.id}`} post={p} />)}
+              {homeFeed.slice(0, 3).map((p) => <PostCard key={`demo-saved-${p.id}`} post={p} />)}
             </>
           ) : (
             <>
@@ -285,7 +299,7 @@ function Home() {
             {sort === "following" ? (
               <p className="px-5 pb-2 text-[11px] text-ink-muted">Demo feed from people you follow</p>
             ) : null}
-            {feed.map((p) => <PostCard key={p.id} post={p} />)}
+            {homeFeed.map((p) => <PostCard key={p.id} post={p} />)}
           </>
         )}
       </div>
