@@ -16,7 +16,7 @@ import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
-import { QUIZ_DIFFICULTY_LABEL } from "@/lib/quiz-bank";
+import { QUIZ_BANK_LIST, QUIZ_DIFFICULTY_LABEL } from "@/lib/quiz-bank";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { pageHead } from "@/lib/seo";
@@ -56,8 +56,13 @@ function EarnPage() {
   const gigs = gigsQ.data ?? [];
 
   const listQ = useServerFn(listQuizzes);
-  const quizzesQ = useQuery({ queryKey: ["public", "quizzes"], queryFn: () => listQ() });
-  const quizzes = quizzesQ.data ?? [];
+  const quizzesQ = useQuery({
+    queryKey: ["public", "quizzes"],
+    queryFn: () => listQ(),
+    initialData: QUIZ_BANK_LIST,
+    staleTime: 60_000,
+  });
+  const quizzes = quizzesQ.data ?? QUIZ_BANK_LIST;
 
   const [drag, setDrag] = useState(0);
   const startX = useRef<number | null>(null);
@@ -158,7 +163,11 @@ function EarnPage() {
           <section className="w-1/2 shrink-0 px-5">
             {quizzes.length === 0 && (
               <p className="px-1 py-10 text-center text-[13px] text-ink-muted">
-                {quizzesQ.isLoading ? "Loading…" : "No quizzes yet."}
+                {quizzesQ.isFetching && !quizzesQ.data?.length
+                  ? "Loading…"
+                  : quizzesQ.isError
+                    ? "Could not load quizzes. Pull to refresh."
+                    : "No quizzes yet."}
               </p>
             )}
             {quizzes.map((q) => (

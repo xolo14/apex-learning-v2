@@ -7,11 +7,6 @@ import type { QuizAttemptAnswer, QuizLeaderboardRow, QuizQuestionDef } from "./q
 const DEVICE_KEY = "syncpedia_device_key";
 
 export async function seedQuizBank(s: ReturnType<typeof import("./db.server").sql>) {
-  const bankIds = QUIZ_BANK.map((q) => q.id);
-
-  await s`DELETE FROM quiz_attempts WHERE NOT (quiz_id = ANY(${bankIds}))`;
-  await s`DELETE FROM quizzes WHERE NOT (id = ANY(${bankIds}))`;
-
   for (const quiz of QUIZ_BANK) {
     const questionsJson = JSON.stringify(quiz.questions);
     await s`

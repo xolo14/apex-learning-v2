@@ -301,7 +301,7 @@ export type DbQuiz = {
 };
 
 export const listQuizzes = createServerFn({ method: "GET" }).handler(async () => {
-  await db();
+  // Static catalog — no DB round-trip (avoids ensureSchema/seed blocking the Earn page).
   return QUIZ_BANK_LIST as DbQuiz[];
 });
 
@@ -311,7 +311,6 @@ export const getQuiz = createServerFn({ method: "GET" })
     return { id: d.id.trim().slice(0, 80) };
   })
   .handler(async ({ data }) => {
-    await db();
     return quizMetaFromBank(data.id) as DbQuiz | null;
   });
 
