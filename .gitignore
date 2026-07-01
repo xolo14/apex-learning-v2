@@ -15,6 +15,9 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.env
+.env.*
+!.env.example
 
 # Wrangler / Cloudflare
 .wrangler/
@@ -29,4 +32,8 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+android/.gradle
+android/local.properties
+android/keystore.properties
+*.jks
+*.keystore
