@@ -1,4 +1,5 @@
 import type { QuizAttemptAnswer, QuizGradeItem, QuizQuestionDef } from "./quiz.types";
+import { stripAnswers } from "./quiz-utils";
 
 function pointsFor(q: QuizQuestionDef) {
   return q.points ?? 1;
@@ -39,10 +40,6 @@ export function gradeQuizAnswers(
   }
 
   return { score, maxScore, breakdown };
-}
-
-export function stripAnswers(questions: QuizQuestionDef[]) {
-  return questions.map(({ answer: _a, ...rest }) => rest);
 }
 
 export function parseQuestionsJson(raw: string | null | undefined): QuizQuestionDef[] {

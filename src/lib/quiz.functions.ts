@@ -1,8 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { DbQuiz } from "./social.functions";
-import { QUIZ_BANK, quizMetaFromBank } from "./quiz-bank";
-import { gradeQuizAnswers, parseQuestionsJson, stripAnswers } from "./quiz-grade.server";
+import { QUIZ_BANK } from "./quiz-bank";
+import { gradeQuizAnswers, parseQuestionsJson } from "./quiz-grade.server";
+import { buildQuizPlayFromBank, type QuizPlayPayload } from "./quiz-play.shared";
+import { stripAnswers } from "./quiz-utils";
 import type { QuizAttemptAnswer, QuizLeaderboardRow, QuizQuestionDef } from "./quiz.types";
+
+export type { QuizPlayPayload };
 
 const DEVICE_KEY = "syncpedia_device_key";
 
@@ -46,76 +50,52 @@ async function loadQuizQuestions(s: ReturnType<typeof import("./db.server").sql>
   return bankQuestions(quizId);
 }
 
-export type QuizPlayPayload = {
-  quiz: DbQuiz;
-  questions: ReturnType<typeof stripAnswers>;
-  previousAttempt: {
-    score: number;
-    max_score: number;
-    pct: number;
-    created_at: string;
-  } | null;
-};
-
 export const getQuizPlay = createServerFn({ method: "POST" })
   .inputValidator((d: { quizId: string; deviceKey: string }) => {
     if (!d.quizId?.trim()) throw new Error("quizId required");
     return { quizId: d.quizId.trim().slice(0, 80), deviceKey: d.deviceKey ?? "" };
   })
   .handler(async ({ data }): Promise<QuizPlayPayload | null> => {
-    const s = await db();
-    const rows = (await s`
-      SELECT id, community_slug, title, description,
-             COALESCE(questions_count, 0)::int AS questions_count,
-             COALESCE(minutes, 0)::int AS minutes,
-             COALESCE(coins, 0)::int AS coins, created_at
-      FROM quizzes WHERE id = ${data.quizId} LIMIT 1
-    `) as DbQuiz[];
+    const base = buildQuizPlayFromBank(data.quizId);
+    if (!base) return null;
 
-    let quiz = rows[0] ?? null;
-    if (!quiz) {
-      const meta = quizMetaFromBank(data.quizId);
-      if (!meta) return null;
-      quiz = meta;
-    }
+    try {
+      const s = await db();
+      const questions = await loadQuizQuestions(s, data.quizId);
+      const play: QuizPlayPayload = {
+        ...base,
+        questions: questions.length ? stripAnswers(questions) : base.questions,
+      };
 
-    const questions = await loadQuizQuestions(s, data.quizId);
-    if (!questions.length) return null;
-
-    let previousAttempt: QuizPlayPayload["previousAttempt"] = null;
-    const { isValidDeviceKey } = await import("./security.server");
-    if (isValidDeviceKey(data.deviceKey)) {
-      const profiles = (await s`
-        SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
-      `) as { unique_id: string }[];
-      const uid = profiles[0]?.unique_id;
-      if (uid) {
-        const attempts = (await s`
-          SELECT score, max_score, created_at
-          FROM quiz_attempts
-          WHERE quiz_id = ${data.quizId} AND user_unique_id = ${uid}
-          LIMIT 1
-        `) as { score: number; max_score: number; created_at: string }[];
-        if (attempts[0]) {
-          const pct =
-            attempts[0].max_score > 0
-              ? Math.round((attempts[0].score / attempts[0].max_score) * 100)
-              : 0;
-          previousAttempt = { ...attempts[0], pct };
+      const { isValidDeviceKey } = await import("./security.server");
+      if (isValidDeviceKey(data.deviceKey)) {
+        const profiles = (await s`
+          SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
+        `) as { unique_id: string }[];
+        const uid = profiles[0]?.unique_id;
+        if (uid) {
+          const attempts = (await s`
+            SELECT score, max_score, created_at
+            FROM quiz_attempts
+            WHERE quiz_id = ${data.quizId} AND user_unique_id = ${uid}
+            LIMIT 1
+          `) as { score: number; max_score: number; created_at: string }[];
+          if (attempts[0]) {
+            play.previousAttempt = {
+              ...attempts[0],
+              pct:
+                attempts[0].max_score > 0
+                  ? Math.round((attempts[0].score / attempts[0].max_score) * 100)
+                  : 0,
+            };
+          }
         }
       }
-    }
 
-    const bank = quizMetaFromBank(data.quizId);
-    return {
-      quiz: {
-        ...quiz,
-        ...(bank ?? {}),
-        questions_count: questions.length,
-      },
-      questions: stripAnswers(questions),
-      previousAttempt,
-    };
+      return play;
+    } catch {
+      return base;
+    }
   });
 
 export type QuizSubmitResult = {
@@ -148,7 +128,12 @@ export const submitQuizAttempt = createServerFn({ method: "POST" })
     if (!isValidDeviceKey(data.deviceKey)) throw new Error("Sign in to submit a quiz.");
     rateLimit(`quiz-submit:${data.deviceKey}`, 12, 60_000);
 
+    const bankEntry = QUIZ_BANK.find((q) => q.id === data.quizId);
+    const questions = bankEntry?.questions ?? [];
+    if (!questions.length) throw new Error("Quiz not found.");
+
     const s = await db();
+
     const profiles = (await s`
       SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
     `) as { unique_id: string }[];
@@ -158,11 +143,7 @@ export const submitQuizAttempt = createServerFn({ method: "POST" })
     const quizRows = (await s`
       SELECT id, COALESCE(coins, 0)::int AS coins FROM quizzes WHERE id = ${data.quizId} LIMIT 1
     `) as { id: string; coins: number }[];
-    const bankEntry = QUIZ_BANK.find((q) => q.id === data.quizId);
     const quizCoins = quizRows[0]?.coins ?? bankEntry?.coins ?? 0;
-
-    const questions = await loadQuizQuestions(s, data.quizId);
-    if (!questions.length) throw new Error("Quiz not found.");
 
     const { score, maxScore, breakdown } = gradeQuizAnswers(questions, data.answers);
     const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
@@ -228,8 +209,9 @@ export const getQuizLeaderboard = createServerFn({ method: "GET" })
     return { quizId: d.quizId.trim().slice(0, 80) };
   })
   .handler(async ({ data }) => {
-    const s = await db();
-    const rows = (await s`
+    try {
+      const s = await db();
+      const rows = (await s`
       SELECT qa.user_unique_id, qa.score, qa.max_score, qa.created_at,
              COALESCE(p.name, qa.user_unique_id) AS display_name
       FROM quiz_attempts qa
@@ -254,4 +236,7 @@ export const getQuizLeaderboard = createServerFn({ method: "GET" })
       pct: r.max_score > 0 ? Math.round((r.score / r.max_score) * 100) : 0,
       created_at: r.created_at,
     }));
+    } catch {
+      return [];
+    }
   });

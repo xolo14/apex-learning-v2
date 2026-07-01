@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -61,6 +61,8 @@ function QuizDetailPage() {
   const playQ = useQuery({
     queryKey: ["quiz-play", id, deviceKey],
     queryFn: () => fetchPlay({ data: { quizId: id, deviceKey } }),
+    retry: 2,
+    enabled: !!id,
   });
 
   const boardQ = useQuery({
@@ -101,8 +103,28 @@ function QuizDetailPage() {
     );
   }
 
+  if (playQ.isError || !playQ.data) {
+    return (
+      <MobileShell immersive>
+        <div className="px-6 pt-20 text-center">
+          <p className="text-[15px] text-foreground">Could not load this quiz.</p>
+          <p className="mt-2 text-[13px] text-ink-muted">Check your connection and try again.</p>
+          <button
+            type="button"
+            onClick={() => playQ.refetch()}
+            className="mt-6 rounded-full bg-forest px-6 py-3 text-[14px] font-semibold text-white"
+          >
+            Retry
+          </button>
+          <Link to="/quizzes" search={{ tab: "quizzes" }} className="mt-4 block text-[13px] text-forest">
+            Back to quizzes
+          </Link>
+        </div>
+      </MobileShell>
+    );
+  }
+
   const payload = playQ.data;
-  if (!payload) throw notFound();
 
   const { quiz, questions, previousAttempt } = payload;
 
