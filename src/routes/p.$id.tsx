@@ -14,7 +14,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { MobileShell } from "@/components/mobile-shell";
-import { communityBySlug, posts } from "@/lib/feed-data";
+import { CommunityIcon } from "@/components/community-icon";
+import { displayCommunityForSlug } from "@/lib/community-display";
+import { posts } from "@/lib/feed-data";
 import { questionToPost, timeAgo } from "@/lib/post-display";
 import { getQuestionById } from "@/lib/questions.functions";
 import { createPostComment, listPostComments } from "@/lib/comments.functions";
@@ -82,6 +84,11 @@ function PostPage() {
     return [...fromDb, ...localReplies];
   }, [commentsQ.data, localReplies]);
 
+  const community = useMemo(
+    () => displayCommunityForSlug(post?.communitySlug ?? ""),
+    [post?.communitySlug],
+  );
+
   if (postQ.isLoading && !staticPost) {
     return (
       <MobileShell>
@@ -100,7 +107,6 @@ function PostPage() {
     );
   }
 
-  const community = communityBySlug(post.communitySlug);
   const canSend = replyText.trim().length > 0;
   const replyCount = commentsQ.isSuccess ? messages.length : post.comments;
 
@@ -149,15 +155,13 @@ function PostPage() {
           >
             <ArrowLeft strokeWidth={1.75} className="h-[18px] w-[18px]" />
           </button>
-          {community ? (
+          {post ? (
             <Link
               to="/c/$slug"
               params={{ slug: community.slug }}
               className="flex items-center gap-2 truncate"
             >
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-forest text-white">
-                <community.icon strokeWidth={2} className="h-[14px] w-[14px]" />
-              </span>
+              <CommunityIcon icon={community.icon} tint={community.tint} size="sm" strokeWidth={2} />
               <span className="truncate text-[14px] font-semibold tracking-tight">
                 c/{community.slug}
               </span>

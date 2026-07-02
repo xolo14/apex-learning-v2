@@ -3,14 +3,16 @@ import { ArrowUp, ArrowDown, MessageCircle, Bookmark, Share2 } from "lucide-reac
 import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { communityBySlug, KIND_BUCKET, KIND_LABEL, type Post } from "@/lib/feed-data";
+import { KIND_BUCKET, KIND_LABEL, type Post } from "@/lib/feed-data";
+import { displayCommunityForSlug } from "@/lib/community-display";
+import { CommunityIcon } from "@/components/community-icon";
 import { UserAvatar } from "@/lib/identity";
 import { useDensity } from "@/lib/density";
 import { votePost } from "@/lib/questions.functions";
 import { useSaved } from "@/lib/saved";
 
 export function PostCard({ post }: { post: Post }) {
-  const community = communityBySlug(post.communitySlug);
+  const community = displayCommunityForSlug(post.communitySlug);
   const { density } = useDensity();
   const compact = density === "compact";
   const bucket = KIND_BUCKET[post.kind];
@@ -74,9 +76,10 @@ export function PostCard({ post }: { post: Post }) {
           <Link
             to="/c/$slug"
             params={{ slug: post.communitySlug }}
-            className="truncate text-[13px] font-medium tracking-tight text-foreground"
+            className="flex items-center gap-1.5 truncate text-[13px] font-medium tracking-tight text-foreground"
           >
-            c/{community?.slug ?? post.communitySlug}
+            <CommunityIcon icon={community.icon} tint={community.tint} size="xs" strokeWidth={2} />
+            c/{community.slug ?? post.communitySlug}
           </Link>
           {compact ? null : (
             <span className="flex items-center gap-1 truncate text-[11px] text-ink-muted">

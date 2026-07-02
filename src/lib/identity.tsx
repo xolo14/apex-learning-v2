@@ -3,19 +3,60 @@ import type { DbProfile } from "./profiles.functions";
 import { isSignedOut, readCachedProfile } from "./session";
 
 export const AVATAR_COLORS = [
-  "#1f6f54",
-  "#b85c2b",
-  "#3b5bdb",
-  "#7c3aed",
-  "#0e7490",
-  "#be185d",
-  "#9a3412",
-  "#15803d",
-  "#4338ca",
-  "#a16207",
-  "#0f172a",
-  "#dc2626",
+  "#6366f1",
+  "#ec4899",
+  "#f59e0b",
+  "#10b981",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ef4444",
+  "#14b8a6",
+  "#f97316",
+  "#06b6d4",
+  "#a855f7",
+  "#84cc16",
+  "#e11d48",
+  "#0ea5e9",
+  "#d946ef",
+  "#22c55e",
+  "#fb7185",
+  "#2dd4bf",
+  "#fbbf24",
+  "#818cf8",
 ];
+
+/** One distinct color per seeded Hyderabad student (SP-HYD01–20). */
+const STUDENT_MEMBER_COLORS = AVATAR_COLORS;
+
+/** Distinct professional palette — separate from student + community tints. */
+const PRO_MEMBER_COLORS = [
+  "#1e3a5f",
+  "#7c2d12",
+  "#134e4a",
+  "#4c1d95",
+  "#831843",
+  "#1e40af",
+  "#365314",
+  "#9a3412",
+  "#0c4a6e",
+  "#581c87",
+];
+
+function memberColorFromUniqueId(uniqueId: string): string {
+  const id = uniqueId.trim().toUpperCase();
+  const hyd = id.match(/^SP-HYD(\d{2})$/);
+  if (hyd) {
+    const n = parseInt(hyd[1]!, 10);
+    return STUDENT_MEMBER_COLORS[(n - 1) % STUDENT_MEMBER_COLORS.length]!;
+  }
+  const pro = id.match(/^SP-PRO(\d{2})$/);
+  if (pro) {
+    const n = parseInt(pro[1]!, 10);
+    return PRO_MEMBER_COLORS[(n - 1) % PRO_MEMBER_COLORS.length]!;
+  }
+  const h = hashString(id);
+  return AVATAR_COLORS[h % AVATAR_COLORS.length]!;
+}
 
 /**
  * Polished avatar set powered by DiceBear (open-source, MIT).
@@ -54,9 +95,10 @@ function isAvatarIcon(id: string): id is AvatarIcon {
 
 /** Deterministic avatar look per Syncpedia unique id. */
 export function avatarFromUniqueId(uniqueId: string): { icon: AvatarIcon; color: string } {
-  const h = hashString(uniqueId.trim().toUpperCase());
+  const id = uniqueId.trim().toUpperCase();
+  const h = hashString(id);
   const icon = AVATAR_STYLES[h % AVATAR_STYLES.length]!.id;
-  const color = AVATAR_COLORS[(h >>> 8) % AVATAR_COLORS.length]!;
+  const color = memberColorFromUniqueId(id);
   return { icon, color };
 }
 
