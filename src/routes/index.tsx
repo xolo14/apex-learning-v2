@@ -15,6 +15,7 @@ import { listEvents, listCommunities } from "@/lib/communities.functions";
 import { listNewQuestions } from "@/lib/questions.functions";
 import { syncVirtualCommunityFeed } from "@/lib/virtual-community.functions";
 import { questionToPost } from "@/lib/post-display";
+import { readCachedQuestionsFeed, writeCachedQuestionsFeed } from "@/lib/questions-feed-cache";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
@@ -62,10 +63,15 @@ function Home() {
   const syncVirtual = useServerFn(syncVirtualCommunityFeed);
   const questionsQ = useQuery({
     queryKey: ["feed", "new"],
-    queryFn: () => fQuestions(),
+    queryFn: async () => {
+      const rows = await fQuestions();
+      writeCachedQuestionsFeed(rows);
+      return rows;
+    },
     enabled: sort === "questions" || sort === "following",
     staleTime: 120_000,
     refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev ?? readCachedQuestionsFeed(),
   });
 
   useEffect(() => {
@@ -117,6 +123,9 @@ function Home() {
   const savedIds = useSavedIds();
   const savedPosts = homeFeed.filter((p) => savedIds.includes(p.id));
   const savedHot = useSavedHot();
+  const questionsTab = sort === "questions" || sort === "following";
+  const feedPending = questionsTab && homeFeed.length === 0 && (questionsQ.isLoading || questionsQ.isFetching);
+  const feedReadyEmpty = questionsTab && homeFeed.length === 0 && !questionsQ.isLoading && !questionsQ.isFetching;
   return (
     <MobileShell>
       {/* Status bar–style chrome */}
@@ -324,6 +333,7 @@ function Home() {
             {sort === "following" ? (
               <p className="px-5 pb-2 text-[11px] text-ink-muted">Questions from communities you join</p>
             ) : null}
+            {feedPending ? <QuestionsFeedSkeleton compact={compact} /> : null}
             {homeFeed.map((p) => (
               <PostCard
                 key={p.id}
@@ -332,18 +342,52 @@ function Home() {
                 variant="question"
               />
             ))}
+            {feedReadyEmpty ? (
+              <p className="px-5 py-10 text-center text-[13px] text-ink-muted">
+                No questions yet. Check back soon or tap Ask to post yours.
+              </p>
+            ) : null}
           </>
         )}
       </div>
 
-
-      <div className="px-5 py-12 text-center">
-        <div className="mx-auto h-px w-10 bg-hairline" />
-        <p className="mt-4 text-[12px] tracking-tight text-ink-muted">
-          You're caught up. Pull to refresh.
-        </p>
-      </div>
+      {questionsTab && homeFeed.length > 0 && !questionsQ.isFetching ? (
+        <div className="px-5 py-12 text-center">
+          <div className="mx-auto h-px w-10 bg-hairline" />
+          <p className="mt-4 text-[12px] tracking-tight text-ink-muted">
+            You&apos;re caught up. Pull to refresh.
+          </p>
+        </div>
+      ) : null}
     </MobileShell>
+  );
+}
+
+function QuestionsFeedSkeleton({ compact }: { compact: boolean }) {
+  return (
+    <div className="animate-pulse">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className={
+            "border-b border-hairline " + (compact ? "px-4 py-3" : "px-5 py-5")
+          }
+        >
+          <div className="flex items-start gap-3">
+            <div className={"rounded-full bg-surface " + (compact ? "h-8 w-8" : "h-9 w-9")} />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="h-3.5 w-28 rounded bg-surface" />
+              <div className="h-3 w-40 rounded bg-surface/80" />
+            </div>
+          </div>
+          <div className={"space-y-2 " + (compact ? "mt-3" : "mt-4")}>
+            <div className="h-4 w-[85%] rounded bg-surface" />
+            <div className="h-3 w-full rounded bg-surface/80" />
+            <div className="h-3 w-2/3 rounded bg-surface/80" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
