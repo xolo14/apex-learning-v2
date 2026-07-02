@@ -8,13 +8,12 @@ import { MobileShell } from "@/components/mobile-shell";
 import { CommunityIcon } from "@/components/community-icon";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { PostCard } from "@/components/post-card";
-import { posts, balancedFeed } from "@/lib/feed-data";
-import { buildCommunityList } from "@/lib/community-display";
+import { buildCommunityList, communityDisplayMap } from "@/lib/community-display";
 import { useDensity } from "@/lib/density";
 import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
 import { listEvents, listCommunities } from "@/lib/communities.functions";
 import { listNewQuestions } from "@/lib/questions.functions";
-import { mergeQuestionFeeds, questionToPost } from "@/lib/post-display";
+import { questionToPost } from "@/lib/post-display";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
@@ -54,7 +53,6 @@ function Home() {
   };
   const { density } = useDensity();
   const compact = density === "compact";
-  const feed = useMemo(() => balancedFeed(posts), []);
   const fHot = useServerFn(listHot);
   const fEvents = useServerFn(listEvents);
   const fCommunities = useServerFn(listCommunities);
@@ -66,10 +64,10 @@ function Home() {
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
-  const homeFeed = useMemo(() => {
-    const fromDb = (questionsQ.data ?? []).map(questionToPost);
-    return mergeQuestionFeeds(fromDb, feed);
-  }, [questionsQ.data, feed]);
+  const homeFeed = useMemo(
+    () => (questionsQ.data ?? []).map(questionToPost),
+    [questionsQ.data],
+  );
   const comQ = useQuery({
     queryKey: ["public", "communities"],
     queryFn: () => fCommunities(),
@@ -79,6 +77,7 @@ function Home() {
     () => buildCommunityList((comQ.data ?? []).filter((c) => c.status === "approved")),
     [comQ.data],
   );
+  const communityMap = useMemo(() => communityDisplayMap(communityList), [communityList]);
   const featured = communityList.slice(0, 8);
   const hotQ = useQuery({
     queryKey: ["feed", "hot"],
@@ -96,7 +95,7 @@ function Home() {
     refetchOnWindowFocus: false,
   });
   const savedIds = useSavedIds();
-  const savedPosts = feed.filter((p) => savedIds.includes(p.id));
+  const savedPosts = homeFeed.filter((p) => savedIds.includes(p.id));
   const savedHot = useSavedHot();
   return (
     <MobileShell>
@@ -284,22 +283,25 @@ function Home() {
           <EventsFeed loading={eventsQ.isLoading} events={eventsQ.data ?? []} compact={compact} />
         ) : sort === "saved" ? (
           savedPosts.length === 0 && savedHot.length === 0 ? (
-            <>
-              <p className="px-5 pb-2 text-[11px] text-ink-muted">Demo saved posts</p>
-              {homeFeed.slice(0, 3).map((p) => <PostCard key={`demo-saved-${p.id}`} post={p} />)}
-            </>
+            <p className="px-5 py-10 text-center text-[13px] text-ink-muted">
+              Save posts and hot stories to find them here.
+            </p>
           ) : (
             <>
               {savedHot.length > 0 ? <SavedHotList items={savedHot} compact={compact} /> : null}
-              {savedPosts.map((p) => <PostCard key={p.id} post={p} />)}
+              {savedPosts.map((p) => (
+                <PostCard key={p.id} post={p} community={communityMap.get(p.communitySlug)} />
+              ))}
             </>
           )
         ) : (
           <>
             {sort === "following" ? (
-              <p className="px-5 pb-2 text-[11px] text-ink-muted">Demo feed from people you follow</p>
+              <p className="px-5 pb-2 text-[11px] text-ink-muted">Questions from communities you join</p>
             ) : null}
-            {homeFeed.map((p) => <PostCard key={p.id} post={p} />)}
+            {homeFeed.map((p) => (
+              <PostCard key={p.id} post={p} community={communityMap.get(p.communitySlug)} />
+            ))}
           </>
         )}
       </div>

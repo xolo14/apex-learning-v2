@@ -38,7 +38,7 @@ export async function ensureLegacyPostComments(s: Sql) {
   const orphans = (await s`
     SELECT id, created_at::text AS created_at
     FROM questions q
-    WHERE (q.id LIKE 'seed_q_%' OR q.id LIKE 'virt_q_%')
+    WHERE q.id LIKE 'virt_q_%'
       AND NOT EXISTS (SELECT 1 FROM post_comments pc WHERE pc.post_id = q.id)
     ORDER BY created_at ASC
     LIMIT 120

@@ -4,20 +4,25 @@ import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { KIND_BUCKET, KIND_LABEL, type Post } from "@/lib/feed-data";
-import { displayCommunityForSlug } from "@/lib/community-display";
+import { displayCommunityForSlug, type DisplayCommunity } from "@/lib/community-display";
 import { CommunityIcon } from "@/components/community-icon";
 import { UserAvatar } from "@/lib/identity";
 import { useDensity } from "@/lib/density";
 import { votePost } from "@/lib/questions.functions";
 import { useSaved } from "@/lib/saved";
 
-export function PostCard({ post }: { post: Post }) {
-  const community = displayCommunityForSlug(post.communitySlug);
+export function PostCard({
+  post,
+  community: communityProp,
+}: {
+  post: Post;
+  community?: DisplayCommunity;
+}) {
+  const community = communityProp ?? displayCommunityForSlug(post.communitySlug);
   const { density } = useDensity();
   const compact = density === "compact";
   const bucket = KIND_BUCKET[post.kind];
   const kindLabel = KIND_LABEL[post.kind];
-  const avatarSize = compact ? "h-7 w-7" : "h-9 w-9";
   const vote = useServerFn(votePost);
   const qc = useQueryClient();
   const [myVote, setMyVote] = useState<number>(0);
@@ -60,6 +65,7 @@ export function PostCard({ post }: { post: Post }) {
       setVotes(post.votes);
     }
   }
+
   return (
     <article
       className={
@@ -67,43 +73,46 @@ export function PostCard({ post }: { post: Post }) {
         (compact ? "px-4 pb-2.5 pt-3" : "px-5 pb-4 pt-5")
       }
     >
-      <header className={"flex items-center " + (compact ? "gap-2" : "gap-2.5")}>
-        <UserAvatar
-          uniqueId={post.unique_id || post.author}
-          className={"shrink-0 " + avatarSize}
-        />
-        <span className="flex min-w-0 flex-col leading-tight">
+      <header className={"flex items-start " + (compact ? "gap-2" : "gap-2.5")}>
+        <Link to="/c/$slug" params={{ slug: post.communitySlug }} className="shrink-0">
+          <CommunityIcon
+            icon={community.icon}
+            tint={community.tint}
+            imageUrl={community.image_url}
+            size={compact ? "sm" : "md"}
+            strokeWidth={1.75}
+          />
+        </Link>
+        <span className="min-w-0 flex-1 leading-tight">
           <Link
             to="/c/$slug"
             params={{ slug: post.communitySlug }}
-            className="flex items-center gap-1.5 truncate text-[13px] font-medium tracking-tight text-foreground"
+            className="truncate text-[13px] font-semibold tracking-tight text-foreground"
           >
-            <CommunityIcon icon={community.icon} tint={community.tint} size="xs" strokeWidth={2} />
-            c/{community.slug ?? post.communitySlug}
+            c/{community.slug}
           </Link>
-          {compact ? null : (
-            <span className="flex items-center gap-1 truncate text-[11px] text-ink-muted">
-              <span className="truncate">{post.unique_id}</span>
-              <span>·</span>
-              <span>{post.time}</span>
-            </span>
-          )}
+          <span className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-ink-muted">
+            <UserAvatar uniqueId={post.unique_id || post.author} className="h-4 w-4 shrink-0" />
+            <span className="truncate font-medium text-foreground/80">{post.unique_id}</span>
+            <span>·</span>
+            <span>{post.time}</span>
+          </span>
         </span>
         <span
-            className={
-              "ml-auto rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.12em] " +
-              (bucket === "signal"
-                ? "bg-foreground/[0.06] text-foreground"
-                : bucket === "light"
-                  ? "bg-orange/10 text-orange"
-                  : "bg-surface text-ink-muted")
-            }
-          >
-            {kindLabel}
-          </span>
+          className={
+            "shrink-0 rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.12em] " +
+            (bucket === "signal"
+              ? "bg-foreground/[0.06] text-foreground"
+              : bucket === "light"
+                ? "bg-orange/10 text-orange"
+                : "bg-surface text-ink-muted")
+          }
+        >
+          {kindLabel}
+        </span>
       </header>
 
-      <Link to="/p/$id" params={{ id: post.id }} className={compact ? "mt-2 block" : "mt-4 block"}>
+      <Link to="/p/$id" params={{ id: post.id }} className={compact ? "mt-2 block" : "mt-3 block"}>
         <h3
           className={
             "font-semibold tracking-tight text-foreground " +
@@ -123,7 +132,11 @@ export function PostCard({ post }: { post: Post }) {
 
       <footer className={"flex items-center text-[12px] text-ink-muted " + (compact ? "mt-2" : "mt-4")}>
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); cast(1); }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cast(1);
+          }}
           aria-label="Upvote"
           className={
             "inline-flex items-center gap-1.5 rounded-full active:scale-95 " +
@@ -132,12 +145,21 @@ export function PostCard({ post }: { post: Post }) {
           }
         >
           <ArrowUp strokeWidth={2} className="h-[14px] w-[14px]" />
-          <span className={"text-[12px] font-medium tabular-nums " + (myVote === 1 ? "text-forest" : "text-foreground")}>
+          <span
+            className={
+              "text-[12px] font-medium tabular-nums " +
+              (myVote === 1 ? "text-forest" : "text-foreground")
+            }
+          >
             {formatNumber(votes)}
           </span>
         </button>
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); cast(-1); }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cast(-1);
+          }}
           aria-label="Downvote"
           className={
             "ml-1.5 inline-flex items-center rounded-full active:scale-95 " +
@@ -161,13 +183,15 @@ export function PostCard({ post }: { post: Post }) {
         {compact ? (
           <span className="ml-auto text-[11px] text-ink-muted">{post.time}</span>
         ) : (
-        <div className="ml-auto flex items-center gap-1">
-          <button aria-label="Share" className="grid h-8 w-8 place-items-center rounded-full text-ink-muted active:bg-surface">
-            <Share2 strokeWidth={1.75} className="h-[14px] w-[14px]" />
-          </button>
-          <BookmarkButton postId={post.id} />
-
-        </div>
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              aria-label="Share"
+              className="grid h-8 w-8 place-items-center rounded-full text-ink-muted active:bg-surface"
+            >
+              <Share2 strokeWidth={1.75} className="h-[14px] w-[14px]" />
+            </button>
+            <BookmarkButton postId={post.id} />
+          </div>
         )}
       </footer>
     </article>

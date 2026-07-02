@@ -19,7 +19,6 @@ import { PostCard } from "@/components/post-card";
 import { PriceCoinBadges } from "@/components/price-coin-badges";
 import {
   communityBySlug,
-  posts,
   type Post,
   type PostKind,
 } from "@/lib/feed-data";
@@ -100,17 +99,8 @@ function CommunityPage() {
   const { icon: Icon, name, about, image_url: imageUrl, members, online, tint } = display;
 
   const communityPosts = useMemo(() => {
-    const fromDb = (questionsQ.data ?? []).map(questionToPost);
-    const fromStatic = posts.filter((p) => p.communitySlug === slug);
-    const seen = new Set<string>();
-    const merged: Post[] = [];
-    for (const p of [...fromDb, ...fromStatic]) {
-      if (seen.has(p.id)) continue;
-      seen.add(p.id);
-      merged.push(p);
-    }
-    return merged;
-  }, [questionsQ.data, slug]);
+    return (questionsQ.data ?? []).map(questionToPost);
+  }, [questionsQ.data]);
 
   const pinnedPosts = useMemo(
     () =>
@@ -271,7 +261,7 @@ function CommunityPage() {
           ) : (
             <div>
               {feedPosts.map((p) => (
-                <PostCard key={p.id} post={p} />
+                <PostCard key={p.id} post={p} community={display} />
               ))}
             </div>
           )}

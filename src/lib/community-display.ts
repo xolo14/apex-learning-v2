@@ -56,6 +56,19 @@ export function buildCommunityList(approved: DbCommunityRow[]): DisplayCommunity
   });
 }
 
+export function resolveCommunityDisplay(
+  slug: string,
+  map?: Map<string, DisplayCommunity>,
+  dbRow?: DbCommunityRow | null,
+): DisplayCommunity {
+  if (map?.has(slug)) return map.get(slug)!;
+  return displayCommunityForSlug(slug, dbRow);
+}
+
+export function communityDisplayMap(list: DisplayCommunity[]): Map<string, DisplayCommunity> {
+  return new Map(list.map((c) => [c.slug, c]));
+}
+
 export function displayCommunityForSlug(
   slug: string,
   dbRow?: DbCommunityRow | null,

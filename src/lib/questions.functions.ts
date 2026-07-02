@@ -40,6 +40,7 @@ export const listNewQuestions = createServerFn({ method: "GET" }).handler(async 
            created_at, hidden
     FROM questions
     WHERE hidden = false
+      AND id NOT LIKE 'seed_%'
     ORDER BY created_at DESC
     LIMIT 150
   `) as DbQuestion[];
@@ -77,9 +78,13 @@ export const listCommunityQuestions = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { sql } = await import("./db.server");
     const rows = (await sql()`
-      SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
+      SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes,
+             (SELECT COUNT(*)::int FROM post_comments pc WHERE pc.post_id = questions.id) AS comments,
+             created_at, hidden
       FROM questions
-      WHERE hidden = false AND community_slug = ${data.slug}
+      WHERE hidden = false
+        AND community_slug = ${data.slug}
+        AND id NOT LIKE 'seed_%'
       ORDER BY created_at DESC
       LIMIT 100
     `) as DbQuestion[];
