@@ -1,9 +1,9 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { ChevronLeft, ArrowDownLeft, ArrowUpRight, Sparkles, Wallet, Banknote, X } from "lucide-react";
+import { ChevronLeft, ArrowDownLeft, ArrowUpRight, Sparkles, Wallet, Banknote, X, Gift } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MobileShell, MobileHeader } from "@/components/mobile-shell";
 import { CoinsCard } from "@/components/coins-card";
-import { useCoinBalance } from "@/lib/use-coin-balance";
+import { useCoinDisplay } from "@/lib/use-coin-display";
 import { useEarningsEnabled, useWithdrawEnabled } from "@/lib/use-feature-flags";
 import { pageHead } from "@/lib/seo";
 
@@ -30,6 +30,17 @@ const ACTION_LABELS: Record<string, string> = {
   internshipApplied: "Internship applied",
 };
 
+function labelForAction(key: string): string {
+  if (ACTION_LABELS[key]) return ACTION_LABELS[key];
+  if (key.startsWith("daily:")) return "Daily check-in";
+  if (key.startsWith("mission:quiz:")) return "Quiz mission";
+  if (key.startsWith("mission:ask:")) return "Ask mission";
+  if (key.startsWith("mission:event:")) return "Event mission";
+  if (key.startsWith("mission:certify:")) return "Certification mission";
+  if (key.startsWith("mission:all-complete:")) return "Perfect day bonus";
+  return key.replace(/_/g, " ");
+}
+
 function timeAgoShort(iso: string) {
   const d = Date.now() - new Date(iso).getTime();
   const m = Math.floor(d / 60000);
@@ -42,7 +53,7 @@ function timeAgoShort(iso: string) {
 
 function CoinsPage() {
   const [name, setName] = useState("You");
-  const { balance, entries } = useCoinBalance();
+  const { balance, claimable, claimableToday, entries } = useCoinDisplay();
   const withdrawEnabled = useWithdrawEnabled();
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [amount, setAmount] = useState("");
@@ -86,7 +97,28 @@ function CoinsPage() {
       />
 
       <div className="px-5 pt-5">
-        <CoinsCard name={name} balance={balance} />
+        <CoinsCard
+          name={name}
+          balance={balance}
+          claimable={claimable}
+          claimableToday={claimableToday}
+        />
+
+        {claimable > 0 ? (
+          <Link
+            to="/"
+            className="mt-3 flex items-center gap-3 rounded-2xl border border-orange/25 bg-gradient-to-r from-orange/10 to-amber-50 px-4 py-3 active:opacity-90"
+          >
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-orange text-white">
+              <Gift strokeWidth={1.75} className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-semibold text-foreground">+{claimable} waiting on home</div>
+              <div className="text-[11px] text-ink-muted">Claim your daily check-in to move coins into your wallet</div>
+            </div>
+            <span className="text-[12px] font-semibold text-orange">Claim →</span>
+          </Link>
+        ) : null}
 
         {withdrawEnabled && (
         <button
@@ -156,7 +188,7 @@ function CoinsPage() {
                   </span>
                   <div className="min-w-0">
                     <div className="truncate text-[13.5px] font-medium tracking-tight text-foreground">
-                      {ACTION_LABELS[a.action_key] ?? a.action_key}
+                      {labelForAction(a.action_key)}
                     </div>
                     <div className="text-[11px] text-ink-muted">{timeAgoShort(a.created_at)} ago</div>
                   </div>

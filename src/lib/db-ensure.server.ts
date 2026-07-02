@@ -200,6 +200,11 @@ export function ensureSchema() {
         updated_at timestamptz DEFAULT now()
       )
     `;
+    await s`
+      INSERT INTO feature_flags (key, enabled, updated_at)
+      VALUES ('earnings', true, now())
+      ON CONFLICT (key) DO UPDATE SET enabled = true, updated_at = now()
+    `;
 
     // -------- Event RSVPs (server-validated; coins credited only here) --------
     await s`

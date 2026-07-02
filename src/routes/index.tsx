@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X, MapPin, Trophy } from "lucide-react";
-import goldCoin from "@/assets/syncpedia-gold-coin.png";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -19,7 +18,8 @@ import { fetchQuestionsFeed } from "@/lib/questions-feed-client";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
-import { useCoinBalance } from "@/lib/use-coin-balance";
+import { CoinPill } from "@/components/coin-pill";
+import { useCoinDisplay } from "@/lib/use-coin-display";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { DailyEngagementHub } from "@/components/daily-engagement-hub";
 import { setHomeTab, type HomeTab } from "@/lib/home-tab";
@@ -47,7 +47,7 @@ const sorts = [
 function Home() {
   const qc = useQueryClient();
   const identity = useIdentity();
-  const { balance: coinBalance } = useCoinBalance();
+  const coins = useCoinDisplay();
   const earningsEnabled = useEarningsEnabled();
   const [sort, setSortState] = useState<HomeTab>("questions");
   const setSort = (v: HomeTab) => {
@@ -144,14 +144,7 @@ function Home() {
               />
             </Link>
             {earningsEnabled ? (
-              <Link
-                to="/coins"
-                aria-label="Open coins"
-                className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-1.5 text-[12px] font-semibold text-background active:scale-95"
-              >
-                <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-                {coinBalance.toLocaleString()}
-              </Link>
+              <CoinPill amount={coins.headerAmount} mode={coins.mode} />
             ) : null}
           </div>
 

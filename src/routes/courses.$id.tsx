@@ -7,17 +7,23 @@ import { CertificationClassroomView } from "@/components/certification-classroom
 import { CertificationDetailView } from "@/components/certification-detail-view";
 import { MobileShell } from "@/components/mobile-shell";
 import {
+  ActionToast,
+  isProfileSetupError,
+  ProfileRequiredPrompt,
+} from "@/components/profile-required-prompt";
+import {
   confirmCoursePayment,
   enrollInCourse,
   getCourse,
   getMyCourseEnrollment,
 } from "@/lib/communities.functions";
+import { useServerProfile, ensureDeviceProfileLinked, readCachedProfileHints } from "@/lib/use-server-profile";
 import { certificationMeta } from "@/lib/certification-meta";
 import { useIdentity } from "@/lib/identity";
+import { DEVICE_KEY, openOnboarding, readCachedProfile } from "@/lib/session";
+import { getProfileByDevice, resumeProfileSession } from "@/lib/profiles.functions";
 import { useCoinBalance } from "@/lib/use-coin-balance";
 import { pageHead } from "@/lib/seo";
-
-const DEVICE_KEY = "syncpedia_device_key";
 
 export const Route = createFileRoute("/courses/$id")({
   head: ({ params }) =>
@@ -44,11 +50,19 @@ function CertificationDetailPage() {
 
   const fetchCourse = useServerFn(getCourse);
   const fetchEnroll = useServerFn(getMyCourseEnrollment);
+  const fetchProfile = useServerFn(getProfileByDevice);
+  const resumeProfile = useServerFn(resumeProfileSession);
   const enroll = useServerFn(enrollInCourse);
   const confirmPay = useServerFn(confirmCoursePayment);
 
   const deviceKey =
     typeof window !== "undefined" ? localStorage.getItem(DEVICE_KEY) ?? "" : "";
+
+  const profileQ = useServerProfile();
+  const hasServerProfile = !!profileQ.data;
+  const hints = readCachedProfileHints();
+  const cachedUid = identity.uniqueId ?? hints.uniqueId ?? null;
+  const canTryEnroll = !!deviceKey && (!!cachedUid || !!hints.gmail);
 
   const courseQ = useQuery({
     queryKey: ["course", id],
@@ -57,19 +71,44 @@ function CertificationDetailPage() {
 
   const enrollQ = useQuery({
     queryKey: ["course-enroll", id, deviceKey],
-    queryFn: () => fetchEnroll({ data: { courseId: id, deviceKey } }),
+    queryFn: () =>
+      fetchEnroll({
+        data: {
+          courseId: id,
+          deviceKey,
+          uniqueId: cachedUid ?? undefined,
+          gmail: hints.gmail,
+        },
+      }),
     enabled: !!deviceKey,
   });
 
   const enrollM = useMutation({
-    mutationFn: () => enroll({ data: { courseId: id, deviceKey } }),
+    mutationFn: async () => {
+      await ensureDeviceProfileLinked(
+        deviceKey,
+        cachedUid,
+        fetchProfile,
+        resumeProfile,
+      );
+      return enroll({
+        data: {
+          courseId: id,
+          deviceKey,
+          uniqueId: cachedUid ?? undefined,
+          gmail: hints.gmail,
+        },
+      });
+    },
     onSuccess: async (res) => {
       setToast(res.message);
+      await profileQ.refetch();
       await qc.refetchQueries({ queryKey: ["course-enroll", id] });
       refetchCoins();
     },
     onError: (err) => {
-      setToast(err instanceof Error ? err.message : "Could not enroll.");
+      const msg = err instanceof Error ? err.message : "Could not enroll.";
+      setToast(msg);
     },
   });
 
@@ -194,12 +233,36 @@ function CertificationDetailPage() {
         onPreviewPlay={openPreview}
       />
 
-      {toast ? (
-        <p className="fixed inset-x-0 bottom-28 z-40 text-center text-[12px] text-ink-muted">{toast}</p>
+      {toast && isProfileSetupError(toast) ? (
+        <ActionToast
+          message={
+            cachedUid
+              ? `Still connecting ${cachedUid} to this device. Open Settings and sign in with Google once, then try again.`
+              : "You need a Syncpedia profile before enrolling in certifications."
+          }
+          actionLabel={cachedUid ? "Open settings" : "Set up profile"}
+          onAction={() => {
+            setToast(null);
+            if (cachedUid) {
+              window.location.href = "/settings";
+            } else {
+              openOnboarding();
+            }
+          }}
+          onDismiss={() => setToast(null)}
+          variant="profile"
+        />
+      ) : toast ? (
+        <ActionToast message={toast} onDismiss={() => setToast(null)} />
       ) : null}
 
       <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-[480px] border-t border-hairline bg-background/95 px-5 py-4 backdrop-blur pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {!identity.uniqueId ? (
+        {!hasServerProfile && !profileQ.isLoading && !isConfirmed ? (
+          <div className="mb-3">
+            <ProfileRequiredPrompt uniqueId={identity.uniqueId} />
+          </div>
+        ) : null}
+        {!identity.uniqueId && hasServerProfile ? (
           <p className="mb-2 text-center text-[11px] text-ink-muted">Sign in to get class access</p>
         ) : null}
         <div className="flex items-center justify-between gap-3">
@@ -247,11 +310,11 @@ function CertificationDetailPage() {
           ) : (
             <button
               type="button"
-              disabled={!deviceKey || !identity.uniqueId || enrollM.isPending}
+              disabled={!canTryEnroll || enrollM.isPending || profileQ.isLoading}
               onClick={() => enrollM.mutate()}
               className="rounded-full bg-orange px-6 py-3 text-[14px] font-semibold text-white disabled:opacity-40"
             >
-              {enrollM.isPending
+              {enrollM.isPending || profileQ.isLoading
                 ? "…"
                 : isFree
                   ? "Get free access"

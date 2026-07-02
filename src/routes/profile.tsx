@@ -10,7 +10,7 @@ import type { Post, PostKind } from "@/lib/feed-data";
 import { posts as demoPosts } from "@/lib/feed-data";
 import { useIdentity, IdentityAvatar } from "@/lib/identity";
 import { listMyQuestions, type DbQuestion } from "@/lib/questions.functions";
-import { useCoinBalance } from "@/lib/use-coin-balance";
+import { useCoinDisplay } from "@/lib/use-coin-display";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { DEVICE_KEY } from "@/lib/session";
 import { getEngagementHub } from "@/lib/engagement.functions";
@@ -111,7 +111,7 @@ function ProfilePage() {
   });
 
   const mapped = useMemo(() => (myPosts.data ?? []).map(toPost), [myPosts.data]);
-  const { balance: coinBalance } = useCoinBalance();
+  const coins = useCoinDisplay();
   const earningsEnabled = useEarningsEnabled();
   const fetchHub = useServerFn(getEngagementHub);
   const hubQ = useQuery({
@@ -252,7 +252,12 @@ function ProfilePage() {
         ) : null}
         {earningsEnabled ? (
           <Link to="/coins" className="mt-5 block active:scale-[0.99] transition-transform">
-            <CoinsCard name={profileName} balance={coinBalance} />
+            <CoinsCard
+              name={profileName}
+              balance={coins.balance}
+              claimable={coins.claimable}
+              claimableToday={coins.claimableToday}
+            />
           </Link>
         ) : null}
       </section>

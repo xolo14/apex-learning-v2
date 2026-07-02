@@ -47,6 +47,8 @@ export type EngagementHub = {
   allMissionsComplete: boolean;
   perfectDayClaimed: boolean;
   coinsLeftToday: number;
+  /** Unclaimed check-in + any ready rewards not yet in the ledger. */
+  claimableCoins: number;
   stats: {
     quizzesCompleted: number;
     questionsAsked: number;
@@ -86,6 +88,7 @@ export const getEngagementHub = createServerFn({ method: "GET" })
       allMissionsComplete: false,
       perfectDayClaimed: false,
       coinsLeftToday: 0,
+      claimableCoins: 0,
       stats: { quizzesCompleted: 0, questionsAsked: 0, eventsAttended: 0, coinBalance: 0 },
     };
 
@@ -266,11 +269,14 @@ export const getEngagementHub = createServerFn({ method: "GET" })
         return { ...a, unlocked };
       });
 
+      const checkInReward = streakCoins(Math.max(1, checkedInToday ? streak : streak + 1));
+      const claimableCoins = checkedInToday ? 0 : checkInReward;
+
       return {
         streak,
         longestStreak,
         checkedInToday,
-        checkInReward: streakCoins(Math.max(1, checkedInToday ? streak : streak + 1)),
+        checkInReward,
         level: prog.level,
         levelTitle: prog.title,
         xp: prog.xp,
@@ -291,6 +297,7 @@ export const getEngagementHub = createServerFn({ method: "GET" })
         allMissionsComplete,
         perfectDayClaimed,
         coinsLeftToday,
+        claimableCoins,
         stats: {
           quizzesCompleted: quizCount,
           questionsAsked: questionCount,

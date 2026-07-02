@@ -8,7 +8,7 @@ import {
   MapPin,
   ArrowUpRight,
 } from "lucide-react";
-import goldCoin from "@/assets/syncpedia-gold-coin.png";
+import { CoinPill } from "@/components/coin-pill";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -17,7 +17,7 @@ import { PriceCoinBadges } from "@/components/price-coin-badges";
 import { listGigs } from "@/lib/communities.functions";
 import { listQuizzes } from "@/lib/social.functions";
 import { QUIZ_BANK_LIST, QUIZ_DIFFICULTY_LABEL } from "@/lib/quiz-bank";
-import { useCoinBalance } from "@/lib/use-coin-balance";
+import { useCoinDisplay } from "@/lib/use-coin-display";
 import { useEarningsEnabled } from "@/lib/use-feature-flags";
 import { pageHead } from "@/lib/seo";
 
@@ -47,7 +47,7 @@ function isInteractiveTarget(el: EventTarget | null) {
 function EarnPage() {
   const { tab } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { balance: coinBalance } = useCoinBalance();
+  const coins = useCoinDisplay();
   const setTab = (t: "quizzes" | "gigs") =>
     navigate({ search: { tab: t }, replace: true });
 
@@ -104,16 +104,7 @@ function EarnPage() {
             <ChevronLeft strokeWidth={1.75} className="h-[18px] w-[18px]" />
           </Link>
         }
-        right={
-          <Link
-            to="/coins"
-            aria-label="View coins"
-            className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-[12px] font-semibold text-background active:scale-95"
-          >
-            <img src={goldCoin} alt="" className="h-[14px] w-[14px] object-contain" />
-            {coinBalance.toLocaleString()}
-          </Link>
-        }
+        right={<CoinPill amount={coins.headerAmount} mode={coins.mode} />}
       />
 
       <div className="px-5 pt-4">

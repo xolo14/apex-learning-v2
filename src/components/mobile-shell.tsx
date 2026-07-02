@@ -166,8 +166,8 @@ type Tab = { to: string; label: string; icon: IconType; search?: Record<string, 
 const tabs: Tab[] = [
   { to: "/", label: "Home", icon: HomeIcon },
   { to: "/communities", label: "Network", icon: UserGroupIcon },
-  { to: "/courses", label: "Internship", icon: BriefcaseIcon, search: { tab: "certifications" } },
-  { to: "/quizzes", label: "Earnings", icon: WalletIcon },
+  { to: "/courses", label: "Learn", icon: BriefcaseIcon, search: { tab: "certifications" } },
+  { to: "/quizzes", label: "Earn", icon: WalletIcon },
 ];
 
 function BottomTabs() {

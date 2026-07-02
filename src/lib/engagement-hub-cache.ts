@@ -45,6 +45,7 @@ export function optimisticEngagementHub(): EngagementHub {
     allMissionsComplete: false,
     perfectDayClaimed: false,
     coinsLeftToday: MISSION_REWARDS.quiz + MISSION_REWARDS.ask + MISSION_REWARDS.event + MISSION_REWARDS.certify + streakCoins(1) + DAILY_COMPLETE_BONUS_COINS,
+    claimableCoins: streakCoins(1),
     stats: { quizzesCompleted: 0, questionsAsked: 0, eventsAttended: 0, coinBalance: 0 },
   };
 }

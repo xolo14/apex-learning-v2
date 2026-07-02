@@ -292,29 +292,37 @@ async function resolveCourse(s: Awaited<ReturnType<typeof db>>, courseId: string
 }
 
 export const getMyCourseEnrollment = createServerFn({ method: "POST" })
-  .inputValidator((d: { courseId: string; deviceKey: string }) => d)
+  .inputValidator((d: { courseId: string; deviceKey: string; uniqueId?: string; gmail?: string }) => d)
   .handler(async ({ data }) => {
     const { isValidDeviceKey } = await import("./security.server");
     if (!isValidDeviceKey(data.deviceKey)) return null;
     const s = await db();
-    const profiles = (await s`
-      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
-    `) as { unique_id: string }[];
-    const uid = profiles[0]?.unique_id;
-    if (!uid) return null;
+    const { resolveProfileForDevice } = await import("./profile-auth.server");
+    const profile = await resolveProfileForDevice(
+      s,
+      data.deviceKey,
+      data.uniqueId,
+      data.gmail,
+    );
+    if (!profile) return null;
     const rows = (await s`
       SELECT id, course_id, user_unique_id, status, price_snapshot, coins_credited, created_at
       FROM course_enrollments
-      WHERE course_id = ${data.courseId} AND user_unique_id = ${uid}
+      WHERE course_id = ${data.courseId} AND user_unique_id = ${profile.unique_id}
       LIMIT 1
     `) as CourseEnrollment[];
     return rows[0] ?? null;
   });
 
 export const enrollInCourse = createServerFn({ method: "POST" })
-  .inputValidator((d: { courseId: string; deviceKey: string }) => {
+  .inputValidator((d: { courseId: string; deviceKey: string; uniqueId?: string; gmail?: string }) => {
     if (!d.courseId?.trim()) throw new Error("courseId required");
-    return { courseId: d.courseId.trim().slice(0, 80), deviceKey: d.deviceKey };
+    return {
+      courseId: d.courseId.trim().slice(0, 80),
+      deviceKey: d.deviceKey,
+      uniqueId: d.uniqueId?.trim().toUpperCase(),
+      gmail: d.gmail?.trim(),
+    };
   })
   .handler(async ({ data }) => {
     const { isValidDeviceKey, rateLimit } = await import("./security.server");
@@ -322,11 +330,18 @@ export const enrollInCourse = createServerFn({ method: "POST" })
     rateLimit(`course-enroll:${data.deviceKey}`, 8, 60_000);
 
     const s = await db();
-    const profiles = (await s`
-      SELECT unique_id FROM profiles WHERE device_key = ${data.deviceKey} LIMIT 1
-    `) as { unique_id: string }[];
-    const profile = profiles[0];
-    if (!profile) throw new Error("Create your Syncpedia profile before enrolling.");
+    const { resolveProfileForDevice } = await import("./profile-auth.server");
+    const profile = await resolveProfileForDevice(
+      s,
+      data.deviceKey,
+      data.uniqueId,
+      data.gmail,
+    );
+    if (!profile) {
+      throw new Error(
+        "We could not find your Syncpedia profile on this device. Open Settings and sign in with Google, then try again.",
+      );
+    }
 
     const course = await resolveCourse(s, data.courseId);
     if (!course) throw new Error("Course not found.");

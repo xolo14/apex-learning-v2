@@ -37,6 +37,23 @@ export function clearLocalSession() {
 }
 
 export const SIGNED_OUT_EVENT = "syncpedia:signed-out";
+export const OPEN_ONBOARDING_EVENT = "syncpedia:open-onboarding";
+export const FORCE_ONBOARDING_KEY = "syncpedia:force-onboarding";
+
+/** Re-open signup when an action needs a server-side profile. */
+export function openOnboarding() {
+  if (typeof window === "undefined") return;
+  clearSignedOutFlag();
+  sessionStorage.setItem(FORCE_ONBOARDING_KEY, "1");
+  window.dispatchEvent(new CustomEvent(OPEN_ONBOARDING_EVENT));
+}
+
+export function consumeForceOnboarding(): boolean {
+  if (typeof window === "undefined") return false;
+  if (sessionStorage.getItem(FORCE_ONBOARDING_KEY) !== "1") return false;
+  sessionStorage.removeItem(FORCE_ONBOARDING_KEY);
+  return true;
+}
 
 /** Instant client sign-out — dispatches event so UI updates without a full reload. */
 export function signOutLocally() {

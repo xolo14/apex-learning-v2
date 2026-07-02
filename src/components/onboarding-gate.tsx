@@ -20,6 +20,8 @@ import {
   PROFILE_CACHE,
   INTERESTS_KEY,
   SIGNED_OUT_EVENT,
+  OPEN_ONBOARDING_EVENT,
+  consumeForceOnboarding,
   getOrCreateDeviceKey,
   isSignedOut,
   clearSignedOutFlag,
@@ -163,8 +165,19 @@ export function OnboardingGate() {
         department: "",
       });
     };
+    const onOpenOnboarding = () => {
+      setProfile(null);
+      setScreen("welcome");
+      setStep(0);
+      setAuthReady(true);
+      document.documentElement.setAttribute("data-auth-gate", "open");
+    };
     window.addEventListener(SIGNED_OUT_EVENT, onSignedOut);
-    return () => window.removeEventListener(SIGNED_OUT_EVENT, onSignedOut);
+    window.addEventListener(OPEN_ONBOARDING_EVENT, onOpenOnboarding);
+    return () => {
+      window.removeEventListener(SIGNED_OUT_EVENT, onSignedOut);
+      window.removeEventListener(OPEN_ONBOARDING_EVENT, onOpenOnboarding);
+    };
   }, []);
 
   useEffect(() => {
@@ -177,7 +190,8 @@ export function OnboardingGate() {
     }
 
     const cached = readCachedProfile();
-    if (cached) {
+    const forceOnboarding = consumeForceOnboarding();
+    if (cached && !forceOnboarding) {
       setUniqueId(cached.unique_id);
       const prefs = avatarPrefsFromProfile(cached);
       applyAvatar(prefs.icon, prefs.color);
@@ -191,7 +205,7 @@ export function OnboardingGate() {
     const key = getOrCreateDeviceKey();
 
     fetchProfileRef
-      .current({ data: { deviceKey: key } })
+      .current({ data: { deviceKey: key, uniqueId: cached?.unique_id } })
       .then(async (serverProfile) => {
         if (!alive || isSignedOut()) return;
 

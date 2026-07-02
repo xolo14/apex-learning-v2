@@ -3,11 +3,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { getCoinBalance } from "@/lib/coins.functions";
 import { engagementQueryKeys } from "@/lib/engagement-sync";
 import { useResolvedUniqueId } from "@/lib/identity";
-import { DEVICE_KEY } from "@/lib/session";
+import { DEVICE_KEY, readCachedProfile } from "@/lib/session";
 import { readCachedEngagementHub, writeCachedEngagementHub } from "@/lib/engagement-hub-cache";
 
 export function useCoinBalance() {
-  const uid = useResolvedUniqueId();
+  const uid = useResolvedUniqueId() ?? readCachedProfile()?.unique_id ?? null;
   const fn = useServerFn(getCoinBalance);
   const q = useQuery({
     queryKey: engagementQueryKeys.coins(uid ?? "anon"),

@@ -8,6 +8,7 @@ import {
   rateLimitAuth,
   requireAdmin,
 } from "./security.server";
+import { isValidUniqueId } from "./profile-ids";
 
 export type DbProfile = {
   id: string;
@@ -164,22 +165,33 @@ export const checkContactExists = createServerFn({ method: "POST" })
     return { exists: false as const };
   });
 
-export const getProfileByDevice = createServerFn({ method: "GET" })
-  .inputValidator((d: { deviceKey: string }) => {
+export const getProfileByDevice = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceKey: string; uniqueId?: string; gmail?: string }) => {
     if (!isValidDeviceKey(d.deviceKey)) throw new Error("Invalid device key");
-    return d;
+    const uniqueId = d.uniqueId?.trim().toUpperCase();
+    const gmail = d.gmail?.trim();
+    return { deviceKey: d.deviceKey, uniqueId: uniqueId || undefined, gmail: gmail || undefined };
   })
   .handler(async ({ data }) => {
     const { getDb } = await import("./db-access.server");
+    const { resolveProfileForDevice } = await import("./profile-auth.server");
     const s = await getDb();
     if (!s) throw new Error("Database unavailable — try again shortly.");
+
+    const linked = await resolveProfileForDevice(
+      s,
+      data.deviceKey,
+      data.uniqueId,
+      data.gmail,
+    );
+    if (!linked) return null;
+
     const rows = (await s`
       SELECT id, device_key, name, mobile, gmail, year, college, role, unique_id, company, experience, branch, department,
              COALESCE(avatar_icon, '') AS avatar_icon, COALESCE(avatar_color, '') AS avatar_color,
              COALESCE(google_sub, '') AS google_sub, created_at
       FROM profiles
-      WHERE device_key = ${data.deviceKey} AND device_key NOT LIKE 'unlinked_%'
-      ORDER BY created_at DESC
+      WHERE unique_id = ${linked.unique_id}
       LIMIT 1
     `) as DbProfile[];
     if (rows[0]) await ensureSignupBonus(s, rows[0].unique_id);
@@ -330,7 +342,7 @@ export const resumeProfileSession = createServerFn({ method: "POST" })
   .inputValidator((d: { deviceKey: string; uniqueId: string }) => {
     if (!isValidDeviceKey(d.deviceKey)) throw new Error("Device key required");
     const uniqueId = String(d.uniqueId ?? "").trim().toUpperCase();
-    if (!/^SP-[A-Z0-9]{6}$/.test(uniqueId)) throw new Error("Invalid profile id");
+    if (!isValidUniqueId(uniqueId)) throw new Error("Invalid profile id");
     return { deviceKey: d.deviceKey, uniqueId };
   })
   .handler(async ({ data }) => {
@@ -339,16 +351,17 @@ export const resumeProfileSession = createServerFn({ method: "POST" })
 
     const { sql } = await import("./db.server");
     const { ensureSchema } = await import("./db-ensure.server");
+    const { resolveProfileForDevice } = await import("./profile-auth.server");
     await ensureSchema();
 
-    const rows = (await sql()`
-      SELECT id FROM profiles WHERE unique_id = ${data.uniqueId} LIMIT 1
-    `) as { id: string }[];
-    if (!rows[0]) return null;
+    const linked = await resolveProfileForDevice(sql(), data.deviceKey, data.uniqueId);
+    if (!linked) return null;
 
-    await claimDeviceKey(sql, rows[0].id, data.deviceKey);
-    const profile = await loadProfileById(sql, rows[0].id);
-    if (profile) await ensureSignupBonus(sql, profile.unique_id);
+    const idRows = (await sql()`
+      SELECT id FROM profiles WHERE unique_id = ${linked.unique_id} LIMIT 1
+    `) as { id: string }[];
+    const profile = idRows[0] ? await loadProfileById(sql(), idRows[0].id) : null;
+    if (profile) await ensureSignupBonus(sql(), profile.unique_id);
     return profile;
   });
 

@@ -122,10 +122,13 @@ export function DailyEngagementHub() {
       ) : null}
 
       <div
-        className={`border-y border-hairline bg-gradient-to-b from-surface/50 to-background transition-opacity ${hubRefreshing ? "opacity-85" : ""}`}
+        className={`border-y border-hairline bg-gradient-to-b from-orange/[0.04] via-surface/40 to-background transition-opacity ${hubRefreshing ? "opacity-85" : ""}`}
       >
         {/* Header + daily progress */}
         <div className="px-5 py-4">
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange">
+            Your daily rewards
+          </p>
           <div className="flex items-center gap-3.5">
             <div className="relative grid h-14 w-14 shrink-0 place-items-center">
               <svg className="absolute inset-0 h-14 w-14 -rotate-90" viewBox="0 0 56 56" aria-hidden>
@@ -153,7 +156,12 @@ export function DailyEngagementHub() {
               </div>
               <p className="mt-1 text-[12px] text-ink-muted">
                 {hub.allMissionsComplete ? (
-                  <span className="font-semibold text-forest">Perfect day — all missions done!</span>
+                  <span className="font-semibold text-forest">Perfect day — you crushed it today!</span>
+                ) : !hub.checkedInToday ? (
+                  <>
+                    Claim <span className="font-semibold text-orange">+{hub.checkInReward}</span> first ·{" "}
+                    <span className="font-semibold text-foreground">{hub.coinsLeftToday}</span> more to earn today
+                  </>
                 ) : (
                   <>
                     <span className="font-semibold text-foreground">{hub.coinsLeftToday}</span> coins left today ·{" "}
