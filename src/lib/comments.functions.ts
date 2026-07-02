@@ -23,8 +23,8 @@ export const listPostComments = createServerFn({ method: "GET" })
     const { getDb } = await import("./db-access.server");
     const s = await getDb();
     if (!s) return [] as PostComment[];
-    const { ensureLegacyPostComments } = await import("./comments.server");
-    await ensureLegacyPostComments(s);
+    const { ensurePostCommentsForId } = await import("./comments.server");
+    await ensurePostCommentsForId(s, data.postId);
     return (await s`
       SELECT id, post_id, unique_id, role_label, mentor, body, votes, parent_id, is_virtual, created_at::text AS created_at
       FROM post_comments

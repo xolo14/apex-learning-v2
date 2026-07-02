@@ -30,7 +30,52 @@ export async function syncAllQuestionCommentCounts(s: Sql) {
   `;
 }
 
-/** Backfill mentor replies for seed + virtual posts that have none yet. */
+/** Backfill mentor replies for one virtual post if missing. */
+async function backfillCommentsForPost(
+  s: Sql,
+  post: { id: string; created_at: string },
+  index: number,
+) {
+  const day = post.created_at.slice(0, 10);
+  const answerCount = 1 + hashPick(`${post.id}:answers`, 3);
+
+  for (let a = 0; a < answerCount; a++) {
+    const proIdx = hashPick(`${post.id}:pro:${a}`, VIRTUAL_PRO_COUNT);
+    const proId = virtualProId(proIdx);
+    const role = VIRTUAL_PRO_ROLES[proId] ?? "Professional";
+    const body = VIRTUAL_ANSWER_BODIES[hashPick(`${post.id}:body:${a}`, VIRTUAL_ANSWER_BODIES.length)]!;
+    const commentId = `virt_c_${day}_${post.id}_${a + 1}`;
+
+    await s`
+      INSERT INTO post_comments (id, post_id, unique_id, role_label, mentor, body, votes, parent_id, is_virtual, created_at)
+      VALUES (
+        ${commentId}, ${post.id}, ${proId}, ${role}, true, ${body},
+        ${12 + hashPick(commentId, 120)}, NULL, true, ${dayStartUtc(day, 720 + index * 13 + a * 41)}
+      )
+      ON CONFLICT (id) DO NOTHING
+    `;
+  }
+
+  await s`UPDATE questions SET comments = ${answerCount} WHERE id = ${post.id}`;
+}
+
+export async function ensurePostCommentsForId(s: Sql, postId: string) {
+  if (!postId.startsWith("virt_q_")) return;
+  const { ensureVirtualCommunitySchema } = await import("./virtual-community.server");
+  await ensureVirtualCommunitySchema(s);
+
+  const rows = (await s`
+    SELECT id, created_at::text AS created_at
+    FROM questions q
+    WHERE q.id = ${postId}
+      AND NOT EXISTS (SELECT 1 FROM post_comments pc WHERE pc.post_id = q.id)
+    LIMIT 1
+  `) as { id: string; created_at: string }[];
+  if (!rows[0]) return;
+  await backfillCommentsForPost(s, rows[0], 0);
+}
+
+/** Backfill mentor replies for virtual posts that have none yet (cron / background sync). */
 export async function ensureLegacyPostComments(s: Sql) {
   const { ensureVirtualCommunitySchema } = await import("./virtual-community.server");
   await ensureVirtualCommunitySchema(s);
@@ -41,37 +86,11 @@ export async function ensureLegacyPostComments(s: Sql) {
     WHERE q.id LIKE 'virt_q_%'
       AND NOT EXISTS (SELECT 1 FROM post_comments pc WHERE pc.post_id = q.id)
     ORDER BY created_at ASC
-    LIMIT 120
+    LIMIT 40
   `) as { id: string; created_at: string }[];
 
   for (let i = 0; i < orphans.length; i++) {
-    const post = orphans[i]!;
-    const day = post.created_at.slice(0, 10);
-    const answerCount = 1 + hashPick(`${post.id}:answers`, 3);
-
-    for (let a = 0; a < answerCount; a++) {
-      const proIdx = hashPick(`${post.id}:pro:${a}`, VIRTUAL_PRO_COUNT);
-      const proId = virtualProId(proIdx);
-      const role = VIRTUAL_PRO_ROLES[proId] ?? "Professional";
-      const body = VIRTUAL_ANSWER_BODIES[hashPick(`${post.id}:body:${a}`, VIRTUAL_ANSWER_BODIES.length)]!;
-      const commentId =
-        post.id.startsWith("virt_")
-          ? `virt_c_${day}_${post.id}_${a + 1}`
-          : `seed_c_${post.id}_${a + 1}`;
-
-      await s`
-        INSERT INTO post_comments (id, post_id, unique_id, role_label, mentor, body, votes, parent_id, is_virtual, created_at)
-        VALUES (
-          ${commentId}, ${post.id}, ${proId}, ${role}, true, ${body},
-          ${12 + hashPick(commentId, 120)}, NULL, true, ${dayStartUtc(day, 720 + i * 13 + a * 41)}
-        )
-        ON CONFLICT (id) DO NOTHING
-      `;
-    }
-
-    await s`
-      UPDATE questions SET comments = ${answerCount} WHERE id = ${post.id}
-    `;
+    await backfillCommentsForPost(s, orphans[i]!, i);
   }
 
   await syncAllQuestionCommentCounts(s);

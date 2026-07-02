@@ -14,11 +14,15 @@ import { useSaved } from "@/lib/saved";
 export function PostCard({
   post,
   community: communityProp,
+  variant = "default",
 }: {
   post: Post;
   community?: DisplayCommunity;
+  /** Questions feed — highlight who asked. */
+  variant?: "default" | "question";
 }) {
   const community = communityProp ?? displayCommunityForSlug(post.communitySlug);
+  const questionFeed = variant === "question";
   const { density } = useDensity();
   const compact = density === "compact";
   const bucket = KIND_BUCKET[post.kind];
@@ -74,30 +78,68 @@ export function PostCard({
       }
     >
       <header className={"flex items-start " + (compact ? "gap-2" : "gap-2.5")}>
-        <Link to="/c/$slug" params={{ slug: post.communitySlug }} className="shrink-0">
-          <CommunityIcon
-            icon={community.icon}
-            tint={community.tint}
-            imageUrl={community.image_url}
-            size={compact ? "sm" : "md"}
-            strokeWidth={1.75}
-          />
-        </Link>
-        <span className="min-w-0 flex-1 leading-tight">
-          <Link
-            to="/c/$slug"
-            params={{ slug: post.communitySlug }}
-            className="truncate text-[13px] font-semibold tracking-tight text-foreground"
-          >
-            c/{community.slug}
-          </Link>
-          <span className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-ink-muted">
-            <UserAvatar uniqueId={post.unique_id || post.author} className="h-4 w-4 shrink-0" />
-            <span className="truncate font-medium text-foreground/80">{post.unique_id}</span>
-            <span>·</span>
-            <span>{post.time}</span>
-          </span>
-        </span>
+        {questionFeed ? (
+          <>
+            <UserAvatar
+              uniqueId={post.unique_id || post.author}
+              label={post.initials || undefined}
+              lite
+              className={compact ? "h-8 w-8" : "h-9 w-9"}
+            />
+            <span className="min-w-0 flex-1 leading-tight">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                <span className="text-[14px] font-semibold tracking-tight text-foreground">
+                  {post.unique_id}
+                </span>
+                <span className="text-[11px] text-ink-muted">·</span>
+                <span className="text-[11px] font-medium text-ink-muted">{post.role}</span>
+                <span className="text-[11px] text-ink-muted">·</span>
+                <span className="text-[11px] text-ink-muted">{post.time}</span>
+              </div>
+              <Link
+                to="/c/$slug"
+                params={{ slug: post.communitySlug }}
+                className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted"
+              >
+                <CommunityIcon
+                  icon={community.icon}
+                  tint={community.tint}
+                  imageUrl={community.image_url}
+                  size="xs"
+                  strokeWidth={1.75}
+                />
+                c/{community.slug}
+              </Link>
+            </span>
+          </>
+        ) : (
+          <>
+            <Link to="/c/$slug" params={{ slug: post.communitySlug }} className="shrink-0">
+              <CommunityIcon
+                icon={community.icon}
+                tint={community.tint}
+                imageUrl={community.image_url}
+                size={compact ? "sm" : "md"}
+                strokeWidth={1.75}
+              />
+            </Link>
+            <span className="min-w-0 flex-1 leading-tight">
+              <Link
+                to="/c/$slug"
+                params={{ slug: post.communitySlug }}
+                className="truncate text-[13px] font-semibold tracking-tight text-foreground"
+              >
+                c/{community.slug}
+              </Link>
+              <span className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-ink-muted">
+                <UserAvatar uniqueId={post.unique_id || post.author} lite className="h-4 w-4 shrink-0" />
+                <span className="truncate font-medium text-foreground/80">{post.unique_id}</span>
+                <span>·</span>
+                <span>{post.time}</span>
+              </span>
+            </span>
+          </>
+        )}
         <span
           className={
             "shrink-0 rounded-full px-2 py-1 text-[10px] uppercase tracking-[0.12em] " +

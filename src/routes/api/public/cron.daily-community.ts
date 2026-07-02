@@ -11,7 +11,9 @@ export const Route = createFileRoute("/api/public/cron/daily-community")({
             return Response.json({ ok: false, error: "Database unavailable" }, { status: 503 });
           }
           const { runDailyVirtualCommunity } = await import("@/lib/virtual-community.server");
+          const { ensureLegacyPostComments } = await import("@/lib/comments.server");
           const result = await runDailyVirtualCommunity(s);
+          await ensureLegacyPostComments(s);
           return Response.json({ ok: true, ...result });
         } catch (e) {
           return Response.json(

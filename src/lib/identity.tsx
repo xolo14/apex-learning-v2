@@ -355,6 +355,37 @@ export function IdentityAvatar({
 }
 
 /** Avatar for any member by their SP id (posts, profiles, etc.). */
-export function UserAvatar({ uniqueId, className }: { uniqueId: string; className?: string }) {
+export function UserAvatar({
+  uniqueId,
+  className,
+  lite,
+  label,
+}: {
+  uniqueId: string;
+  className?: string;
+  /** Skip DiceBear fetch — fast initials chip for feeds. */
+  lite?: boolean;
+  label?: string;
+}) {
+  if (lite) {
+    const { color } = avatarFromUniqueId(uniqueId);
+    const text =
+      label ??
+      (uniqueId.trim().toUpperCase().startsWith("SP-")
+        ? uniqueId.trim().toUpperCase().replace("SP-", "").slice(0, 3)
+        : uniqueId.trim().slice(0, 2).toUpperCase());
+    return (
+      <span
+        className={
+          "grid shrink-0 place-items-center rounded-full text-[10px] font-bold uppercase text-white " +
+          (className ?? "h-8 w-8")
+        }
+        style={{ backgroundColor: color }}
+        aria-hidden
+      >
+        {text}
+      </span>
+    );
+  }
   return <IdentityAvatar uniqueId={uniqueId} className={className} />;
 }

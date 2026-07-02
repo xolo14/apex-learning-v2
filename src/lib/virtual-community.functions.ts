@@ -1,5 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 
+export const syncVirtualCommunityFeed = createServerFn({ method: "POST" }).handler(async () => {
+  try {
+    const { getDb } = await import("./db-access.server");
+    const s = await getDb();
+    if (!s) return { synced: false };
+    const { runDailyVirtualCommunity } = await import("./virtual-community.server");
+    const { ensureLegacyPostComments } = await import("./comments.server");
+    await runDailyVirtualCommunity(s);
+    await ensureLegacyPostComments(s);
+    return { synced: true };
+  } catch {
+    return { synced: false };
+  }
+});
+
 export const getVirtualCommunityStatus = createServerFn({ method: "GET" }).handler(async () => {
   try {
     const { getDb } = await import("./db-access.server");
@@ -20,8 +35,7 @@ export const getVirtualCommunityStatus = createServerFn({ method: "GET" }).handl
         lastRunAt: null as string | null,
       };
     }
-    const { getVirtualActivitySummary, runDailyVirtualCommunity } = await import("./virtual-community.server");
-    await runDailyVirtualCommunity(s);
+    const { getVirtualActivitySummary } = await import("./virtual-community.server");
     return await getVirtualActivitySummary(s);
   } catch {
     return {

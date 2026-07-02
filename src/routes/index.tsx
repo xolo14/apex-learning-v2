@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Bell, Flame, Calendar, MessageCircleQuestion, ArrowUpRight, Bookmark, X, MapPin, Trophy } from "lucide-react";
 import goldCoin from "@/assets/syncpedia-gold-coin.png";
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/mobile-shell";
 import { CommunityIcon } from "@/components/community-icon";
@@ -13,6 +13,7 @@ import { useDensity } from "@/lib/density";
 import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
 import { listEvents, listCommunities } from "@/lib/communities.functions";
 import { listNewQuestions } from "@/lib/questions.functions";
+import { syncVirtualCommunityFeed } from "@/lib/virtual-community.functions";
 import { questionToPost } from "@/lib/post-display";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
@@ -43,6 +44,7 @@ const sorts = [
 ] as const;
 
 function Home() {
+  const qc = useQueryClient();
   const identity = useIdentity();
   const { balance: coinBalance } = useCoinBalance();
   const earningsEnabled = useEarningsEnabled();
@@ -57,13 +59,30 @@ function Home() {
   const fEvents = useServerFn(listEvents);
   const fCommunities = useServerFn(listCommunities);
   const fQuestions = useServerFn(listNewQuestions);
+  const syncVirtual = useServerFn(syncVirtualCommunityFeed);
   const questionsQ = useQuery({
     queryKey: ["feed", "new"],
     queryFn: () => fQuestions(),
     enabled: sort === "questions" || sort === "following",
-    staleTime: 60_000,
+    staleTime: 120_000,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (sort !== "questions" && sort !== "following") return;
+    const day = new Date().toISOString().slice(0, 10);
+    const key = `syncpedia:vc-sync:${day}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    const timer = window.setTimeout(() => {
+      syncVirtual()
+        .then((res) => {
+          if (res.synced) void qc.invalidateQueries({ queryKey: ["feed", "new"] });
+        })
+        .catch(() => sessionStorage.removeItem(key));
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [sort, syncVirtual, qc]);
   const homeFeed = useMemo(
     () => (questionsQ.data ?? []).map(questionToPost),
     [questionsQ.data],
@@ -71,7 +90,8 @@ function Home() {
   const comQ = useQuery({
     queryKey: ["public", "communities"],
     queryFn: () => fCommunities(),
-    staleTime: 60_000,
+    staleTime: 300_000,
+    refetchOnWindowFocus: false,
   });
   const communityList = useMemo(
     () => buildCommunityList((comQ.data ?? []).filter((c) => c.status === "approved")),
@@ -290,7 +310,12 @@ function Home() {
             <>
               {savedHot.length > 0 ? <SavedHotList items={savedHot} compact={compact} /> : null}
               {savedPosts.map((p) => (
-                <PostCard key={p.id} post={p} community={communityMap.get(p.communitySlug)} />
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  community={communityMap.get(p.communitySlug)}
+                  variant="question"
+                />
               ))}
             </>
           )
@@ -300,7 +325,12 @@ function Home() {
               <p className="px-5 pb-2 text-[11px] text-ink-muted">Questions from communities you join</p>
             ) : null}
             {homeFeed.map((p) => (
-              <PostCard key={p.id} post={p} community={communityMap.get(p.communitySlug)} />
+              <PostCard
+                key={p.id}
+                post={p}
+                community={communityMap.get(p.communitySlug)}
+                variant="question"
+              />
             ))}
           </>
         )}
