@@ -671,7 +671,7 @@ async function seedPosts() {
     const tag = p.mentor ? "Mentor" : "Question";
     await sql`
       INSERT INTO questions (id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, hidden, created_at)
-      VALUES (${id}, ${author}, ${initials}, ${unique_id}, ${p.slug}, ${p.title}, ${p.body}, ${tag}, ${Math.floor(Math.random() * 40) + 3}, ${Math.floor(Math.random() * 12)}, false, ${NOW})
+      VALUES (${id}, ${author}, ${initials}, ${unique_id}, ${p.slug}, ${p.title}, ${p.body}, ${tag}, ${Math.floor(Math.random() * 40) + 3}, 0, false, ${NOW})
       ON CONFLICT (id) DO UPDATE SET
         title = EXCLUDED.title,
         body = EXCLUDED.body,

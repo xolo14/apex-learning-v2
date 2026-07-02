@@ -23,8 +23,8 @@ export const listPostComments = createServerFn({ method: "GET" })
     const { getDb } = await import("./db-access.server");
     const s = await getDb();
     if (!s) return [] as PostComment[];
-    const { ensureVirtualCommunitySchema } = await import("./virtual-community.server");
-    await ensureVirtualCommunitySchema(s);
+    const { ensureLegacyPostComments } = await import("./comments.server");
+    await ensureLegacyPostComments(s);
     return (await s`
       SELECT id, post_id, unique_id, role_label, mentor, body, votes, parent_id, is_virtual, created_at::text AS created_at
       FROM post_comments
@@ -65,7 +65,12 @@ export const createPostComment = createServerFn({ method: "POST" })
       INSERT INTO post_comments (id, post_id, unique_id, role_label, mentor, body, votes, is_virtual, created_at)
       VALUES (${id}, ${data.postId}, ${profile.unique_id}, ${role}, false, ${data.body}, 0, false, now())
     `;
-    await s`UPDATE questions SET comments = comments + 1 WHERE id = ${data.postId}`;
+    await s`
+      UPDATE questions SET comments = (
+        SELECT COUNT(*)::int FROM post_comments WHERE post_id = ${data.postId}
+      )
+      WHERE id = ${data.postId}
+    `;
 
     return { id };
   });

@@ -57,10 +57,12 @@ function PostPage() {
     return staticPost;
   }, [postQ.data, staticPost]);
 
+  const isDbPost = !!postQ.data || /^(seed_q_|virt_q_|q_)/.test(id);
+
   const commentsQ = useQuery({
     queryKey: ["post-comments", id],
     queryFn: () => fetchComments({ data: { postId: id } }),
-    enabled: !!postQ.data,
+    enabled: isDbPost,
     staleTime: 30_000,
   });
 
@@ -100,12 +102,13 @@ function PostPage() {
 
   const community = communityBySlug(post.communitySlug);
   const canSend = replyText.trim().length > 0;
+  const replyCount = commentsQ.isSuccess ? messages.length : post.comments;
 
   async function sendReply() {
     const text = replyText.trim();
     if (!text) return;
 
-    if (postQ.data) {
+    if (isDbPost) {
       const deviceKey = localStorage.getItem(DEVICE_KEY) ?? "";
       if (!deviceKey) return;
       try {
@@ -192,7 +195,7 @@ function PostPage() {
           </div>
           <button className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-2">
             <MessageCircle strokeWidth={1.75} className="h-[15px] w-[15px]" />
-            {Math.max(post.comments, messages.length)}
+            {replyCount}
           </button>
           <button className="ml-auto grid h-9 w-9 place-items-center rounded-full bg-surface">
             <Share2 strokeWidth={1.75} className="h-[15px] w-[15px]" />
@@ -205,9 +208,9 @@ function PostPage() {
 
       <div className="px-5 pb-28 pt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[14px] font-medium text-foreground">{messages.length} replies</h2>
+          <h2 className="text-[14px] font-medium text-foreground">{replyCount} replies</h2>
         </div>
-        {commentsQ.isLoading && postQ.data ? (
+        {commentsQ.isLoading && isDbPost ? (
           <div className="mt-6 grid place-items-center">
             <Loader2 className="h-5 w-5 animate-spin text-ink-muted" />
           </div>

@@ -28,12 +28,16 @@ export const listNewQuestions = createServerFn({ method: "GET" }).handler(async 
   try {
     const { runDailyVirtualCommunity } = await import("./virtual-community.server");
     await runDailyVirtualCommunity(s);
+    const { ensureLegacyPostComments } = await import("./comments.server");
+    await ensureLegacyPostComments(s);
   } catch (e) {
     console.error("[syncpedia] virtual community:", e instanceof Error ? e.message : e);
   }
 
   const rows = (await s`
-    SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
+    SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes,
+           (SELECT COUNT(*)::int FROM post_comments pc WHERE pc.post_id = questions.id) AS comments,
+           created_at, hidden
     FROM questions
     WHERE hidden = false
     ORDER BY created_at DESC
@@ -52,8 +56,12 @@ export const getQuestionById = createServerFn({ method: "GET" })
     const { getDb } = await import("./db-access.server");
     const s = await getDb();
     if (!s) return null;
+    const { ensureLegacyPostComments } = await import("./comments.server");
+    await ensureLegacyPostComments(s);
     const rows = (await s`
-      SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments, created_at, hidden
+      SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes,
+             (SELECT COUNT(*)::int FROM post_comments pc WHERE pc.post_id = questions.id) AS comments,
+             created_at, hidden
       FROM questions
       WHERE id = ${data.id} AND hidden = false
       LIMIT 1
