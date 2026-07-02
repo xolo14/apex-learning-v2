@@ -6,7 +6,9 @@ import {
   Award,
   Calendar,
   Check,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Flame,
   GraduationCap,
   Loader2,
@@ -45,6 +47,7 @@ export function DailyEngagementHub() {
   const uid = useResolvedUniqueId();
   const qc = useQueryClient();
   const [celebration, setCelebration] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const fetchHub = useServerFn(getEngagementHub);
   const claimFn = useServerFn(claimDailyCheckIn);
   const syncFn = useServerFn(syncEngagementMissions);
@@ -124,11 +127,12 @@ export function DailyEngagementHub() {
       <div
         className={`border-y border-hairline bg-gradient-to-b from-orange/[0.04] via-surface/40 to-background transition-opacity ${hubRefreshing ? "opacity-85" : ""}`}
       >
-        {/* Header + daily progress */}
-        <div className="px-5 py-4">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange">
-            Your daily rewards
-          </p>
+        <div className={expanded ? "px-5 py-4" : "px-5 py-3"}>
+          {expanded ? (
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-orange">
+              Your daily rewards
+            </p>
+          ) : null}
           <div className="flex items-center gap-3.5">
             <div className="relative grid h-14 w-14 shrink-0 place-items-center">
               <svg className="absolute inset-0 h-14 w-14 -rotate-90" viewBox="0 0 56 56" aria-hidden>
@@ -205,79 +209,98 @@ export function DailyEngagementHub() {
           </div>
         </div>
 
-        {/* Today's picks — quiz + cert */}
-        {hub.quizOfTheDay || hub.certOfTheDay ? (
-          <div className="border-t border-hairline">
-            {hub.quizOfTheDay ? (
-              <SpotlightRow
-                to="/quizzes/$id"
-                params={{ id: hub.quizOfTheDay.id }}
-                label="Quiz pick"
-                title={hub.quizOfTheDay.title}
-                coins={hub.quizOfTheDay.coins}
-                icon={Target}
-                accent="orange"
-              />
-            ) : null}
-            {hub.certOfTheDay ? (
-              <SpotlightRow
-                to="/courses/$id"
-                params={{ id: hub.certOfTheDay.id }}
-                label="Cert pick"
-                title={hub.certOfTheDay.title}
-                coins={hub.certOfTheDay.coins}
-                icon={GraduationCap}
-                accent="forest"
-              />
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* Missions grid */}
-        {dailyMissions.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2 border-t border-hairline p-4">
-            {dailyMissions.map((m) => (
-              <MissionCell key={m.id} mission={m} />
-            ))}
-          </div>
-        ) : null}
-
-        {/* Perfect day bonus */}
-        {!hub.perfectDayClaimed && hub.missionsDone >= hub.missionsTotal - 1 ? (
-          <div className="flex items-center gap-2.5 border-t border-hairline bg-gradient-to-r from-amber-50/80 to-orange-50/50 px-5 py-3 dark:from-orange/10 dark:to-amber/5">
-            <Star className="h-4 w-4 shrink-0 text-orange" fill="currentColor" />
-            <p className="min-w-0 flex-1 text-[12px] text-foreground">
-              Finish all missions for <span className="font-bold text-orange">+{hub.dailyCompleteBonus} bonus coins</span>
-            </p>
-            <Zap className="h-4 w-4 shrink-0 text-orange" />
-          </div>
-        ) : hub.perfectDayClaimed && hub.allMissionsComplete ? (
-          <div className="flex items-center gap-2.5 border-t border-hairline bg-forest/5 px-5 py-3">
-            <Star className="h-4 w-4 shrink-0 text-forest" fill="currentColor" />
-            <p className="text-[12px] font-semibold text-forest">Perfect day! +{hub.dailyCompleteBonus} bonus earned</p>
-          </div>
-        ) : null}
-
-        {hub.streak > 0 && !hub.checkedInToday ? (
-          <p className="border-t border-hairline px-5 py-2 text-center text-[11px] font-medium text-orange">
-            Don&apos;t lose your {hub.streak}-day streak — claim now!
-          </p>
-        ) : null}
-
-        {hub.achievementsUnlocked > 0 ? (
-          <Link
-            to="/profile"
-            className="flex items-center justify-between border-t border-hairline px-5 py-2.5 text-[11px] text-ink-muted active:bg-surface/40"
+        {!expanded ? (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="flex w-full items-center justify-center gap-1 border-t border-hairline py-2.5 text-[12px] font-medium text-forest active:bg-surface/50"
           >
-            <span className="inline-flex items-center gap-1">
-              <Award className="h-3 w-3" />
-              {hub.achievementsUnlocked} badge{hub.achievementsUnlocked === 1 ? "" : "s"}
-            </span>
-            <span className="inline-flex items-center gap-0.5 font-medium text-forest">
-              View <ChevronRight className="h-3 w-3" />
-            </span>
-          </Link>
-        ) : null}
+            View full
+            <ChevronDown className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </button>
+        ) : (
+          <>
+            {hub.quizOfTheDay || hub.certOfTheDay ? (
+              <div className="border-t border-hairline">
+                {hub.quizOfTheDay ? (
+                  <SpotlightRow
+                    to="/quizzes/$id"
+                    params={{ id: hub.quizOfTheDay.id }}
+                    label="Quiz pick"
+                    title={hub.quizOfTheDay.title}
+                    coins={hub.quizOfTheDay.coins}
+                    icon={Target}
+                    accent="orange"
+                  />
+                ) : null}
+                {hub.certOfTheDay ? (
+                  <SpotlightRow
+                    to="/courses/$id"
+                    params={{ id: hub.certOfTheDay.id }}
+                    label="Cert pick"
+                    title={hub.certOfTheDay.title}
+                    coins={hub.certOfTheDay.coins}
+                    icon={GraduationCap}
+                    accent="forest"
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
+            {dailyMissions.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2 border-t border-hairline p-4">
+                {dailyMissions.map((m) => (
+                  <MissionCell key={m.id} mission={m} />
+                ))}
+              </div>
+            ) : null}
+
+            {!hub.perfectDayClaimed && hub.missionsDone >= hub.missionsTotal - 1 ? (
+              <div className="flex items-center gap-2.5 border-t border-hairline bg-gradient-to-r from-amber-50/80 to-orange-50/50 px-5 py-3 dark:from-orange/10 dark:to-amber/5">
+                <Star className="h-4 w-4 shrink-0 text-orange" fill="currentColor" />
+                <p className="min-w-0 flex-1 text-[12px] text-foreground">
+                  Finish all missions for <span className="font-bold text-orange">+{hub.dailyCompleteBonus} bonus coins</span>
+                </p>
+                <Zap className="h-4 w-4 shrink-0 text-orange" />
+              </div>
+            ) : hub.perfectDayClaimed && hub.allMissionsComplete ? (
+              <div className="flex items-center gap-2.5 border-t border-hairline bg-forest/5 px-5 py-3">
+                <Star className="h-4 w-4 shrink-0 text-forest" fill="currentColor" />
+                <p className="text-[12px] font-semibold text-forest">Perfect day! +{hub.dailyCompleteBonus} bonus earned</p>
+              </div>
+            ) : null}
+
+            {hub.streak > 0 && !hub.checkedInToday ? (
+              <p className="border-t border-hairline px-5 py-2 text-center text-[11px] font-medium text-orange">
+                Don&apos;t lose your {hub.streak}-day streak — claim now!
+              </p>
+            ) : null}
+
+            {hub.achievementsUnlocked > 0 ? (
+              <Link
+                to="/profile"
+                className="flex items-center justify-between border-t border-hairline px-5 py-2.5 text-[11px] text-ink-muted active:bg-surface/40"
+              >
+                <span className="inline-flex items-center gap-1">
+                  <Award className="h-3 w-3" />
+                  {hub.achievementsUnlocked} badge{hub.achievementsUnlocked === 1 ? "" : "s"}
+                </span>
+                <span className="inline-flex items-center gap-0.5 font-medium text-forest">
+                  View <ChevronRight className="h-3 w-3" />
+                </span>
+              </Link>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="flex w-full items-center justify-center gap-1 border-t border-hairline py-2.5 text-[12px] font-medium text-ink-muted active:bg-surface/50"
+            >
+              Show less
+              <ChevronUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+            </button>
+          </>
+        )}
       </div>
     </section>
   );
