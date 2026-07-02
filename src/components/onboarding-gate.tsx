@@ -27,6 +27,7 @@ import {
 } from "@/lib/session";
 import { getEngagementHub } from "@/lib/engagement.functions";
 import { prefetchEngagementHub } from "@/lib/engagement-sync";
+import { prefetchQuestionsFeed } from "@/lib/questions-feed-client";
 
 const INTERESTS: Interest[] = [
   { id: "tech", label: "Technology", emoji: "💻", gradient: "from-sky-400 to-indigo-500" },
@@ -97,6 +98,7 @@ export function OnboardingGate() {
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
+    prefetchQuestionsFeed(qc);
     if (isSignedOut()) {
       document.documentElement.removeAttribute("data-auth-resolving");
       return;
@@ -104,7 +106,7 @@ export function OnboardingGate() {
     if (readCachedProfile()) {
       document.documentElement.removeAttribute("data-auth-resolving");
     }
-  }, []);
+  }, [qc]);
 
   const gateOpen = authReady && !profile;
 

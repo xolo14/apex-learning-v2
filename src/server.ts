@@ -1,5 +1,10 @@
 import "./lib/error-capture";
 
+// Warm schema once per process so read-only routes never pay migration cost on first request.
+void import("./lib/db-ensure.server")
+  .then(({ ensureSchema }) => ensureSchema())
+  .catch((err) => console.error("[syncpedia] schema warm:", err));
+
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { applySecurityHeaders } from "./lib/security.server";

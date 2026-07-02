@@ -21,20 +21,8 @@ function randomId() {
 }
 
 export const listNewQuestions = createServerFn({ method: "GET" }).handler(async () => {
-  const { getDb } = await import("./db-access.server");
-  const s = await getDb();
-  if (!s) return [] as DbQuestion[];
-
-  const rows = (await s`
-    SELECT id, author, initials, unique_id, community_slug, title, body, tag, votes, comments,
-           created_at, hidden
-    FROM questions
-    WHERE hidden = false
-      AND id NOT LIKE 'seed_%'
-    ORDER BY created_at DESC
-    LIMIT 50
-  `) as DbQuestion[];
-  return rows;
+  const { queryRecentQuestions } = await import("./questions-feed.server");
+  return queryRecentQuestions(50);
 });
 
 export const getQuestionById = createServerFn({ method: "GET" })

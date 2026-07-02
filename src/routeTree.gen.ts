@@ -48,6 +48,7 @@ import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 import { Route as AdminCoinsRouteImport } from './routes/admin.coins'
 import { Route as ApiPublicSitemapRouteImport } from './routes/api/public/sitemap'
+import { Route as ApiPublicQuestionsFeedRouteImport } from './routes/api/public/questions-feed'
 import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicClassVideoRouteImport } from './routes/api/public/class-video'
 import { Route as ApiPublicAppConfigRouteImport } from './routes/api/public/app-config'
@@ -249,6 +250,11 @@ const ApiPublicSitemapRoute = ApiPublicSitemapRouteImport.update({
   path: '/api/public/sitemap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicQuestionsFeedRoute = ApiPublicQuestionsFeedRouteImport.update({
+  id: '/api/public/questions-feed',
+  path: '/api/public/questions-feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
   id: '/api/public/health',
   path: '/api/public/health',
@@ -318,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/questions-feed': typeof ApiPublicQuestionsFeedRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/daily-community': typeof ApiPublicCronDailyCommunityRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
@@ -362,6 +369,7 @@ export interface FileRoutesByTo {
   '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/questions-feed': typeof ApiPublicQuestionsFeedRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/daily-community': typeof ApiPublicCronDailyCommunityRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
@@ -409,6 +417,7 @@ export interface FileRoutesById {
   '/api/public/app-config': typeof ApiPublicAppConfigRoute
   '/api/public/class-video': typeof ApiPublicClassVideoRoute
   '/api/public/health': typeof ApiPublicHealthRoute
+  '/api/public/questions-feed': typeof ApiPublicQuestionsFeedRoute
   '/api/public/sitemap': typeof ApiPublicSitemapRoute
   '/api/public/cron/daily-community': typeof ApiPublicCronDailyCommunityRoute
   '/api/public/cron/refresh-hot': typeof ApiPublicCronRefreshHotRoute
@@ -457,6 +466,7 @@ export interface FileRouteTypes {
     | '/api/public/app-config'
     | '/api/public/class-video'
     | '/api/public/health'
+    | '/api/public/questions-feed'
     | '/api/public/sitemap'
     | '/api/public/cron/daily-community'
     | '/api/public/cron/refresh-hot'
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/api/public/app-config'
     | '/api/public/class-video'
     | '/api/public/health'
+    | '/api/public/questions-feed'
     | '/api/public/sitemap'
     | '/api/public/cron/daily-community'
     | '/api/public/cron/refresh-hot'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/api/public/app-config'
     | '/api/public/class-video'
     | '/api/public/health'
+    | '/api/public/questions-feed'
     | '/api/public/sitemap'
     | '/api/public/cron/daily-community'
     | '/api/public/cron/refresh-hot'
@@ -576,6 +588,7 @@ export interface RootRouteChildren {
   ApiPublicAppConfigRoute: typeof ApiPublicAppConfigRoute
   ApiPublicClassVideoRoute: typeof ApiPublicClassVideoRoute
   ApiPublicHealthRoute: typeof ApiPublicHealthRoute
+  ApiPublicQuestionsFeedRoute: typeof ApiPublicQuestionsFeedRoute
   ApiPublicSitemapRoute: typeof ApiPublicSitemapRoute
   ApiPublicCronDailyCommunityRoute: typeof ApiPublicCronDailyCommunityRoute
   ApiPublicCronRefreshHotRoute: typeof ApiPublicCronRefreshHotRoute
@@ -856,6 +869,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitemapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/questions-feed': {
+      id: '/api/public/questions-feed'
+      path: '/api/public/questions-feed'
+      fullPath: '/api/public/questions-feed'
+      preLoaderRoute: typeof ApiPublicQuestionsFeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/health': {
       id: '/api/public/health'
       path: '/api/public/health'
@@ -989,6 +1009,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAppConfigRoute: ApiPublicAppConfigRoute,
   ApiPublicClassVideoRoute: ApiPublicClassVideoRoute,
   ApiPublicHealthRoute: ApiPublicHealthRoute,
+  ApiPublicQuestionsFeedRoute: ApiPublicQuestionsFeedRoute,
   ApiPublicSitemapRoute: ApiPublicSitemapRoute,
   ApiPublicCronDailyCommunityRoute: ApiPublicCronDailyCommunityRoute,
   ApiPublicCronRefreshHotRoute: ApiPublicCronRefreshHotRoute,

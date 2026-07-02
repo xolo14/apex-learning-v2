@@ -12,10 +12,10 @@ import { buildCommunityList, communityDisplayMap } from "@/lib/community-display
 import { useDensity } from "@/lib/density";
 import { listHot, fetchHotArticle, type HotItem } from "@/lib/hot.functions";
 import { listEvents, listCommunities } from "@/lib/communities.functions";
-import { listNewQuestions } from "@/lib/questions.functions";
 import { syncVirtualCommunityFeed } from "@/lib/virtual-community.functions";
 import { questionToPost } from "@/lib/post-display";
-import { readCachedQuestionsFeed, writeCachedQuestionsFeed } from "@/lib/questions-feed-cache";
+import { readCachedQuestionsFeed, readCachedQuestionsFeedUpdatedAt } from "@/lib/questions-feed-cache";
+import { fetchQuestionsFeed } from "@/lib/questions-feed-client";
 import { useSavedIds } from "@/lib/saved";
 import { useSavedHot, useSavedHotToggle, type SavedHot } from "@/lib/saved-hot";
 import { IdentityAvatar, useIdentity } from "@/lib/identity";
@@ -59,16 +59,14 @@ function Home() {
   const fHot = useServerFn(listHot);
   const fEvents = useServerFn(listEvents);
   const fCommunities = useServerFn(listCommunities);
-  const fQuestions = useServerFn(listNewQuestions);
   const syncVirtual = useServerFn(syncVirtualCommunityFeed);
+  const clientReady = typeof window !== "undefined";
   const questionsQ = useQuery({
     queryKey: ["feed", "new"],
-    queryFn: async () => {
-      const rows = await fQuestions();
-      writeCachedQuestionsFeed(rows);
-      return rows;
-    },
-    enabled: sort === "questions" || sort === "following",
+    queryFn: fetchQuestionsFeed,
+    enabled: clientReady && (sort === "questions" || sort === "following"),
+    initialData: () => readCachedQuestionsFeed(),
+    initialDataUpdatedAt: () => readCachedQuestionsFeedUpdatedAt(),
     staleTime: 120_000,
     refetchOnWindowFocus: false,
     placeholderData: (prev) => prev ?? readCachedQuestionsFeed(),
@@ -83,10 +81,10 @@ function Home() {
     const timer = window.setTimeout(() => {
       syncVirtual()
         .then((res) => {
-          if (res.synced) void qc.invalidateQueries({ queryKey: ["feed", "new"] });
+          if (res.synced) void qc.refetchQueries({ queryKey: ["feed", "new"] });
         })
         .catch(() => sessionStorage.removeItem(key));
-    }, 1200);
+    }, 8000);
     return () => window.clearTimeout(timer);
   }, [sort, syncVirtual, qc]);
   const homeFeed = useMemo(
@@ -96,6 +94,7 @@ function Home() {
   const comQ = useQuery({
     queryKey: ["public", "communities"],
     queryFn: () => fCommunities(),
+    enabled: clientReady,
     staleTime: 300_000,
     refetchOnWindowFocus: false,
   });
