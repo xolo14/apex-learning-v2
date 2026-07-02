@@ -3,7 +3,7 @@ import type { DbQuiz } from "./social.functions";
 import { QUIZ_BANK } from "./quiz-bank";
 import { gradeQuizAnswers, parseQuestionsJson } from "./quiz-grade.server";
 import { buildQuizPlayFromBank, type QuizPlayPayload } from "./quiz-play.shared";
-import { stripAnswers } from "./quiz-utils";
+import { quizTop3Bonus, quizTop3BonusLabel, stripAnswers } from "./quiz-utils";
 import type { QuizAttemptAnswer, QuizLeaderboardRow, QuizQuestionDef } from "./quiz.types";
 
 export type { QuizPlayPayload };
@@ -103,6 +103,8 @@ export type QuizSubmitResult = {
   breakdown: { questionId: string; correct: boolean; points: number; earned: number }[];
   coinsEarned: number;
   perfectBonus: number;
+  top3Rank: number | null;
+  top3Bonus: number;
   message: string;
   engagement?: {
     missionCoins: number;
@@ -199,6 +201,38 @@ export const submitQuizAttempt = createServerFn({ method: "POST" })
       perfectBonus = inserted[0]?.amount ?? 0;
     }
 
+    let top3Rank: number | null = null;
+    let top3Bonus = 0;
+    if (pct >= 50) {
+      const ranked = (await s`
+        SELECT user_unique_id
+        FROM quiz_attempts
+        WHERE quiz_id = ${data.quizId}
+        ORDER BY score DESC, created_at ASC
+      `) as { user_unique_id: string }[];
+      const rank = ranked.findIndex((r) => r.user_unique_id === uid) + 1;
+      if (rank >= 1 && rank <= 3) {
+        top3Rank = rank;
+        const bonus = quizTop3Bonus(rank as 1 | 2 | 3, quizCoins);
+        const top3Key = `quiz:${data.quizId}:top3`;
+        const prev = (await s`
+          SELECT amount FROM coin_ledger
+          WHERE user_unique_id = ${uid} AND action_key = ${top3Key}
+          LIMIT 1
+        `) as { amount: number }[];
+        const prevAmt = Number(prev[0]?.amount ?? 0);
+        const upserted = (await s`
+          INSERT INTO coin_ledger (user_unique_id, action_key, amount)
+          VALUES (${uid}, ${top3Key}, ${bonus})
+          ON CONFLICT (user_unique_id, action_key)
+          DO UPDATE SET amount = GREATEST(coin_ledger.amount, EXCLUDED.amount)
+          RETURNING amount
+        `) as { amount: number }[];
+        const newAmt = Number(upserted[0]?.amount ?? 0);
+        top3Bonus = Math.max(0, newAmt - prevAmt);
+      }
+    }
+
     let engagement: QuizSubmitResult["engagement"];
     try {
       const { addXp, tryDailyMission, ensureEngagementRow } = await import("./engagement.server");
@@ -237,14 +271,32 @@ export const submitQuizAttempt = createServerFn({ method: "POST" })
       /* engagement is optional */
     }
 
+    const top3Part =
+      top3Rank && top3Bonus > 0
+        ? ` ${quizTop3BonusLabel(top3Rank as 1 | 2 | 3)} bonus: +${top3Bonus} coins.`
+        : top3Rank
+          ? ` You're #${top3Rank} on the leaderboard!`
+          : "";
+
     const message =
       pct === 100
-        ? `Perfect score! ${coinsEarned ? `+${coinsEarned} coins` : ""}${perfectBonus ? ` +${perfectBonus} bonus` : ""}.`
+        ? `Perfect score! ${coinsEarned ? `+${coinsEarned} coins` : ""}${perfectBonus ? ` +${perfectBonus} bonus` : ""}.${top3Part}`
         : pct >= 50
-          ? `You scored ${pct}% — ${coinsEarned ? `+${coinsEarned} coins earned` : "nice work!"}.`
+          ? `You scored ${pct}% — ${coinsEarned ? `+${coinsEarned} coins earned` : "nice work!"}.${top3Part}`
           : `You scored ${pct}%. Score 50%+ to earn coins. Retake to improve!`;
 
-    return { score, maxScore, pct, breakdown, coinsEarned, perfectBonus, message, engagement };
+    return {
+      score,
+      maxScore,
+      pct,
+      breakdown,
+      coinsEarned,
+      perfectBonus,
+      top3Rank,
+      top3Bonus,
+      message,
+      engagement,
+    };
   });
 
 export const getQuizLeaderboard = createServerFn({ method: "GET" })

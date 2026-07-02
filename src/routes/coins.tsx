@@ -38,7 +38,9 @@ function labelForAction(key: string): string {
   if (key.startsWith("mission:event:")) return "Event mission";
   if (key.startsWith("mission:certify:")) return "Certification mission";
   if (key.startsWith("mission:all-complete:")) return "Perfect day bonus";
-  return key.replace(/_/g, " ");
+  if (key.endsWith(":top3")) return "Quiz top-3 bonus";
+  if (key.endsWith(":perfect")) return "Perfect score bonus";
+  if (key.startsWith("quiz:")) return "Quiz completed";
 }
 
 function timeAgoShort(iso: string) {

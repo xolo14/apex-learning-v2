@@ -18,6 +18,7 @@ import { LevelBadge } from "@/components/level-badge";
 import { QuizPlayer } from "@/components/quiz-player";
 import { MobileShell } from "@/components/mobile-shell";
 import { QUIZ_DIFFICULTY_LABEL } from "@/lib/quiz-bank";
+import { quizTop3Bonus } from "@/lib/quiz-utils";
 import { useIdentity } from "@/lib/identity";
 import { getQuizPlay, getQuizLeaderboard, submitQuizAttempt, type QuizSubmitResult } from "@/lib/quiz.functions";
 import type { QuizAttemptAnswer } from "@/lib/quiz.types";
@@ -180,11 +181,26 @@ function QuizDetailPage() {
               {result.score} / {result.maxScore} marks
             </p>
             <p className="mt-3 text-[13px] text-ink-muted">{result.message}</p>
-            {(result.coinsEarned > 0 || result.perfectBonus > 0) && (
-              <p className="mt-2 inline-flex items-center gap-1 text-[14px] font-semibold text-orange">
-                <img src={goldCoin} alt="" className="h-4 w-4" />
-                +{result.coinsEarned + result.perfectBonus} coins
-              </p>
+            {(result.coinsEarned > 0 || result.perfectBonus > 0 || result.top3Bonus > 0) && (
+              <div className="mt-2 space-y-1">
+                {(result.coinsEarned > 0 || result.perfectBonus > 0) && (
+                  <p className="inline-flex items-center gap-1 text-[14px] font-semibold text-orange">
+                    <img src={goldCoin} alt="" className="h-4 w-4" />
+                    +{result.coinsEarned + result.perfectBonus} coins
+                  </p>
+                )}
+                {result.top3Rank && result.top3Bonus > 0 ? (
+                  <p className="inline-flex items-center gap-1 text-[13px] font-semibold text-forest">
+                    <Trophy className="h-4 w-4" />
+                    #{result.top3Rank} on leaderboard · +{result.top3Bonus} bonus
+                  </p>
+                ) : result.top3Rank ? (
+                  <p className="inline-flex items-center gap-1 text-[13px] font-medium text-forest">
+                    <Trophy className="h-4 w-4" />
+                    #{result.top3Rank} on the leaderboard
+                  </p>
+                ) : null}
+              </div>
             )}
             {result.engagement ? (
               <div className="mt-4 space-y-2 rounded-xl border border-forest/20 bg-forest/5 px-3 py-3 text-left">
@@ -299,6 +315,12 @@ function QuizDetailPage() {
                 <span className="inline-flex items-center gap-1 rounded-full bg-orange/10 px-3 py-1.5 text-[12px] font-medium text-orange">
                   <img src={goldCoin} alt="" className="h-3.5 w-3.5" />
                   Up to +{quiz.coins} coins
+                </span>
+              ) : null}
+              {quiz.coins > 0 ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-3 py-1.5 text-[12px] font-medium text-forest">
+                  <Trophy className="h-3.5 w-3.5" />
+                  Top 3: +{quizTop3Bonus(3, quiz.coins)}–{quizTop3Bonus(1, quiz.coins)} bonus
                 </span>
               ) : null}
             </div>
