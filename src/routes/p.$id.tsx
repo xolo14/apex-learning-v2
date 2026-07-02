@@ -20,6 +20,7 @@ import { posts } from "@/lib/feed-data";
 import { questionToPost, timeAgo } from "@/lib/post-display";
 import { getQuestionById } from "@/lib/questions.functions";
 import { createPostComment, listPostComments } from "@/lib/comments.functions";
+import { listCommunities } from "@/lib/communities.functions";
 import { UserAvatar, useResolvedUniqueId } from "@/lib/identity";
 import { DEVICE_KEY } from "@/lib/session";
 import type { Post } from "@/lib/feed-data";
@@ -44,6 +45,7 @@ function PostPage() {
   const myUid = useResolvedUniqueId();
   const fetchQ = useServerFn(getQuestionById);
   const fetchComments = useServerFn(listPostComments);
+  const fetchCommunities = useServerFn(listCommunities);
   const submitComment = useServerFn(createPostComment);
 
   const staticPost = useMemo(() => posts.find((p) => p.id === id) ?? null, [id]);
@@ -58,6 +60,18 @@ function PostPage() {
     if (postQ.data) return questionToPost(postQ.data);
     return staticPost;
   }, [postQ.data, staticPost]);
+
+  const comQ = useQuery({
+    queryKey: ["public", "communities"],
+    queryFn: () => fetchCommunities(),
+    staleTime: 60_000,
+  });
+
+  const community = useMemo(() => {
+    const slug = post?.communitySlug ?? "";
+    const dbRow = (comQ.data ?? []).find((c) => c.slug === slug && c.status === "approved");
+    return displayCommunityForSlug(slug, dbRow);
+  }, [post?.communitySlug, comQ.data]);
 
   const isDbPost = !!postQ.data || /^(seed_q_|virt_q_|q_)/.test(id);
 
@@ -83,11 +97,6 @@ function PostPage() {
     }));
     return [...fromDb, ...localReplies];
   }, [commentsQ.data, localReplies]);
-
-  const community = useMemo(
-    () => displayCommunityForSlug(post?.communitySlug ?? ""),
-    [post?.communitySlug],
-  );
 
   if (postQ.isLoading && !staticPost) {
     return (
@@ -161,7 +170,13 @@ function PostPage() {
               params={{ slug: community.slug }}
               className="flex items-center gap-2 truncate"
             >
-              <CommunityIcon icon={community.icon} tint={community.tint} size="sm" strokeWidth={2} />
+              <CommunityIcon
+                icon={community.icon}
+                tint={community.tint}
+                imageUrl={community.image_url}
+                size="sm"
+                strokeWidth={1.75}
+              />
               <span className="truncate text-[14px] font-semibold tracking-tight">
                 c/{community.slug}
               </span>
